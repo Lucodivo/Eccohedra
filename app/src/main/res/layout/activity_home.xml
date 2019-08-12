@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                             xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools"
+                                             android:layout_width="match_parent"
+                                             android:layout_height="match_parent"
+                                             tools:context=".activities.HomeActivity">
+    <TextView
+            android:text="@string/infinite_cube_scene_bottom_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/infiniteCubeText"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+    <ImageView
+            app:srcCompat="@drawable/infinite_cube_thumbnail"
+            android:id="@+id/infiniteCubeThumbnail"
+            android:contentDescription="@string/infinite_cube_thumbnail_description"
+            android:adjustViewBounds="true"
+            app:layout_constraintStart_toStartOf="@+id/infiniteCubeText"
+            app:layout_constraintEnd_toEndOf="@+id/infiniteCubeText"
+            android:layout_width="0dp" android:layout_height="0dp"
+            app:layout_constraintDimensionRatio="w,1:1" app:layout_constraintBottom_toTopOf="@+id/infiniteCubeText"
+            android:layout_marginBottom="8dp"/>
+</android.support.constraint.ConstraintLayout>

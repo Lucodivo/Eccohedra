@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">LearnOpenGL_AndroidPort</string>
+    <string name="infinite_cube_thumbnail_description">Screen shot of infinite cube scene</string>
+    <string name="title_activity_main">MainActivity</string>
+
+    <string name="title_activity_home">FullscreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="infinite_cube_scene_bottom_text">Infinite Cube Scene</string>
+</resources>
