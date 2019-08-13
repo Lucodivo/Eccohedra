@@ -1,13 +1,18 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport
 
+import android.content.Context
 import android.opengl.GLES30.*
+import android.util.Log
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.BYTES_PER_FLOAT
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.BYTES_PER_INT
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
+import android.opengl.GLUtils
+import android.graphics.BitmapFactory
+import android.support.annotation.RawRes
 
 // ===== cube values =====
-const val cubePosTexNormAttSizeInBytes = 8 * 4 // 8 times size in bytes
+const val cubePosTexNormAttSizeInBytes = 8 * BYTES_PER_FLOAT // 8 times size in bytes
 const val cubePosTextNormNumElements = 12 // 2 triangles per side * 6 sides per cube
 val cubePosTexNormAttributes = floatArrayOf(
     // positions           // normals            // texture positions
@@ -42,8 +47,6 @@ val cubePosTexNormAttributes = floatArrayOf(
     0.5f,  0.5f,  0.5f,    0.0f,  1.0f,  0.0f,   1.0f, 0.0f,    // bottom right
     -0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f,   0.0f, 0.0f      // bottom left
 )
-
-// cube indices
 val cubePosNormIndices = intArrayOf(
     0, 2, 1,
     2, 0, 3,
@@ -57,6 +60,20 @@ val cubePosNormIndices = intArrayOf(
     18, 19, 16,
     20, 22, 21,
     22, 20, 23
+)
+
+// ===== frame buffer quad values =====
+const val frameBufferQuadVertexAttSizeInBytes = 4 * BYTES_PER_FLOAT
+val frameBufferQuadVertexAttributes = floatArrayOf(
+    // positions   // texCoords
+    -1.0f,  1.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f,  0.0f, 0.0f,
+    1.0f, -1.0f,  1.0f, 0.0f,
+    1.0f,  1.0f,  1.0f, 1.0f
+)
+val quadIndices = intArrayOf(
+    0, 1, 2,
+    0, 2, 3
 )
 
 fun FloatArray.toFloatBuffer(): FloatBuffer {
@@ -103,7 +120,7 @@ fun initializeCubePosTexNormAttBuffers(vaoIntBuffer: IntBuffer, vboIntBuffer: In
         GL_FLOAT,
         false,
         cubePosTexNormAttSizeInBytes,
-        3 * 4)
+        3 * BYTES_PER_FLOAT)
     glEnableVertexAttribArray(1)
 
     // texture coords attribute
@@ -112,7 +129,7 @@ fun initializeCubePosTexNormAttBuffers(vaoIntBuffer: IntBuffer, vboIntBuffer: In
         GL_FLOAT,
         false,
         cubePosTexNormAttSizeInBytes,
-        6 * 4)
+        6 * BYTES_PER_FLOAT)
     glEnableVertexAttribArray(2)
 
     glGenBuffers(1, eboIntBuffer)
@@ -128,4 +145,139 @@ fun initializeCubePosTexNormAttBuffers(vaoIntBuffer: IntBuffer, vboIntBuffer: In
     glBindVertexArray(0)
     // Must unbind EBO AFTER unbinding VAO, since VAO stores all glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _) calls
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
+}
+
+
+fun initializeFrameBufferQuadVertexAttBuffers(vaoIntBuffer: IntBuffer, vboIntBuffer: IntBuffer, eboIntBuffer: IntBuffer)
+{
+    glGenVertexArrays(1, vaoIntBuffer)
+    glGenBuffers(1,
+        vboIntBuffer)
+    glGenBuffers(1, eboIntBuffer)
+
+
+    val vao = vaoIntBuffer[0]
+    val vbo = vboIntBuffer[0]
+    val ebo = eboIntBuffer[0]
+
+    glBindVertexArray(vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER,
+        frameBufferQuadVertexAttributes.size * BYTES_PER_FLOAT,
+        frameBufferQuadVertexAttributes.toFloatBuffer(),
+        GL_STATIC_DRAW)
+
+    // set the vertex attributes (position and texture)
+    // position attribute
+    glVertexAttribPointer(0,
+        2,
+        GL_FLOAT,
+        false,
+        frameBufferQuadVertexAttSizeInBytes,
+        0)
+    glEnableVertexAttribArray(0)
+
+    // texture attribute
+    glVertexAttribPointer(1,
+        2,
+        GL_FLOAT,
+        false,
+        frameBufferQuadVertexAttSizeInBytes,
+        2 * BYTES_PER_FLOAT)
+    glEnableVertexAttribArray(1)
+
+    // bind element buffer object to give indices
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+        quadIndices.size * BYTES_PER_INT,
+        quadIndices.toIntBuffer(),
+        GL_STATIC_DRAW)
+
+    // unbind VBO, VAO, & EBO
+    glBindBuffer(GL_ARRAY_BUFFER, 0)
+    glBindVertexArray(0)
+    // Must unbind EBO AFTER unbinding VAO, since VAO stores all glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _) calls
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
+}
+
+data class FrameBuffer(val index: IntBuffer = IntBuffer.allocate(1),
+                       val renderBufferIndex: IntBuffer = IntBuffer.allocate(1),
+                       val textureBufferIndex: IntBuffer = IntBuffer.allocate(1))
+fun FrameBuffer.delete() {
+    glDeleteFramebuffers(1, index)
+    glDeleteRenderbuffers(1, renderBufferIndex)
+    glDeleteTextures(1, textureBufferIndex)
+}
+fun initializeFrameBuffer(frameBuffer: FrameBuffer, width: Int, height: Int) {
+    // creating frame buffer
+    glGenFramebuffers(1, frameBuffer.index)
+    val frameBufferIndex = frameBuffer.index[0]
+    glBindFramebuffer(GL_FRAMEBUFFER, frameBufferIndex)
+
+    // creating frame buffer texture
+    glGenTextures(1, frameBuffer.textureBufferIndex)
+    val frameBufferTextureIndex = frameBuffer.textureBufferIndex[0]
+    glBindTexture(GL_TEXTURE_2D, frameBufferTextureIndex)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, null)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    glBindTexture(GL_TEXTURE_2D, 0) // unbind
+
+    // attach texture w/ color to frame buffer
+    glFramebufferTexture2D(GL_FRAMEBUFFER, // frame buffer we're tageting (draw, read, or both)
+        GL_COLOR_ATTACHMENT0, // type of attachment
+        GL_TEXTURE_2D, // type of texture
+        frameBufferTextureIndex, // texture
+        0) // mipmap level
+
+    // creating render buffer to be depth/stencil buffer
+    glGenRenderbuffers(1, frameBuffer.renderBufferIndex)
+    val rboIndex = frameBuffer.renderBufferIndex[0]
+    glBindRenderbuffer(GL_RENDERBUFFER, rboIndex)
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height)
+    glBindRenderbuffer(GL_RENDERBUFFER, 0); // unbind
+    // attach render buffer w/ depth & stencil to frame buffer
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, // frame buffer target
+        GL_DEPTH_STENCIL_ATTACHMENT, // attachment point of frame buffer
+        GL_RENDERBUFFER, // render buffer target
+        rboIndex)  // render buffer
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        Log.e("ObjectData", "ERROR::FRAMEBUFFER:: Framebuffer is not complete!")
+        throw RuntimeException("Error creating frame buffer")
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0)
+}
+
+fun loadTexture(context: Context, @RawRes resourceId: Int): Int {
+    val textureIntArray = IntArray(1)
+    glGenTextures(1, textureIntArray, 0)
+    val textureId = textureIntArray[0]
+
+    if (textureId == 0) {
+        throw RuntimeException("Error loading texture.")
+    }
+
+    val options = BitmapFactory.Options()
+    options.inScaled = false   // No pre-scaling
+
+    // Read in the resource
+    val bitmap = BitmapFactory.decodeResource(context.resources, resourceId, options)
+
+    // Bind to the texture in OpenGL
+    glBindTexture(GL_TEXTURE_2D, textureId)
+
+    // Set filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+    // Load the bitmap into the bound texture.
+    GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0)
+
+    // Recycle the bitmap, since its data has been loaded into OpenGL.
+    bitmap.recycle()
+
+    return textureId
 }
