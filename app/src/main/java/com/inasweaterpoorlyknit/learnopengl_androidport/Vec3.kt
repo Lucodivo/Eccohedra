@@ -16,6 +16,6 @@ fun Vec3.normalize(): Vec3 {
 
 fun cross(first: Vec3, second: Vec3): Vec3 {
     return Vec3(first.y * second.z - first.z * second.y,
-                first.x * second.z - first.z * second.x,
+                first.z * second.x - first.x * second.z,
                 first.x * second.y - first.y * second.x)
 }

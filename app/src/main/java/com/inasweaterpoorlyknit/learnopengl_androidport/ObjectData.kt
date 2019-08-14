@@ -155,12 +155,11 @@ fun initializeFrameBufferQuadVertexAttBuffers(vaoIntBuffer: IntBuffer, vboIntBuf
         vboIntBuffer)
     glGenBuffers(1, eboIntBuffer)
 
-
     val vao = vaoIntBuffer[0]
     val vbo = vboIntBuffer[0]
     val ebo = eboIntBuffer[0]
 
-    glBindVertexArray(vao);
+    glBindVertexArray(vao)
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER,
@@ -236,7 +235,7 @@ fun initializeFrameBuffer(frameBuffer: FrameBuffer, width: Int, height: Int) {
     val rboIndex = frameBuffer.renderBufferIndex[0]
     glBindRenderbuffer(GL_RENDERBUFFER, rboIndex)
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height)
-    glBindRenderbuffer(GL_RENDERBUFFER, 0); // unbind
+    glBindRenderbuffer(GL_RENDERBUFFER, 0) // unbind
     // attach render buffer w/ depth & stencil to frame buffer
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, // frame buffer target
         GL_DEPTH_STENCIL_ATTACHMENT, // attachment point of frame buffer

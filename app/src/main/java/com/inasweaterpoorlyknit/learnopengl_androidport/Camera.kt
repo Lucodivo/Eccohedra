@@ -20,25 +20,28 @@ const val SENSITIVTY = 0.1f
 const val ZOOM = 45.0f
 const val JUMP_SPEED = 1
 
-class Camera(private val position: Vec3 = Vec3(0.0f, 0.0f, 3.0f)) {
+class Camera {
+    private val position: Vec3 = Vec3(0.0f, 0.0f, 3.0f)
     private var up: Vec3 = Vec3(0.0f, 1.0f, 0.0f)
     private val yaw: Float = YAW
     private val pitch: Float = PITCH
 
     private var front = Vec3(0.0f, 0.0f, -1.0f)
-    private var right = Vec3()
-    private var worldUp = Vec3()
+    private var right = Vec3(1.0f, 0.0f, 0.0f)
+    private var worldUp = Vec3(0.0f, 1.0f, 0.0f)
 
     var movementSpeed = SPEED
     var zoom = ZOOM
 
     var deltaPosition = Vec3(0.0f, 0.0f, 0.0f)
 
-    // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
-    fun GetViewMatrix(deltaTime: Float) : FloatArray
-    {
-        changePositioning(deltaTime)
+    init {
+        updateCameraVectors()
+    }
 
+    // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
+    fun getViewMatrix(deltaTime: Float) : FloatArray
+    {
         return lookAt()
     }
 
@@ -77,10 +80,6 @@ class Camera(private val position: Vec3 = Vec3(0.0f, 0.0f, 3.0f)) {
         // Remember to read from right to left (first translation then rotation)
         Matrix.multiplyMM(resultMatrix, 0, rotation, 0, translation, 0)
         return resultMatrix
-    }
-
-    private fun changePositioning(deltaTime: Float) {
-        // TODO: implement
     }
 
     // Calculates the front vector from the Camera's (updated) Eular Angles
