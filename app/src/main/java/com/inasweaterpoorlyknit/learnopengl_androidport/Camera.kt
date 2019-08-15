@@ -1,9 +1,11 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport
 
-import android.opengl.Matrix
-import com.inasweaterpoorlyknit.learnopengl_androidport.utils.radians
 import kotlin.math.cos
 import kotlin.math.sin
+
+import glm_.vec3.Vec3
+import glm_.mat4x4.Mat4
+import glm_.glm
 
 enum class CameraMovement {
     Forward,
@@ -40,57 +42,51 @@ class Camera {
     }
 
     // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
-    fun getViewMatrix(deltaTime: Float) : FloatArray
+    fun getViewMatrix(deltaTime: Float) : Mat4
     {
         return lookAt()
     }
 
     // TODO: Test that the transpose logic is necessary
-    private fun lookAt() : FloatArray
+    private fun lookAt() : Mat4
     {
         val target = position + front
 
         // Calculate cameraDirection
-        val zAxis = (position - target).normalize()
+        val zAxis = glm.normalize(position - target)
         // Get positive right axis vector
         // TODO: Is the inner normalize of up necessary?
-        val xAxis = cross(up.normalize(), zAxis).normalize()
+        val xAxis = glm.normalize(glm.cross(glm.normalize(up), zAxis))
         // Calculate camera up vector
-        val yAxis = cross(zAxis, xAxis)
+        val yAxis = glm.cross(zAxis, xAxis)
 
         // In glm we access elements as mat[col][row] due to column-major layout
-        val translation = floatArrayOf(
+        val translation = Mat4(
             1.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 0.0f,
             0.0f, 0.0f, 1.0f, 0.0f,
             -position.x, -position.y, -position.z, 1.0f)
-        val translationTranspose = FloatArray(translation.size)
-        Matrix.transposeM(translationTranspose, 0, translation, 0)
 
-        val rotation = floatArrayOf(
+        val rotation = Mat4(
             xAxis.x, yAxis.x, zAxis.x, 0.0f,
             xAxis.y, yAxis.y, zAxis.y, 0.0f,
             xAxis.z, yAxis.z, zAxis.z, 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f)
-        val rotationTranspose = FloatArray(rotation.size)
-        Matrix.transposeM(rotationTranspose, 0, rotation, 0)
 
         // Return lookAt matrix as combination of translation and rotation matrix
-        val resultMatrix = FloatArray(rotation.size)
         // Remember to read from right to left (first translation then rotation)
-        Matrix.multiplyMM(resultMatrix, 0, rotation, 0, translation, 0)
-        return resultMatrix
+        return rotation * translation
     }
 
     // Calculates the front vector from the Camera's (updated) Eular Angles
     private fun updateCameraVectors() {
         // Calculate the new front vector
-        val newFront = Vec3(cos(radians(yaw)) * cos(radians(pitch)),
-                            sin(radians(pitch)),
-                        sin(radians(yaw)) * cos(radians(pitch)))
-        front = newFront.normalize()
+        val newFront = Vec3(cos(glm.radians(yaw)) * cos(glm.radians(pitch)),
+                            sin(glm.radians(pitch)),
+                        sin(glm.radians(yaw)) * cos(glm.radians(pitch)))
+        front = glm.normalize(newFront)
         // Also re-calculate the right and Up vector
-        right = cross(front, worldUp).normalize()  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-        up = cross(right, front).normalize()
+        right = glm.normalize(glm.cross(front, worldUp))  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+        up = glm.normalize(glm.cross(right, front))
     }
 }

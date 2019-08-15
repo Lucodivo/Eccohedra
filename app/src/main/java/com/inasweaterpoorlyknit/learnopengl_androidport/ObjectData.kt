@@ -1,15 +1,11 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport
 
-import android.content.Context
 import android.opengl.GLES30.*
 import android.util.Log
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.BYTES_PER_FLOAT
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.BYTES_PER_INT
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
-import android.opengl.GLUtils
-import android.graphics.BitmapFactory
-import android.support.annotation.RawRes
 
 // ===== cube values =====
 const val cubePosTexNormAttSizeInBytes = 8 * BYTES_PER_FLOAT // 8 times size in bytes
@@ -248,35 +244,4 @@ fun initializeFrameBuffer(frameBuffer: FrameBuffer, width: Int, height: Int) {
         throw RuntimeException("Error creating frame buffer")
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0)
-}
-
-fun loadTexture(context: Context, @RawRes resourceId: Int): Int {
-    val textureIntArray = IntArray(1)
-    glGenTextures(1, textureIntArray, 0)
-    val textureId = textureIntArray[0]
-
-    if (textureId == 0) {
-        throw RuntimeException("Error loading texture.")
-    }
-
-    val options = BitmapFactory.Options()
-    options.inScaled = false   // No pre-scaling
-
-    // Read in the resource
-    val bitmap = BitmapFactory.decodeResource(context.resources, resourceId, options)
-
-    // Bind to the texture in OpenGL
-    glBindTexture(GL_TEXTURE_2D, textureId)
-
-    // Set filtering
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-
-    // Load the bitmap into the bound texture.
-    GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0)
-
-    // Recycle the bitmap, since its data has been loaded into OpenGL.
-    bitmap.recycle()
-
-    return textureId
 }

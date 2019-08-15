@@ -1,24 +1,25 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.scenes
 
 import android.content.Context
-import javax.microedition.khronos.egl.EGLConfig
-
 import android.opengl.GLES31.*
 import android.opengl.GLSurfaceView
-import android.opengl.Matrix
 import com.inasweaterpoorlyknit.learnopengl_androidport.*
-import com.inasweaterpoorlyknit.learnopengl_androidport.utils.MAT_4x4_SIZE
-import com.inasweaterpoorlyknit.learnopengl_androidport.utils.radians
+import com.inasweaterpoorlyknit.learnopengl_androidport.utils.loadTexture
+import glm_.glm
+import glm_.mat4x4.Mat4
+import glm_.vec3.Vec3
 import java.nio.IntBuffer
+import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 import kotlin.math.cos
 import kotlin.math.sin
 
 
-
 const val cubeRotationAngle = 2.5f
 val cubeRotationAxis = Vec3(1.0f, 0.3f, 0.5f)
 const val outlineTextureIndex = 2
+
+const val SMOOTH_TRANSITIONS = true
 
 class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
@@ -32,7 +33,7 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
     private var outlineTextureId: Int = -1
     private var viewportHeight: Int = -1
     private var viewportWidth: Int = -1
-    private var projectionMat = FloatArray(MAT_4x4_SIZE)
+    private var projectionMat = Mat4()
     private var lastFrameTime: Float = -1.0f
 
     private var currentFrameBufferIndex: Int = 0
@@ -63,9 +64,9 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
         glBindTexture(GL_TEXTURE_2D, outlineTextureId)
         glActiveTexture(GL_TEXTURE0)
 
-        //glEnable(GL_CULL_FACE)
-        //glCullFace(GL_BACK)
-        //glFrontFace(GL_CCW)
+        glEnable(GL_CULL_FACE)
+        glCullFace(GL_BACK)
+        glFrontFace(GL_CCW)
 
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -79,21 +80,32 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
         lastFrameTime = getTime()
     }
 
+    private var elapsedTime = 0.0f
+    private var staggeredTimer = 0.0f;
     override fun onDrawFrame(unused: GL10) {
         val t = getTime()
         val deltaTime = t - lastFrameTime
         lastFrameTime = t
+        elapsedTime += deltaTime
 
-        // constant frame changes for cube
-        previousFrameBufferIndex = currentFrameBufferIndex;
-        currentFrameBufferIndex = if (currentFrameBufferIndex == 0) 1 else 0
+        if(SMOOTH_TRANSITIONS) {
+            // constant frame changes for cube
+            previousFrameBufferIndex = currentFrameBufferIndex;
+            currentFrameBufferIndex = if (currentFrameBufferIndex == 0) 1 else 0
+        } else {
+            staggeredTimer += deltaTime
+            // control when we "change frames" for the cube
+            if (staggeredTimer > 5.0f)
+            {
+                staggeredTimer = 0.0f
+                previousFrameBufferIndex = currentFrameBufferIndex
+                currentFrameBufferIndex = if (currentFrameBufferIndex == 0) 1 else 0
+            }
+        }
 
         // set background color
-        // smoother color change
-        val lightR = (sin(radians(t)) / 2.0f) + 0.5f
-        val lightG = (cos(radians(t) / 2.0f)) + 0.5f
-        val lightB = (sin(radians(t + 180.0f)) / 2.0f) + 0.5f
-        glClearColor(lightR, lightG, lightB, 1.0f)
+        val timeColor = getTimeColor()
+        glClearColor(timeColor.r, timeColor.g, timeColor.b, 1.0f)
 
         // bind default frame buffer
         glBindFramebuffer(GL_FRAMEBUFFER, frameBuffers[currentFrameBufferIndex].index[0])
@@ -104,14 +116,11 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
 
         // draw cube
         // rotate with time
-        val cubeModelMatrix = FloatArray(MAT_4x4_SIZE)
-        Matrix.setRotateM(
+        var cubeModelMatrix = Mat4()
+        cubeModelMatrix = glm.rotate(
             cubeModelMatrix,
-            0,
-            (t / 128) * cubeRotationAngle,
-            cubeRotationAxis.x,
-            cubeRotationAxis.y,
-            cubeRotationAxis.z
+            (elapsedTime/8) * glm.radians(cubeRotationAngle),
+            cubeRotationAxis
         )
 
         // draw cube outline
@@ -141,7 +150,6 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
 
         // draw scene to quad
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f)
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
         frameBufferProgram.use()
@@ -171,7 +179,8 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
         initializeFrameBuffer(frameBuffers[1], viewportWidth, viewportHeight)
 
         // start frame buffer with single color
-        glClearColor(0.5f, 0.0f, 0.0f, 1.0f)
+        val timeColor = getTimeColor()
+        glClearColor(timeColor.r, timeColor.g, timeColor.b, 1.0f)
 
         glBindFramebuffer(GL_FRAMEBUFFER, frameBuffers[0].index[0])
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
@@ -185,11 +194,11 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
         glBindTexture(GL_TEXTURE_2D, frameBuffers[1].textureBufferIndex[0])
         glActiveTexture(GL_TEXTURE0)
 
-        Matrix.perspectiveM(projectionMat, 0, camera.zoom, viewportWidth.toFloat()/viewportHeight, 0.1f, 100.0f)
+        projectionMat = glm.perspective(glm.radians(camera.zoom), viewportWidth.toFloat()/viewportHeight, 0.1f, 100.0f)
 
         cubeProgram.use()
-        cubeProgram.setUniform("texWidth", viewportWidth)
-        cubeProgram.setUniform("texHeight", viewportHeight)
+        cubeProgram.setUniform("texWidth", viewportWidth.toFloat())
+        cubeProgram.setUniform("texHeight", viewportHeight.toFloat())
         cubeProgram.setUniform("projection", projectionMat)
 
         cubeOutlineProgram.use()
@@ -199,5 +208,13 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
     private fun getTime() : Float {
         // note: time measured in deciseconds (10^-1 seconds)
         return System.nanoTime().toFloat() / 100000000
+    }
+
+    private fun getTimeColor() : Vec3 {
+        val t = getTime()
+        val lightR = (sin(glm.radians(t)) / 2.0f) + 0.5f
+        val lightG = (cos(glm.radians(t) / 2.0f)) + 0.5f
+        val lightB = (sin(glm.radians(t + 180.0f)) / 2.0f) + 0.5f
+        return Vec3(lightR, lightG, lightB)
     }
 }
