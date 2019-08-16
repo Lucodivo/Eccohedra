@@ -1,13 +1,12 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport
 
 import android.content.Context
-import android.opengl.GLES31.*
+import android.opengl.GLES20.*
 import android.support.annotation.RawRes
 import android.util.Log
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.MAT_4x4_SIZE
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.createFragmentShader
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.createVertexShader
-import glm_.glm
 import glm_.mat4x4.Mat4
 import java.nio.FloatBuffer
 
@@ -28,7 +27,7 @@ class Program(context: Context, @RawRes vertexShaderResId: Int, @RawRes fragment
         glGetProgramiv(id, GL_LINK_STATUS, linkSuccess, 0)
         if(linkSuccess[0] == 0) {
             Log.d("Program", glGetProgramInfoLog(id))
-            throw RuntimeException("Program failed to setup")
+            throw RuntimeException("OpenGL program failed to setup.")
         }
 
         glDeleteShader(vertexShader)

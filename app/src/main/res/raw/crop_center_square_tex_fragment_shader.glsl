@@ -1,5 +1,8 @@
 #version 300 es
 
+// define float precision
+precision highp float;
+
 uniform sampler2D diffTexture;
 uniform float texWidth;
 uniform float texHeight;

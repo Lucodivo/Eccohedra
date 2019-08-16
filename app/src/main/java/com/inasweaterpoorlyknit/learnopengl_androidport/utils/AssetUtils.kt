@@ -2,7 +2,7 @@ package com.inasweaterpoorlyknit.learnopengl_androidport.utils
 
 import android.content.Context
 import android.graphics.BitmapFactory
-import android.opengl.GLES30.*
+import android.opengl.GLES20.*
 import android.support.annotation.RawRes
 import java.io.InputStream
 import java.nio.IntBuffer
@@ -25,14 +25,14 @@ fun loadTexture(context: Context, @RawRes resourceId: Int): Int {
     val textureId = textureIntArray[0]
 
     if (textureId == 0) {
-        throw RuntimeException("Error loading texture.")
+        throw RuntimeException("Error generating OpenGL texture.")
     }
 
     val options = BitmapFactory.Options()
     options.inScaled = false   // No pre-scaling
 
     // Read in the resource
-    val bitmap = BitmapFactory.decodeResource(context.resources, resourceId, options)
+    val bitmap = BitmapFactory.decodeResource(context.resources, resourceId, options) ?: throw RuntimeException("Error decoding image: ${context.resources.getResourceName(resourceId)}")
 
     var internalFormat: Int
     var externalFormat: Int

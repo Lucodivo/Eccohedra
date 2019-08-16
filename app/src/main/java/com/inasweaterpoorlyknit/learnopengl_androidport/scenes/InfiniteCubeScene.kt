@@ -18,11 +18,11 @@ class InfiniteCubeScene(context: Activity) : GLSurfaceView(context) {
         val configurationInfo = activityManager!!.deviceConfigurationInfo
         val openGLESVersion = java.lang.Double.parseDouble(configurationInfo.glEsVersion)
 
-        if (openGLESVersion >= 3.1) {
-            // We have at least ES 3.1
+        if (openGLESVersion >= 3.0) {
+            // We have at least ES 3.0
             setEGLContextClientVersion(3)
         } else {
-            val openGLVersionToast: Toast = Toast.makeText(context, "Device only supports OpenGL $openGLESVersion. \n Scene requires at least OpenGL 3.1", Toast.LENGTH_LONG)
+            val openGLVersionToast: Toast = Toast.makeText(context, "Device only supports OpenGL $openGLESVersion. \n Scene requires at least OpenGL 3.0", Toast.LENGTH_LONG)
             openGLVersionToast.show()
             activity.finish()
         }

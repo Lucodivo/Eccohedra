@@ -241,7 +241,7 @@ fun initializeFrameBuffer(frameBuffer: FrameBuffer, width: Int, height: Int) {
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
         Log.e("ObjectData", "ERROR::FRAMEBUFFER:: Framebuffer is not complete!")
-        throw RuntimeException("Error creating frame buffer")
+        throw RuntimeException("Error creating OpenGL frame buffer.")
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0)
 }

@@ -1,7 +1,8 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.scenes
 
 import android.content.Context
-import android.opengl.GLES31.*
+import android.opengl.GLES20.*
+import android.opengl.GLES30.glBindVertexArray
 import android.opengl.GLSurfaceView
 import com.inasweaterpoorlyknit.learnopengl_androidport.*
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.loadTexture
