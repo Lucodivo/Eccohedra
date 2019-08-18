@@ -12,7 +12,7 @@ import java.nio.FloatBuffer
 
 class Program(context: Context, @RawRes vertexShaderResId: Int, @RawRes fragmentShaderResId: Int)
 {
-    val id: Int
+    private val id: Int
 
     init {
         val vertexShader = createVertexShader(context, vertexShaderResId)

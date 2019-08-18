@@ -204,6 +204,7 @@ fun FrameBuffer.delete() {
     glDeleteRenderbuffers(1, renderBufferIndex)
     glDeleteTextures(1, textureBufferIndex)
 }
+
 fun initializeFrameBuffer(frameBuffer: FrameBuffer, width: Int, height: Int) {
     // creating frame buffer
     glGenFramebuffers(1, frameBuffer.index)

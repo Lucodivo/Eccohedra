@@ -14,6 +14,8 @@ import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 import kotlin.math.cos
 import kotlin.math.sin
+import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.InfiniteCubeRenderer.GrowState.*
+import glm_.vec2.Vec2
 
 
 const val cubeRotationAngle = 2.5f
@@ -39,6 +41,8 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
 
     private var currentFrameBufferIndex: Int = 0
     private var previousFrameBufferIndex: Int = 1
+    private var cubeScale: Float = 1.0f
+    private var growScaleMax: Float = 1.5f
 
     override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
         camera = Camera()
@@ -46,7 +50,6 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
         cubeOutlineProgram = Program(context, R.raw.pos_norm_tex_vertex_shader, R.raw.discard_alpha_fragment_shader)
         frameBufferProgram = Program(context, R.raw.frame_buffer_vertex_shader, R.raw.basic_texture_fragment_shader)
 
-        // TODO: Delete buffers when renderer completes?
         // setup vertex attribute objects
         val cubeVAOBuffer = IntBuffer.allocate(1)
         val cubeVBOBuffer = IntBuffer.allocate(1)
@@ -78,23 +81,23 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
         cubeOutlineProgram.use()
         cubeOutlineProgram.setUniform("diffTexture", outlineTextureIndex)
 
-        lastFrameTime = getTime()
+        lastFrameTime = getDeciseconds()
     }
 
     private var elapsedTime = 0.0f
     private var staggeredTimer = 0.0f;
     override fun onDrawFrame(unused: GL10) {
-        val t = getTime()
-        val deltaTime = t - lastFrameTime
+        val t = getDeciseconds()
+        val deltaDeciseconds = (t - lastFrameTime)
         lastFrameTime = t
-        elapsedTime += deltaTime
+        elapsedTime += deltaDeciseconds
 
         if(SMOOTH_TRANSITIONS) {
             // constant frame changes for cube
             previousFrameBufferIndex = currentFrameBufferIndex;
             currentFrameBufferIndex = if (currentFrameBufferIndex == 0) 1 else 0
         } else {
-            staggeredTimer += deltaTime
+            staggeredTimer += deltaDeciseconds
             // control when we "change frames" for the cube
             if (staggeredTimer > 5.0f)
             {
@@ -105,19 +108,41 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
         }
 
         // set background color
-        val timeColor = getTimeColor()
-        glClearColor(timeColor.r, timeColor.g, timeColor.b, 1.0f)
+        val lightR = (sin(glm.radians(elapsedTime)) / 2.0f) + 0.5f
+        val lightG = (cos(glm.radians(elapsedTime) / 2.0f)) + 0.5f
+        val lightB = (sin(glm.radians(elapsedTime + 180.0f)) / 2.0f) + 0.5f
+        glClearColor(lightR, lightG, lightB, 1.0f)
 
         // bind default frame buffer
         glBindFramebuffer(GL_FRAMEBUFFER, frameBuffers[currentFrameBufferIndex].index[0])
 
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
-        val viewMat = camera.getViewMatrix(deltaTime)
+        val viewMat = camera.getViewMatrix(deltaDeciseconds)
 
         // draw cube
         // rotate with time
+        if(growState != None) {
+
+            val deltaScale = 0.004f/deltaDeciseconds
+            if(growState == Growing) { // grow
+                cubeScale += deltaScale
+                if(cubeScale >= growScaleMax) growState = Shrinking
+            } else { // shrink
+                cubeScale -= deltaScale
+            }
+
+            if(cubeScale <= 1.0f) {
+                growState = None
+                cubeScale = 1.0f
+            }
+        }
+
         var cubeModelMatrix = Mat4()
+        cubeModelMatrix = glm.scale(
+            cubeModelMatrix,
+            Vec3(cubeScale)
+        )
         cubeModelMatrix = glm.rotate(
             cubeModelMatrix,
             (elapsedTime/8) * glm.radians(cubeRotationAngle),
@@ -168,13 +193,7 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
 
         glViewport(0, 0, viewportWidth, viewportHeight)
 
-        // delete render buffers if they've already been initialized
-        if (::frameBuffers.isInitialized){
-            frameBuffers[0].delete()
-            frameBuffers[1].delete()
-        } else {
-            frameBuffers = arrayOf(FrameBuffer(), FrameBuffer())
-        }
+        frameBuffers = arrayOf(FrameBuffer(), FrameBuffer())
 
         initializeFrameBuffer(frameBuffers[0], viewportWidth, viewportHeight)
         initializeFrameBuffer(frameBuffers[1], viewportWidth, viewportHeight)
@@ -206,16 +225,34 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
         cubeOutlineProgram.setUniform("projection", projectionMat)
     }
 
-    private fun getTime() : Float {
+
+    var growState: GrowState = None
+    fun touch() {
+        if(growState == None) {
+            growState = Growing
+        }
+    }
+
+    private fun getDeciseconds() : Float {
         // note: time measured in deciseconds (10^-1 seconds)
         return System.nanoTime().toFloat() / 100000000
     }
 
     private fun getTimeColor() : Vec3 {
-        val t = getTime()
+        val t = getDeciseconds()
         val lightR = (sin(glm.radians(t)) / 2.0f) + 0.5f
         val lightG = (cos(glm.radians(t) / 2.0f)) + 0.5f
         val lightB = (sin(glm.radians(t + 180.0f)) / 2.0f) + 0.5f
         return Vec3(lightR, lightG, lightB)
+    }
+
+    fun pan(vec2: Vec2) {
+        camera.processPan(vec2)
+    }
+
+    enum class GrowState {
+        Growing,
+        Shrinking,
+        None
     }
 }
