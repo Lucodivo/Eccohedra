@@ -10,7 +10,6 @@ const val PITCH = 0.0f
 const val YAW = -90.0f
 const val ZOOM = 45.0f
 const val MOVEMENT_SPEED = 1.0f
-const val YAW_PAN_SENSITIVITY = 0.1f
 
 class Camera {
     private val position: Vec3 = Vec3(0.0f, 0.0f, 3.0f)
@@ -22,11 +21,12 @@ class Camera {
     private var right = Vec3(1.0f, 0.0f, 0.0f)
     private var worldUp = Vec3(0.0f, 1.0f, 0.0f)
 
-    var zoom = ZOOM
-
     var deltaPosition = Vec3(0.0f, 0.0f, 0.0f)
 
     var rotMat = Mat4(1.0f)
+
+    // startingInverse Matrix
+    lateinit var startingMat4Inverse: Mat4
 
     init {
         updateCameraVectors()
@@ -81,7 +81,7 @@ class Camera {
         up = glm.normalize(glm.cross(right, front))
     }
 
-    fun changePositioning()
+    private fun changePositioning()
     {
         // multiplying a vec3(0,0,0) by small fractions may lead to NAN values
         if (deltaPosition.x != 0.0f || deltaPosition.y != 0.0f || deltaPosition.z != 0.0f)
@@ -92,14 +92,10 @@ class Camera {
     }
 
     fun processPan(vec2: Vec2) {
-        // NOTE: Uncomment to move whole scene left/right/closer/further
-        //deltaPosition = Vec3(-vec2.x, 0.0f, vec2.y) * (MOVEMENT_SPEED/200.0f)
         val panSpeedMultiplier = (MOVEMENT_SPEED/200.0f)
         deltaPosition = (Vec3(front.x, 0.0f, front.z) * vec2.y * panSpeedMultiplier) + (right * -vec2.x * panSpeedMultiplier)
     }
 
-    // startingInverse Matrix
-    lateinit var startingMat4Inverse: Mat4
     fun processRotationSensor(inverseRotMat: Mat4) {
         if(!::startingMat4Inverse.isInitialized) startingMat4Inverse = inverseRotMat
         this.rotMat = startingMat4Inverse * inverseRotMat.inverse()

@@ -12,17 +12,23 @@ import glm_.vec2.Vec2
 import android.hardware.*
 import android.hardware.SensorManager.SENSOR_DELAY_GAME
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.MAT_4x4_SIZE
+import com.inasweaterpoorlyknit.learnopengl_androidport.utils.systemTimeInSeconds
 import glm_.mat4x4.Mat4
 
 
 @SuppressLint("ViewConstructor")
 class InfiniteCubeScene(context: Activity) : GLSurfaceView(context), SensorEventListener {
 
-    private val renderer: InfiniteCubeRenderer
-    private lateinit var sensorManager: SensorManager
-    private lateinit var sensor: Sensor
+    private val renderer: InfiniteCubeRenderer = InfiniteCubeRenderer(context)
+    private val sensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private val sensor: Sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
     private val rotationSensorMatrix: FloatArray = FloatArray(MAT_4x4_SIZE)
     private var orientation: Int = context.resources.configuration.orientation
+
+    private val touchScaleFactor: Float = 180.0f / 320f
+    private var previousX: Float = 0f
+    private var previousY: Float = 0f
+    private var actionDownTime: Float = 0f
 
     init {
         val activity: Activity = context
@@ -39,16 +45,8 @@ class InfiniteCubeScene(context: Activity) : GLSurfaceView(context), SensorEvent
             activity.finish()
         }
 
-        renderer = InfiniteCubeRenderer(context)
-
         // Set the Renderer for drawing on the GLSurfaceView
         setRenderer(renderer)
-
-        // Render the view only when there is a change in the drawing data
-        //renderMode = RENDERMODE_WHEN_DIRTY
-
-        sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
 
         // set rotation matrix to identity matrix
         rotationSensorMatrix[0] = 1.0f
@@ -57,15 +55,11 @@ class InfiniteCubeScene(context: Activity) : GLSurfaceView(context), SensorEvent
         rotationSensorMatrix[12] = 1.0f
     }
 
-    private val TOUCH_SCALE_FACTOR: Float = 180.0f / 320f
-    private var previousX: Float = 0f
-    private var previousY: Float = 0f
+    private fun onClick() {
+        renderer.action()
+    }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-
-        // MotionEvent reports input details from the touch screen
-        // and other input controls. In this case, you are only
-        // interested in events where the touch position changed.
 
         val x: Float = event.x
         val y: Float = event.y
@@ -74,20 +68,30 @@ class InfiniteCubeScene(context: Activity) : GLSurfaceView(context), SensorEvent
             MotionEvent.ACTION_DOWN -> {
                 previousX = x
                 previousY = y
+                actionDownTime = systemTimeInSeconds()
+                return true
             }
             MotionEvent.ACTION_MOVE -> {
 
                 var dx: Float = x - previousX
                 var dy: Float = y - previousY
 
-                renderer.pan(Vec2(dx, dy) * TOUCH_SCALE_FACTOR)
+                renderer.pan(Vec2(dx, dy) * touchScaleFactor)
 
                 previousX = x
                 previousY = y
+                return true
+            }
+            MotionEvent.ACTION_UP -> {
+                if((systemTimeInSeconds() - actionDownTime) <= 0.3f) {
+                    onClick()
+                }
+                return true
+            }
+            else -> {
+                return super.onTouchEvent(event)
             }
         }
-
-        return true
     }
 
     override fun onAttachedToWindow() {
@@ -104,6 +108,10 @@ class InfiniteCubeScene(context: Activity) : GLSurfaceView(context), SensorEvent
         sensorManager.unregisterListener(this)
     }
 
+    fun orientationChange(orientation: Int) {
+        this.orientation = orientation
+    }
+
     override fun onSensorChanged(event: SensorEvent) {
         when(event.sensor.type){
             Sensor.TYPE_ROTATION_VECTOR -> {
@@ -117,7 +125,4 @@ class InfiniteCubeScene(context: Activity) : GLSurfaceView(context), SensorEvent
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
-    fun orientationChange(orientation: Int) {
-        this.orientation = orientation
-    }
 }
