@@ -15,18 +15,19 @@
             android:theme="@style/AppTheme"
             tools:ignore="AllowBackup,GoogleAppIndexingWarning">
 
+        <!-- TODO: Support landscape -->
         <activity android:name=".activities.InfiniteCubeActivity"
-                  android:theme="@style/AppTheme.NoActionBar">
-            <!-- TODO: Remove. Just for debugging comment -->
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
+                  android:theme="@style/AppTheme.NoActionBar"
+                  android:screenOrientation="portrait">
         </activity>
         <activity
                 android:name=".activities.HomeActivity"
                 android:configChanges="orientation|keyboardHidden|screenSize"
                 android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
         </activity>
     </application>
 </manifest>

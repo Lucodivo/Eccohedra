@@ -1,24 +1,13 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport
 
-import kotlin.math.cos
-import kotlin.math.sin
-
 import glm_.vec3.Vec3
 import glm_.mat4x4.Mat4
 import glm_.glm
 import glm_.vec2.Vec2
-
-enum class CameraMovement {
-    Forward,
-    Backward,
-    Left,
-    Right,
-    Jump
-}
+import glm_.vec4.Vec4
 
 const val PITCH = 0.0f
 const val YAW = -90.0f
-const val SPEED = 2.5f
 const val ZOOM = 45.0f
 const val MOVEMENT_SPEED = 1.0f
 const val YAW_PAN_SENSITIVITY = 0.1f
@@ -36,6 +25,8 @@ class Camera {
     var zoom = ZOOM
 
     var deltaPosition = Vec3(0.0f, 0.0f, 0.0f)
+
+    var rotMat = Mat4(1.0f)
 
     init {
         updateCameraVectors()
@@ -82,10 +73,9 @@ class Camera {
     // Calculates the front vector from the Camera's (updated) Eular Angles
     private fun updateCameraVectors() {
         // Calculate the new front vector
-        val newFront = Vec3(cos(glm.radians(yaw)) * cos(glm.radians(pitch)),
-                            sin(glm.radians(pitch)),
-                        sin(glm.radians(yaw)) * cos(glm.radians(pitch)))
-        front = glm.normalize(newFront)
+        val newFront = rotMat * Vec4(0.0f, 0.0f, -1.0f, 1.0f)
+
+        front = glm.normalize(newFront.toVec3())
         // Also re-calculate the right and Up vector
         right = glm.normalize(glm.cross(front, worldUp))  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
         up = glm.normalize(glm.cross(right, front))
@@ -104,7 +94,14 @@ class Camera {
     fun processPan(vec2: Vec2) {
         // NOTE: Uncomment to move whole scene left/right/closer/further
         //deltaPosition = Vec3(-vec2.x, 0.0f, vec2.y) * (MOVEMENT_SPEED/200.0f)
-        deltaPosition = front * -vec2.y * (MOVEMENT_SPEED/200.0f)
-        yaw += vec2.x * YAW_PAN_SENSITIVITY
+        val panSpeedMultiplier = (MOVEMENT_SPEED/200.0f)
+        deltaPosition = (Vec3(front.x, 0.0f, front.z) * vec2.y * panSpeedMultiplier) + (right * -vec2.x * panSpeedMultiplier)
+    }
+
+    // startingInverse Matrix
+    lateinit var startingMat4Inverse: Mat4
+    fun processRotationSensor(inverseRotMat: Mat4) {
+        if(!::startingMat4Inverse.isInitialized) startingMat4Inverse = inverseRotMat
+        this.rotMat = startingMat4Inverse * inverseRotMat.inverse()
     }
 }

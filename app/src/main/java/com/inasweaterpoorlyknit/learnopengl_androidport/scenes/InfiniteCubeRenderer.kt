@@ -26,7 +26,7 @@ const val SMOOTH_TRANSITIONS = true
 
 class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
-    private lateinit var camera: Camera
+    private val camera: Camera = Camera()
     private lateinit var cubeProgram: Program
     private lateinit var cubeOutlineProgram: Program
     private lateinit var frameBufferProgram: Program
@@ -45,7 +45,6 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
     private var growScaleMax: Float = 1.5f
 
     override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
-        camera = Camera()
         cubeProgram = Program(context, R.raw.pos_norm_tex_vertex_shader, R.raw.crop_center_square_tex_fragment_shader)
         cubeOutlineProgram = Program(context, R.raw.pos_norm_tex_vertex_shader, R.raw.discard_alpha_fragment_shader)
         frameBufferProgram = Program(context, R.raw.frame_buffer_vertex_shader, R.raw.basic_texture_fragment_shader)
@@ -225,7 +224,6 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
         cubeOutlineProgram.setUniform("projection", projectionMat)
     }
 
-
     var growState: GrowState = None
     fun touch() {
         if(growState == None) {
@@ -248,6 +246,10 @@ class InfiniteCubeRenderer(private val context: Context) : GLSurfaceView.Rendere
 
     fun pan(vec2: Vec2) {
         camera.processPan(vec2)
+    }
+
+    fun processRotationSensor(inverseRotMat: Mat4) {
+        camera.processRotationSensor(inverseRotMat)
     }
 
     enum class GrowState {
