@@ -15,10 +15,9 @@
             android:theme="@style/AppTheme"
             tools:ignore="AllowBackup,GoogleAppIndexingWarning">
 
-        <!-- TODO: Support landscape -->
         <activity android:name=".activities.InfiniteCubeActivity"
                   android:theme="@style/AppTheme.NoActionBar"
-                  android:screenOrientation="portrait">
+                  android:configChanges="orientation|screenSize">
         </activity>
         <activity
                 android:name=".activities.HomeActivity"

@@ -6,6 +6,7 @@ import android.content.Context
 import android.opengl.GLSurfaceView
 import android.widget.Toast
 import android.app.ActivityManager
+import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.view.MotionEvent
 import glm_.vec2.Vec2
 import android.hardware.*
@@ -21,6 +22,7 @@ class InfiniteCubeScene(context: Activity) : GLSurfaceView(context), SensorEvent
     private lateinit var sensorManager: SensorManager
     private lateinit var sensor: Sensor
     private val rotationSensorMatrix: FloatArray = FloatArray(MAT_4x4_SIZE)
+    private var orientation: Int = context.resources.configuration.orientation
 
     init {
         val activity: Activity = context
@@ -106,10 +108,16 @@ class InfiniteCubeScene(context: Activity) : GLSurfaceView(context), SensorEvent
         when(event.sensor.type){
             Sensor.TYPE_ROTATION_VECTOR -> {
                 SensorManager.getRotationMatrixFromVector(rotationSensorMatrix, event.values)
+                if(orientation == ORIENTATION_LANDSCAPE) {
+                    SensorManager.remapCoordinateSystem(rotationSensorMatrix, SensorManager.AXIS_Y, SensorManager.AXIS_MINUS_X, rotationSensorMatrix)
+                }
                 renderer.processRotationSensor(Mat4(rotationSensorMatrix))
             }
         }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+    fun orientationChange(orientation: Int) {
+        this.orientation = orientation
+    }
 }
