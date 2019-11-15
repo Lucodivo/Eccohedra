@@ -2,12 +2,14 @@ package com.inasweaterpoorlyknit.learnopengl_androidport
 
 import android.content.Context
 import android.opengl.GLES20.*
-import android.support.annotation.RawRes
 import android.util.Log
+import androidx.annotation.RawRes
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.MAT_4x4_SIZE
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.createFragmentShader
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.createVertexShader
 import glm_.mat4x4.Mat4
+import glm_.vec2.Vec2
+import glm_.vec3.Vec3
 import java.nio.FloatBuffer
 
 class Program(context: Context, @RawRes vertexShaderResId: Int, @RawRes fragmentShaderResId: Int)
@@ -38,6 +40,10 @@ class Program(context: Context, @RawRes vertexShaderResId: Int, @RawRes fragment
 
     // float, mat4, integer
     fun setUniform(name: String, value: Float) = glUniform1f(glGetUniformLocation(id, name), value)
+    fun setUniform(name: String, x: Float, y: Float) = glUniform2f(glGetUniformLocation(id, name), x, y)
+    fun setUniform(name: String, x: Float, y: Float, z: Float) = glUniform3f(glGetUniformLocation(id, name), x, y, z)
+    fun setUniform(name: String, value: Vec2) = setUniform(name, value.x, value.y)
+    fun setUniform(name: String, value: Vec3) = setUniform(name, value.x, value.y, value.z)
     fun setUniform(name: String, value: Int) = glUniform1i(glGetUniformLocation(id, name), value)
     fun setUniform(name: String, value: Mat4) = glUniformMatrix4fv(glGetUniformLocation(id, name), 1, false, value to FloatBuffer.allocate(MAT_4x4_SIZE))
 }

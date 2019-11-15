@@ -1,9 +1,9 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.utils
 
 import android.content.Context
-import android.support.annotation.RawRes
 import android.graphics.BitmapFactory
 import android.opengl.GLES20.*
+import androidx.annotation.RawRes
 import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import java.nio.IntBuffer

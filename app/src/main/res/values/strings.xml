@@ -1,5 +1,7 @@
 <resources>
-    <string name="app_name">Infinite Cube</string>
+    <string name="app_name">Scenes</string>
     <string name="infinite_cube_thumbnail_description">Screen shot of infinite cube scene</string>
+    <string name="infinite_sphere_thumbnail_description">Screen shot of infinite sphere scene</string>
     <string name="infinite_cube_scene_bottom_text">Infinite Cube Scene</string>
+    <string name="infinite_sphere_scene_bottom_text">Infinite Sphere Scene</string>
 </resources>

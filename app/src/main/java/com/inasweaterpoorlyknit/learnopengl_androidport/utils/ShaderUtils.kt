@@ -2,8 +2,8 @@ package com.inasweaterpoorlyknit.learnopengl_androidport.utils
 
 import android.content.Context
 import android.opengl.GLES20.*
-import android.support.annotation.RawRes
 import android.util.Log
+import androidx.annotation.RawRes
 
 // NOTE: OpenGL ES does not support geometry shaders
 

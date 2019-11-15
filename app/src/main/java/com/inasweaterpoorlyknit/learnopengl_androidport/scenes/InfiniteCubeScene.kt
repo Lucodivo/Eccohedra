@@ -13,6 +13,7 @@ import com.inasweaterpoorlyknit.learnopengl_androidport.*
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.MAT_4x4_SIZE
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.loadTexture
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.systemTimeInSeconds
+import com.inasweaterpoorlyknit.learnopengl_androidport.utils.systemTimeInDeciseconds
 import glm_.glm
 import glm_.mat4x4.Mat4
 import glm_.vec3.Vec3
@@ -23,6 +24,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import glm_.vec2.Vec2
 
+import com.inasweaterpoorlyknit.learnopengl_androidport.utils.glClearColor
 
 
 const val cubeRotationAngle = 2.5f
@@ -32,7 +34,7 @@ const val SMOOTH_TRANSITIONS = true
 
 class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener {
 
-    private val camera: Camera = Camera()
+    private val camera = Camera()
     private lateinit var cubeProgram: Program
     private lateinit var cubeOutlineProgram: Program
     private lateinit var frameBufferProgram: Program
@@ -99,11 +101,11 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
         cubeOutlineProgram.use()
         cubeOutlineProgram.setUniform("diffTexture", outlineTextureIndex)
 
-        lastFrameTime = getDeciseconds()
+        lastFrameTime = systemTimeInDeciseconds()
     }
 
     override fun onDrawFrame(unused: GL10) {
-        val t = getDeciseconds()
+        val t = systemTimeInDeciseconds()
         val deltaDeciseconds = (t - lastFrameTime)
         lastFrameTime = t
         elapsedTime += deltaDeciseconds
@@ -125,7 +127,7 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
 
         // set background color
         val timeColor = getTimeColor(elapsedTime)
-        glClearColor(timeColor.r, timeColor.g, timeColor.b, 1.0f)
+        glClearColor(timeColor)
 
         // bind default frame buffer
         glBindFramebuffer(GL_FRAMEBUFFER, frameBuffers[currentFrameBufferIndex].index[0])
@@ -226,12 +228,7 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
         rotationSensorMatrix[12] = 1.0f
     }
 
-    private fun getDeciseconds() : Float {
-        // note: time measured in deciseconds (10^-1 seconds)
-        return System.nanoTime().toFloat() / 100000000
-    }
-
-    private fun getTimeColor(time: Float = getDeciseconds()) : Vec3 {
+    private fun getTimeColor(time: Float = systemTimeInDeciseconds()) : Vec3 {
         val t = time + timeColorOffset
         val lightR = (sin(glm.radians(t)) / 2.0f) + 0.5f
         val lightG = (cos(glm.radians(t) / 2.0f)) + 0.5f
@@ -240,7 +237,7 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
     }
 
     private fun pan(vec2: Vec2) {
-        camera.processPan(vec2)
+        camera.processPanWalk(vec2)
     }
 
     fun action() {

@@ -9,10 +9,10 @@ import glm_.vec4.Vec4
 const val PITCH = 0.0f
 const val YAW = -90.0f
 const val ZOOM = 45.0f
-const val MOVEMENT_SPEED = 1.0f
 
 class Camera {
-    private val position: Vec3 = Vec3(0.0f, 0.0f, 3.0f)
+    val position: Vec3 = Vec3(0.0f, 0.0f, 3.0f)
+    var movementSpeed = 1.0f
     private var up: Vec3 = Vec3(0.0f, 1.0f, 0.0f)
     private var yaw: Float = YAW
     private var pitch: Float = PITCH
@@ -39,6 +39,14 @@ class Camera {
         updateCameraVectors()
 
         return lookAt()
+    }
+
+    fun getRotationMatrix(deltaTime: Float) : Mat4
+    {
+        changePositioning()
+        updateCameraVectors()
+
+        return lookAtRotationMatrix()
     }
 
     private fun lookAt() : Mat4
@@ -70,6 +78,26 @@ class Camera {
         return rotation * translation
     }
 
+    private fun lookAtRotationMatrix(): Mat4 {
+
+        val target = position + front
+
+        // Calculate cameraDirection
+        val zAxis = glm.normalize(position - target)
+        // Get positive right axis vector
+        val xAxis = glm.normalize(glm.cross(glm.normalize(up), zAxis))
+        // Calculate camera up vector
+        val yAxis = glm.cross(zAxis, xAxis)
+
+        val rotation = Mat4(
+            xAxis.x, yAxis.x, -zAxis.x, 0.0f,
+            xAxis.y, yAxis.y, -zAxis.y, 0.0f,
+            xAxis.z, yAxis.z, -zAxis.z, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f)
+
+        return rotation
+    }
+
     // Calculates the front vector from the Camera's (updated) Eular Angles
     private fun updateCameraVectors() {
         // Calculate the new front vector
@@ -91,9 +119,14 @@ class Camera {
         deltaPosition = Vec3(0.0f)
     }
 
-    fun processPan(vec2: Vec2) {
-        val panSpeedMultiplier = (MOVEMENT_SPEED/200.0f)
+    fun processPanWalk(vec2: Vec2) {
+        val panSpeedMultiplier = (movementSpeed/200.0f)
         deltaPosition = (Vec3(front.x, 0.0f, front.z) * vec2.y * panSpeedMultiplier) + (right * -vec2.x * panSpeedMultiplier)
+    }
+
+    fun processPanFly(vec2: Vec2) {
+        val panSpeedMultiplier = (movementSpeed/200.0f)
+        deltaPosition = (front * vec2.y * panSpeedMultiplier) + (right * -vec2.x * panSpeedMultiplier)
     }
 
     fun processRotationSensor(inverseRotMat: Mat4) {
