@@ -9,6 +9,7 @@ import android.hardware.SensorManager
 import android.opengl.GLES20.*
 import android.opengl.GLES30.glBindVertexArray
 import android.view.MotionEvent
+import android.widget.Toast
 import com.inasweaterpoorlyknit.learnopengl_androidport.*
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.MAT_4x4_SIZE
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.loadTexture
@@ -55,7 +56,7 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
     private var timeColorOffset = 0.0f
 
     private val sensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    private val sensor: Sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+    private val sensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
     private val rotationSensorMatrix: FloatArray = FloatArray(MAT_4x4_SIZE)
 
     private val touchScaleFactor: Float = 180.0f / 320f
@@ -251,7 +252,11 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
 
     override fun onAttach() {
         // enable our sensor when attached
-        sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)
+        if(sensor == null) {
+            Toast.makeText(context, R.string.no_rotation_sensor, Toast.LENGTH_LONG).show()
+        } else {
+            sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)
+        }
     }
 
     override fun onDetach() {
@@ -273,8 +278,8 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
             }
             MotionEvent.ACTION_MOVE -> {
 
-                var dx: Float = x - previousX
-                var dy: Float = y - previousY
+                val dx: Float = x - previousX
+                val dy: Float = y - previousY
 
                 pan(Vec2(dx, dy) * touchScaleFactor)
 
