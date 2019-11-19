@@ -18,7 +18,7 @@
         <activity android:name=".activities.InfiniteCubeActivity"
                   android:theme="@style/AppTheme.NoActionBar"
                   android:configChanges="orientation|screenSize"/>
-        <activity android:name=".activities.InfiniteSphereActivity"
+        <activity android:name=".activities.RayMarchingActivity"
                   android:theme="@style/AppTheme.NoActionBar"
                   android:configChanges="orientation|screenSize"/>
         <activity

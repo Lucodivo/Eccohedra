@@ -16,7 +16,7 @@ class HomeActivity : AppCompatActivity() {
             startActivity(infiniteCubeIntent)
         }
         infiniteSphereThumbnail.setOnClickListener {
-            val infiniteSphereIntent = Intent(this, InfiniteSphereActivity::class.java)
+            val infiniteSphereIntent = Intent(this, RayMarchingActivity::class.java)
             startActivity(infiniteSphereIntent)
         }
     }

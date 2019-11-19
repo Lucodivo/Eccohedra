@@ -26,26 +26,39 @@ import glm_.vec3.Vec3
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
+import kotlin.math.cos
+import kotlin.math.sin
 
 
-class InfiniteSphereScene(context: Context) : Scene(context), SensorEventListener {
+class RayMarchingScene(context: Context) : Scene(context), SensorEventListener {
 
     private val camera = Camera()
     private lateinit var rayMarchingProgram: Program
     private var quadVAO: Int = -1
 
-    private var elapsedTime = 0.0f
-    private var lastFrameTime: Float = -1.0f
-    private var firstFrameTime: Float = -1.0f
+    private var elapsedTime : Double = 0.0
+    private var lastFrameTime: Double = -1.0
+    private var firstFrameTime: Double = -1.0
 
     private val sensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private val sensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
     private val rotationSensorMatrix: FloatArray = FloatArray(MAT_4x4_SIZE)
 
     private val touchScaleFactor: Float = 180.0f / 320f
-    private var previousX: Float = 0f
-    private var previousY: Float = 0f
-    private var actionDownTime: Float = 0f
+    private var previousX: Float = 0.0f
+    private var previousY: Float = 0.0f
+    private var actionDownTime: Double = 0.0
+
+    private var lightAlive = false
+    private var lightPosition = Vec3(0.0f, 0.0f, 0.0f)
+    private var lightMoveDir = Vec3(0.0f, 0.0f, 0.0f)
+    private var lightDistanceTraveled = 0.0f
+
+    private val cameraSpeedNormal = 0.5f
+    private val cameraSpeedFast = 2.0f
+    private var cameraSpeed = cameraSpeedNormal
+
+    private val actionTimeFrame = 0.1f
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         initializeRotationMat()
@@ -66,6 +79,9 @@ class InfiniteSphereScene(context: Context) : Scene(context), SensorEventListene
         rayMarchingProgram.use()
         glBindVertexArray(quadVAO)
         rayMarchingProgram.setUniform("viewPortResolution", Vec2(viewportWidth, viewportHeight))
+        rayMarchingProgram.setUniform("lightColor", Vec3(0.5, 0.5, 0.5))
+        rayMarchingProgram.setUniform("lightPos", Vec3(0.0f, 0.0f, 0.0f))
+        camera.position = Vec3(0.0f, 1.0f, 0.0f);
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
@@ -82,11 +98,18 @@ class InfiniteSphereScene(context: Context) : Scene(context), SensorEventListene
 
         glClear(GL_COLOR_BUFFER_BIT)
 
-        val rotationMat = camera.getRotationMatrix(deltaTime)
+        val rotationMat = camera.getRotationMatrix(deltaTime.toFloat())
+        camera.position.plusAssign(camera.front * deltaTime * cameraSpeed)
         rayMarchingProgram.setUniform("rayOrigin", camera.position)
-        rayMarchingProgram.setUniform("elapsedTime", elapsedTime)
+        rayMarchingProgram.setUniform("elapsedTime", elapsedTime.toFloat())
         rayMarchingProgram.setUniform("viewRotationMat", rotationMat)
-
+        if(lightAlive) {
+            rayMarchingProgram.setUniform("lightPos", lightPosition)
+            val lightDelta: Vec3 = lightMoveDir * deltaTime * 2.0f
+            lightPosition = lightPosition + lightDelta
+            lightDistanceTraveled += lightDelta.length()
+            if(lightDistanceTraveled > 100.0) lightAlive = false
+        }
         glDrawElements(GL_TRIANGLES, // drawing mode
             6, // number of elements to draw (3 vertices per triangle * 2 triangles per quad)
             GL_UNSIGNED_INT, // type of the indices
@@ -120,10 +143,15 @@ class InfiniteSphereScene(context: Context) : Scene(context), SensorEventListene
     }
 
     private fun pan(vec2: Vec2) {
-        camera.processPanFly(vec2)
+        //camera.processPanFly(vec2)
     }
 
-    fun action() {}
+    fun action() {
+        lightAlive = true;
+        lightDistanceTraveled = 0.0f
+        lightMoveDir = camera.front
+        lightPosition = camera.position + lightMoveDir
+    }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
 
@@ -138,6 +166,9 @@ class InfiniteSphereScene(context: Context) : Scene(context), SensorEventListene
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
+                if(systemTimeInSeconds() - actionDownTime > actionTimeFrame) {
+                    cameraSpeed = cameraSpeedFast
+                }
 
                 val dx: Float = x - previousX
                 val dy: Float = y - previousY
@@ -149,8 +180,10 @@ class InfiniteSphereScene(context: Context) : Scene(context), SensorEventListene
                 return true
             }
             MotionEvent.ACTION_UP -> {
-                if((systemTimeInSeconds() - actionDownTime) <= 0.3f) {
+                if((systemTimeInSeconds() - actionDownTime) <= actionTimeFrame) {
                     action()
+                } else {
+                    cameraSpeed = cameraSpeedNormal
                 }
                 return true
             }

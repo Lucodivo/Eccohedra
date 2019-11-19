@@ -27,9 +27,9 @@
             app:layout_constraintBottom_toBottomOf="parent"/>
 
     <ImageView
-            app:srcCompat="@drawable/infinite_sphere_thumbnail"
+            app:srcCompat="@drawable/ray_marching_thumbnail"
             android:id="@+id/infiniteSphereThumbnail"
-            android:contentDescription="@string/infinite_sphere_thumbnail_description"
+            android:contentDescription="@string/ray_marching_thumbnail_description"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:adjustViewBounds="true"
@@ -40,7 +40,7 @@
             android:layout_marginTop="32dp"/>
 
     <TextView
-            android:text="@string/infinite_sphere_scene_bottom_text"
+            android:text="@string/ray_marching_scene_bottom_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/infiniteSphereText"

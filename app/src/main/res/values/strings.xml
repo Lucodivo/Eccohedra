@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">Scenes</string>
     <string name="infinite_cube_thumbnail_description">Screen shot of infinite cube scene</string>
-    <string name="infinite_sphere_thumbnail_description">Screen shot of infinite sphere scene</string>
+    <string name="ray_marching_thumbnail_description">Screen shot of ray marching scene</string>
     <string name="infinite_cube_scene_bottom_text">Infinite Cube Scene</string>
-    <string name="infinite_sphere_scene_bottom_text">Infinite Sphere Scene</string>
+    <string name="ray_marching_scene_bottom_text">Ray Marching Scene</string>
     <string name="no_rotation_sensor">No rotation sensor found on device</string>
 </resources>

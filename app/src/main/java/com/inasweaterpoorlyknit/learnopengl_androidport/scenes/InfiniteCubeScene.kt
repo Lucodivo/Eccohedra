@@ -44,14 +44,14 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
     private var quadVAO: Int = -1
     private var outlineTextureId: Int = -1
     private var projectionMat = Mat4()
-    private var lastFrameTime: Float = -1.0f
 
     private var currentFrameBufferIndex: Int = 0
     private var previousFrameBufferIndex: Int = 1
     private var cubeScale: Float = 1.0f
 
-    private var elapsedTime = 0.0f
-    private var staggeredTimer = 0.0f
+    private var lastFrameTime: Double = -1.0
+    private var elapsedTime: Double = 0.0
+    private var staggeredTimer: Double = 0.0
 
     private var timeColorOffset = 0.0f
 
@@ -60,9 +60,9 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
     private val rotationSensorMatrix: FloatArray = FloatArray(MAT_4x4_SIZE)
 
     private val touchScaleFactor: Float = 180.0f / 320f
-    private var previousX: Float = 0f
-    private var previousY: Float = 0f
-    private var actionDownTime: Float = 0f
+    private var previousX: Float = 0.0f
+    private var previousY: Float = 0.0f
+    private var actionDownTime: Double = 0.0
 
     override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
         initializeRotationMat()
@@ -120,7 +120,7 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
             // control when we "change frames" for the cube
             if (staggeredTimer > 0.75f)
             {
-                staggeredTimer = 0.0f
+                staggeredTimer = 0.0
                 previousFrameBufferIndex = currentFrameBufferIndex
                 currentFrameBufferIndex = if (currentFrameBufferIndex == 0) 1 else 0
             }
@@ -135,7 +135,7 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
 
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
-        val viewMat = camera.getViewMatrix(deltaDeciseconds)
+        val viewMat = camera.getViewMatrix(deltaDeciseconds.toFloat())
 
         // draw cube
         // rotate with time
@@ -146,7 +146,7 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
         )
         cubeModelMatrix = glm.rotate(
             cubeModelMatrix,
-            (elapsedTime/8) * glm.radians(cubeRotationAngle),
+            (elapsedTime.toFloat() / 8.0f) * glm.radians(cubeRotationAngle),
             cubeRotationAxis
         )
 
@@ -229,7 +229,7 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
         rotationSensorMatrix[12] = 1.0f
     }
 
-    private fun getTimeColor(time: Float = systemTimeInDeciseconds()) : Vec3 {
+    private fun getTimeColor(time: Double = systemTimeInDeciseconds()) : Vec3 {
         val t = time + timeColorOffset
         val lightR = (sin(glm.radians(t)) / 2.0f) + 0.5f
         val lightG = (cos(glm.radians(t) / 2.0f)) + 0.5f

@@ -4,10 +4,10 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.InfiniteCubeScene
+import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.RayMarchingScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.SceneSurfaceView
 
-class InfiniteCubeActivity : AppCompatActivity() {
+class RayMarchingActivity : AppCompatActivity() {
 
     private lateinit var scene: SceneSurfaceView
 
@@ -16,7 +16,7 @@ class InfiniteCubeActivity : AppCompatActivity() {
 
         // Create a GLSurfaceView instance and set it
         // as the ContentView for this Activity.
-        scene = SceneSurfaceView(this, InfiniteCubeScene(this))
+        scene = SceneSurfaceView(this, RayMarchingScene(this))
         setContentView(scene)
     }
 

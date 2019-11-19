@@ -11,13 +11,13 @@ const val YAW = -90.0f
 const val ZOOM = 45.0f
 
 class Camera {
-    val position: Vec3 = Vec3(0.0f, 0.0f, 3.0f)
+    var position: Vec3 = Vec3(0.0f, 0.0f, 3.0f)
     var movementSpeed = 1.0f
     private var up: Vec3 = Vec3(0.0f, 1.0f, 0.0f)
     private var yaw: Float = YAW
     private var pitch: Float = PITCH
 
-    private var front = Vec3(0.0f, 0.0f, -1.0f)
+    var front = Vec3(0.0f, 0.0f, -1.0f)
     private var right = Vec3(1.0f, 0.0f, 0.0f)
     private var worldUp = Vec3(0.0f, 1.0f, 0.0f)
 
@@ -114,7 +114,7 @@ class Camera {
         // multiplying a vec3(0,0,0) by small fractions may lead to NAN values
         if (deltaPosition.x != 0.0f || deltaPosition.y != 0.0f || deltaPosition.z != 0.0f)
         {
-            position += deltaPosition
+            position.plusAssign(deltaPosition)
         }
         deltaPosition = Vec3(0.0f)
     }
