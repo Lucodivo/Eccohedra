@@ -94,7 +94,7 @@ float distanceRayToScene(vec3 rayOrigin, vec3 rayDir) {
         vec3 pos = rayOrigin + (dist * rayDir);
         float posToScene = distPosToScene(pos);
         dist += posToScene;
-        if(posToScene < HIT_DIST) return dist;
+        if(abs(posToScene) < HIT_DIST) return dist;
         if(posToScene > MISS_DIST) break;
     }
 
