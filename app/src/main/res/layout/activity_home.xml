@@ -1,50 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                                             xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools"
-                                             android:layout_width="match_parent"
-                                             android:layout_height="match_parent"
-                                             tools:context=".activities.HomeActivity">
-    <ImageView
-            app:srcCompat="@drawable/infinite_cube_thumbnail"
-            android:id="@+id/infiniteCubeThumbnail"
-            android:contentDescription="@string/infinite_cube_thumbnail_description"
-            android:adjustViewBounds="true"
-            app:layout_constraintStart_toStartOf="@id/infiniteCubeText"
-            app:layout_constraintEnd_toEndOf="@id/infiniteCubeText"
-            android:layout_width="0dp" android:layout_height="0dp"
-            app:layout_constraintDimensionRatio="w,1:1"
-            app:layout_constraintBottom_toTopOf="@id/infiniteCubeText"
-            android:layout_marginBottom="8dp"/>
 
-    <TextView
-            android:text="@string/infinite_cube_scene_bottom_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/infiniteCubeText"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-
-    <ImageView
-            app:srcCompat="@drawable/ray_marching_thumbnail"
-            android:id="@+id/infiniteSphereThumbnail"
-            android:contentDescription="@string/ray_marching_thumbnail_description"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:adjustViewBounds="true"
-            app:layout_constraintTop_toBottomOf="@id/infiniteCubeText"
-            app:layout_constraintStart_toStartOf="@id/infiniteCubeText"
-            app:layout_constraintEnd_toEndOf="@id/infiniteCubeText"
-            app:layout_constraintDimensionRatio="w,1:1"
-            android:layout_marginTop="32dp"/>
-
-    <TextView
-            android:text="@string/ray_marching_scene_bottom_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/infiniteSphereText"
-            app:layout_constraintTop_toBottomOf="@id/infiniteSphereThumbnail"
-            app:layout_constraintStart_toStartOf="@id/infiniteSphereThumbnail"
-            app:layout_constraintEnd_toEndOf="@+id/infiniteSphereThumbnail"/>
-</androidx.constraintlayout.widget.ConstraintLayout>
+<androidx.recyclerview.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/programRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />

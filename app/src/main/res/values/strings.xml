@@ -5,4 +5,7 @@
     <string name="infinite_cube_scene_bottom_text">Infinite Cube Scene</string>
     <string name="ray_marching_scene_bottom_text">Ray Marching Scene</string>
     <string name="no_rotation_sensor">No rotation sensor found on device</string>
+    <string name="mandelbrot_scene_bottom_text">Mandelbrot Scene</string>
+    <string name="mandelbrot_thumbnail_description">Screen shot of Mandelbrot scene</string>
+    <string name="program_list_item">Program list item</string>
 </resources>

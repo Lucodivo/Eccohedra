@@ -26,8 +26,6 @@ import glm_.vec3.Vec3
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
-import kotlin.math.cos
-import kotlin.math.sin
 
 
 class RayMarchingScene(context: Context) : Scene(context), SensorEventListener {
@@ -63,7 +61,7 @@ class RayMarchingScene(context: Context) : Scene(context), SensorEventListener {
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         initializeRotationMat()
 
-        rayMarchingProgram = Program(context, R.raw.ray_marching_vertex_shader, R.raw.ray_marching_fragment_shader)
+        rayMarchingProgram = Program(context, R.raw.uv_coord_vertex_shader, R.raw.ray_marching_fragment_shader)
 
         // setup vertex attributes for quad
         val quadVAOBuffer = IntBuffer.allocate(1)
@@ -81,7 +79,7 @@ class RayMarchingScene(context: Context) : Scene(context), SensorEventListener {
         rayMarchingProgram.setUniform("viewPortResolution", Vec2(viewportWidth, viewportHeight))
         rayMarchingProgram.setUniform("lightColor", Vec3(0.5, 0.5, 0.5))
         rayMarchingProgram.setUniform("lightPos", Vec3(0.0f, 0.0f, 0.0f))
-        camera.position = Vec3(0.0f, 1.0f, 0.0f);
+        camera.position = Vec3(0.0f, 1.0f, 0.0f)
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {

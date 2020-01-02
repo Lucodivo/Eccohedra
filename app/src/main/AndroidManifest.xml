@@ -21,6 +21,9 @@
         <activity android:name=".activities.RayMarchingActivity"
                   android:theme="@style/AppTheme.NoActionBar"
                   android:configChanges="orientation|screenSize"/>
+        <activity android:name=".activities.MandelbrotActivity"
+                android:theme="@style/AppTheme.NoActionBar"
+                android:configChanges="orientation|screenSize"/>
         <activity
                 android:name=".activities.HomeActivity"
                 android:configChanges="orientation|keyboardHidden|screenSize"

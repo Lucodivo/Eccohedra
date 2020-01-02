@@ -14,8 +14,6 @@ class InfiniteCubeActivity : AppCompatActivity() {
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Create a GLSurfaceView instance and set it
-        // as the ContentView for this Activity.
         scene = SceneSurfaceView(this, InfiniteCubeScene(this))
         setContentView(scene)
     }
@@ -34,9 +32,6 @@ class InfiniteCubeActivity : AppCompatActivity() {
     }
 
     private fun hideSystemUI() {
-        // Enables regular immersive mode.
-        // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
-        // Or for "sticky immersive," replace it with SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         window.decorView.systemUiVisibility = (
                 View.SYSTEM_UI_FLAG_IMMERSIVE
                 or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
