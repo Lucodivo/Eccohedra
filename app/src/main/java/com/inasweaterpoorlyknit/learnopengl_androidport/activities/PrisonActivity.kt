@@ -4,17 +4,17 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.RayMarchingScene
+import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.PrisonScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.SceneSurfaceView
 
-class RayMarchingActivity : AppCompatActivity() {
+class PrisonActivity : AppCompatActivity() {
 
     private lateinit var scene: SceneSurfaceView
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        scene = SceneSurfaceView(this, RayMarchingScene(this))
+        scene = SceneSurfaceView(this, PrisonScene(this))
         setContentView(scene)
     }
 
@@ -34,11 +34,11 @@ class RayMarchingActivity : AppCompatActivity() {
     private fun hideSystemUI() {
         window.decorView.systemUiVisibility = (
                 View.SYSTEM_UI_FLAG_IMMERSIVE
-                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                // Hide the nav bar and status bar
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN)
+                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        // Hide the nav bar and status bar
+                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_FULLSCREEN)
     }
 }

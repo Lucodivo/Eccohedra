@@ -17,13 +17,20 @@
 
         <activity android:name=".activities.InfiniteCubeActivity"
                   android:theme="@style/AppTheme.NoActionBar"
-                  android:configChanges="orientation|screenSize"/>
-        <activity android:name=".activities.RayMarchingActivity"
+                  android:configChanges="orientation|screenSize"
+                android:exported="true"/>
+        <activity android:name=".activities.InfiniteCapsulesActivity"
                   android:theme="@style/AppTheme.NoActionBar"
-                  android:configChanges="orientation|screenSize"/>
+                  android:configChanges="orientation|screenSize"
+                android:exported="true"/>
         <activity android:name=".activities.MandelbrotActivity"
                 android:theme="@style/AppTheme.NoActionBar"
-                android:configChanges="orientation|screenSize"/>
+                android:configChanges="orientation|screenSize"
+                android:exported="true"/>
+        <activity android:name=".activities.PrisonActivity"
+                android:theme="@style/AppTheme.NoActionBar"
+                android:configChanges="orientation|screenSize"
+                android:exported="true"/>
         <activity
                 android:name=".activities.HomeActivity"
                 android:configChanges="orientation|keyboardHidden|screenSize"

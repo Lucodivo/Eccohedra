@@ -10,7 +10,6 @@ import android.opengl.GLES20.*
 import android.opengl.GLES20.GL_UNSIGNED_INT
 import android.opengl.GLES20.glClear
 import android.opengl.GLES30.glBindVertexArray
-import android.view.MotionEvent
 import android.widget.Toast
 import com.inasweaterpoorlyknit.learnopengl_androidport.Camera
 import com.inasweaterpoorlyknit.learnopengl_androidport.Program
@@ -19,7 +18,6 @@ import com.inasweaterpoorlyknit.learnopengl_androidport.initializeFrameBufferQua
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.MAT_4x4_SIZE
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.glClearColor
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.systemTimeInDeciseconds
-import com.inasweaterpoorlyknit.learnopengl_androidport.utils.systemTimeInSeconds
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec3.Vec3
@@ -28,10 +26,10 @@ import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
 
-class RayMarchingScene(context: Context) : Scene(context), SensorEventListener {
+class PrisonScene(context: Context) : Scene(context), SensorEventListener {
 
     private val camera = Camera()
-    private lateinit var rayMarchingProgram: Program
+    private lateinit var prisonProgram: Program
     private var quadVAO: Int = -1
 
     private var elapsedTime : Double = 0.0
@@ -42,26 +40,12 @@ class RayMarchingScene(context: Context) : Scene(context), SensorEventListener {
     private val sensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
     private val rotationSensorMatrix: FloatArray = FloatArray(MAT_4x4_SIZE)
 
-    private val touchScaleFactor: Float = 180.0f / 320f
-    private var previousX: Float = 0.0f
-    private var previousY: Float = 0.0f
-    private var actionDownTime: Double = 0.0
-
-    private var lightAlive = false
-    private var lightPosition = Vec3(0.0f, 0.0f, 0.0f)
-    private var lightMoveDir = Vec3(0.0f, 0.0f, 0.0f)
-    private var lightDistanceTraveled = 0.0f
-
-    private val cameraSpeedNormal = 0.5f
-    private val cameraSpeedFast = 2.0f
-    private var cameraSpeed = cameraSpeedNormal
-
-    private val actionTimeFrame = 0.1f
+    private var cameraSpeed = 0.5f
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         initializeRotationMat()
 
-        rayMarchingProgram = Program(context, R.raw.uv_coord_vertex_shader, R.raw.ray_marching_fragment_shader)
+        prisonProgram = Program(context, R.raw.uv_coord_vertex_shader, R.raw.prison_fragment_shader)
 
         // setup vertex attributes for quad
         val quadVAOBuffer = IntBuffer.allocate(1)
@@ -74,19 +58,17 @@ class RayMarchingScene(context: Context) : Scene(context), SensorEventListener {
         glClearColor(Vec3(1.0f, 0.0f, 0.0f))
         camera.movementSpeed *= 4.0f
 
-        rayMarchingProgram.use()
+        prisonProgram.use()
         glBindVertexArray(quadVAO)
-        rayMarchingProgram.setUniform("viewPortResolution", Vec2(viewportWidth, viewportHeight))
-        rayMarchingProgram.setUniform("lightColor", Vec3(0.5, 0.5, 0.5))
-        rayMarchingProgram.setUniform("lightPos", Vec3(0.0f, 0.0f, 0.0f))
-        camera.position = Vec3(0.0f, 1.0f, 0.0f)
+        prisonProgram.setUniform("viewPortResolution", Vec2(viewportWidth, viewportHeight))
+        camera.position = Vec3(0.0f, 0.0f, 0.0f)
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
         super.onSurfaceChanged(gl, width, height)
 
-        rayMarchingProgram.use()
-        rayMarchingProgram.setUniform("viewPortResolution", Vec2(width, height))
+        prisonProgram.use()
+        prisonProgram.setUniform("viewPortResolution", Vec2(width, height))
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -98,16 +80,8 @@ class RayMarchingScene(context: Context) : Scene(context), SensorEventListener {
 
         val rotationMat = camera.getRotationMatrix(deltaTime.toFloat())
         camera.position.plusAssign(camera.front * deltaTime * cameraSpeed)
-        rayMarchingProgram.setUniform("rayOrigin", camera.position)
-        rayMarchingProgram.setUniform("elapsedTime", elapsedTime.toFloat())
-        rayMarchingProgram.setUniform("viewRotationMat", rotationMat)
-        if(lightAlive) {
-            rayMarchingProgram.setUniform("lightPos", lightPosition)
-            val lightDelta: Vec3 = lightMoveDir * deltaTime * 2.0f
-            lightPosition = lightPosition + lightDelta
-            lightDistanceTraveled += lightDelta.length()
-            if(lightDistanceTraveled > 100.0) lightAlive = false
-        }
+        prisonProgram.setUniform("rayOrigin", camera.position)
+        prisonProgram.setUniform("viewRotationMat", rotationMat)
         glDrawElements(GL_TRIANGLES, // drawing mode
             6, // number of elements to draw (3 vertices per triangle * 2 triangles per quad)
             GL_UNSIGNED_INT, // type of the indices
@@ -138,57 +112,6 @@ class RayMarchingScene(context: Context) : Scene(context), SensorEventListener {
 
     private fun deviceRotation(mat4: Mat4) {
         camera.processRotationSensor(Mat4(mat4))
-    }
-
-    private fun pan(vec2: Vec2) {
-        //camera.processPanFly(vec2)
-    }
-
-    fun action() {
-        lightAlive = true;
-        lightDistanceTraveled = 0.0f
-        lightMoveDir = camera.front
-        lightPosition = camera.position + lightMoveDir
-    }
-
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-
-        val x: Float = event.x
-        val y: Float = event.y
-
-        when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                previousX = x
-                previousY = y
-                actionDownTime = systemTimeInSeconds()
-                return true
-            }
-            MotionEvent.ACTION_MOVE -> {
-                if(systemTimeInSeconds() - actionDownTime > actionTimeFrame) {
-                    cameraSpeed = cameraSpeedFast
-                }
-
-                val dx: Float = x - previousX
-                val dy: Float = y - previousY
-
-                pan(Vec2(dx, dy) * touchScaleFactor)
-
-                previousX = x
-                previousY = y
-                return true
-            }
-            MotionEvent.ACTION_UP -> {
-                if((systemTimeInSeconds() - actionDownTime) <= actionTimeFrame) {
-                    action()
-                } else {
-                    cameraSpeed = cameraSpeedNormal
-                }
-                return true
-            }
-            else -> {
-                return super.onTouchEvent(event)
-            }
-        }
     }
 
     override fun onSensorChanged(event: SensorEvent) {

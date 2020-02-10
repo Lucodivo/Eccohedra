@@ -14,8 +14,9 @@ class HomeActivity : AppCompatActivity() {
         setContentView(R.layout.activity_home)
 
         val programListItemsData = arrayOf(ProgramListItemData(R.drawable.infinite_cube_thumbnail, R.string.infinite_cube_scene_bottom_text),
-                                    ProgramListItemData(R.drawable.ray_marching_thumbnail, R.string.ray_marching_scene_bottom_text),
-                                    ProgramListItemData(R.drawable.mandelbrot_thumbnail, R.string.mandelbrot_scene_bottom_text))
+                                    ProgramListItemData(R.drawable.infinite_capsules_thumbnail, R.string.infinite_capsules_scene_bottom_text),
+                                    ProgramListItemData(R.drawable.mandelbrot_thumbnail, R.string.mandelbrot_scene_bottom_text),
+                                    ProgramListItemData(R.drawable.prison_thumbnail, R.string.prison_scene_bottom_text))
         programRecyclerView.adapter = ProgramListItemAdapter(programListItemsData, ::onClick)
         programRecyclerView.layoutManager = LinearLayoutManager(this)
     }
@@ -23,8 +24,9 @@ class HomeActivity : AppCompatActivity() {
     private fun onClick(imageResourceId: Int) {
         when(imageResourceId) {
             R.drawable.infinite_cube_thumbnail -> startActivity(Intent(this, InfiniteCubeActivity::class.java))
-            R.drawable.ray_marching_thumbnail -> startActivity(Intent(this, RayMarchingActivity::class.java))
+            R.drawable.infinite_capsules_thumbnail -> startActivity(Intent(this, InfiniteCapsulesActivity::class.java))
             R.drawable.mandelbrot_thumbnail -> startActivity(Intent(this, MandelbrotActivity::class.java))
+            R.drawable.prison_thumbnail -> startActivity(Intent(this, PrisonActivity::class.java))
             else -> { /* DO NOTHING */}
         }
     }

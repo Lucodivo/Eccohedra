@@ -18,7 +18,7 @@
             android:layout_weight="1"
             android:adjustViewBounds="true"
             android:contentDescription="@string/program_list_item"
-            tools:src="@drawable/ray_marching_thumbnail" />
+            tools:src="@drawable/infinite_capsules_thumbnail" />
 
     <TextView
             android:id="@+id/program_title_text"
