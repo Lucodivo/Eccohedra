@@ -4,7 +4,7 @@
     <string name="ray_marching_thumbnail_description">Screen shot of ray marching scene</string>
     <string name="infinite_cube_scene_bottom_text">Infinite Cube Scene</string>
     <string name="infinite_capsules_scene_bottom_text">Infinite Capsules Scene</string>
-    <string name="prison_scene_bottom_text">Prison Scene</string>
+    <string name="menger_prison_scene_bottom_text">Menger Prison Scene</string>
     <string name="no_rotation_sensor">No rotation sensor found on device</string>
     <string name="mandelbrot_scene_bottom_text">Mandelbrot Scene</string>
     <string name="mandelbrot_thumbnail_description">Screen shot of Mandelbrot scene</string>

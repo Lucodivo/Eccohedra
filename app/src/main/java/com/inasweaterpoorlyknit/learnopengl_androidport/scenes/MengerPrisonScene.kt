@@ -10,6 +10,7 @@ import android.opengl.GLES20.*
 import android.opengl.GLES20.GL_UNSIGNED_INT
 import android.opengl.GLES20.glClear
 import android.opengl.GLES30.glBindVertexArray
+import android.view.MotionEvent
 import android.widget.Toast
 import com.inasweaterpoorlyknit.learnopengl_androidport.Camera
 import com.inasweaterpoorlyknit.learnopengl_androidport.Program
@@ -18,6 +19,7 @@ import com.inasweaterpoorlyknit.learnopengl_androidport.initializeFrameBufferQua
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.MAT_4x4_SIZE
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.glClearColor
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.systemTimeInDeciseconds
+import com.inasweaterpoorlyknit.learnopengl_androidport.utils.systemTimeInSeconds
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec3.Vec3
@@ -25,16 +27,21 @@ import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
+private const val actionTimeFrame = 0.25f
+private const val maxIterations = 5
 
-class PrisonScene(context: Context) : Scene(context), SensorEventListener {
+class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener {
 
     private val camera = Camera()
-    private lateinit var prisonProgram: Program
+    private lateinit var mengerPrisonProgram: Program
     private var quadVAO: Int = -1
 
     private var elapsedTime : Double = 0.0
     private var lastFrameTime: Double = -1.0
     private var firstFrameTime: Double = -1.0
+
+    private var actionDownTime: Double = 0.0
+    private var currentIterations: Int = 0
 
     private val sensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private val sensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
@@ -45,7 +52,7 @@ class PrisonScene(context: Context) : Scene(context), SensorEventListener {
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         initializeRotationMat()
 
-        prisonProgram = Program(context, R.raw.uv_coord_vertex_shader, R.raw.prison_fragment_shader)
+        mengerPrisonProgram = Program(context, R.raw.uv_coord_vertex_shader, R.raw.menger_prison_fragment_shader)
 
         // setup vertex attributes for quad
         val quadVAOBuffer = IntBuffer.allocate(1)
@@ -58,17 +65,18 @@ class PrisonScene(context: Context) : Scene(context), SensorEventListener {
         glClearColor(Vec3(1.0f, 0.0f, 0.0f))
         camera.movementSpeed *= 4.0f
 
-        prisonProgram.use()
+        mengerPrisonProgram.use()
         glBindVertexArray(quadVAO)
-        prisonProgram.setUniform("viewPortResolution", Vec2(viewportWidth, viewportHeight))
+        mengerPrisonProgram.setUniform("viewPortResolution", Vec2(viewportWidth, viewportHeight))
+        mengerPrisonProgram.setUniform("iterations", currentIterations)
         camera.position = Vec3(0.0f, 0.0f, 0.0f)
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
         super.onSurfaceChanged(gl, width, height)
 
-        prisonProgram.use()
-        prisonProgram.setUniform("viewPortResolution", Vec2(width, height))
+        mengerPrisonProgram.use()
+        mengerPrisonProgram.setUniform("viewPortResolution", Vec2(width, height))
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -80,8 +88,9 @@ class PrisonScene(context: Context) : Scene(context), SensorEventListener {
 
         val rotationMat = camera.getRotationMatrix(deltaTime.toFloat())
         camera.position.plusAssign(camera.front * deltaTime * cameraSpeed)
-        prisonProgram.setUniform("rayOrigin", camera.position)
-        prisonProgram.setUniform("viewRotationMat", rotationMat)
+        mengerPrisonProgram.setUniform("rayOrigin", camera.position)
+        mengerPrisonProgram.setUniform("viewRotationMat", rotationMat)
+        mengerPrisonProgram.setUniform("iterations", currentIterations)
         glDrawElements(GL_TRIANGLES, // drawing mode
             6, // number of elements to draw (3 vertices per triangle * 2 triangles per quad)
             GL_UNSIGNED_INT, // type of the indices
@@ -100,6 +109,32 @@ class PrisonScene(context: Context) : Scene(context), SensorEventListener {
     override fun onDetach() {
         // Turn our sensor off on detached
         sensorManager.unregisterListener(this)
+    }
+
+    private fun action() {
+        if(currentIterations == maxIterations) {
+            currentIterations = 0
+        } else {
+            currentIterations++
+        }
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        return when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                actionDownTime = systemTimeInSeconds()
+                true
+            }
+            MotionEvent.ACTION_UP -> {
+                if((systemTimeInSeconds() - actionDownTime) <= actionTimeFrame) {
+                    action()
+                }
+                true
+            }
+            else -> {
+                super.onTouchEvent(event)
+            }
+        }
     }
 
     private fun initializeRotationMat() {

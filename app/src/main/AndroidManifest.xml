@@ -27,7 +27,7 @@
                 android:theme="@style/AppTheme.NoActionBar"
                 android:configChanges="orientation|screenSize"
                 android:exported="true"/>
-        <activity android:name=".activities.PrisonActivity"
+        <activity android:name=".activities.MengerPrisonActivity"
                 android:theme="@style/AppTheme.NoActionBar"
                 android:configChanges="orientation|screenSize"
                 android:exported="true"/>

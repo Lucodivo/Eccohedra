@@ -4,17 +4,17 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.PrisonScene
+import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.MengerPrisonScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.SceneSurfaceView
 
-class PrisonActivity : AppCompatActivity() {
+class MengerPrisonActivity : AppCompatActivity() {
 
     private lateinit var scene: SceneSurfaceView
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        scene = SceneSurfaceView(this, PrisonScene(this))
+        scene = SceneSurfaceView(this, MengerPrisonScene(this))
         setContentView(scene)
     }
 

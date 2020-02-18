@@ -13,11 +13,12 @@ float distPosToScene(vec3 pos);
 vec2 distanceRayToScene(vec3 rayOrigin, vec3 rayDir);
 float sdCross(vec3 rayPos, vec3 dimen);
 float sdRect(vec2 rayPos, vec2 dimen);
-float distPrison(vec3 rayPos);
+float sdMengerPrison(vec3 rayPos);
 
 uniform vec2 viewPortResolution;
 uniform vec3 rayOrigin;
 uniform mat4 viewRotationMat;
+uniform int iterations;
 
 const float boxDimen = 20.0;
 const float halfBoxDimen = boxDimen / 2.0;
@@ -60,18 +61,30 @@ vec2 distanceRayToScene(vec3 rayOrigin, vec3 rayDir) {
 
     return vec2(-1.0f, MAX_STEPS);
 }
+
 float distPosToScene(vec3 rayPos) {
-    return distPrison(rayPos);
+    return sdMengerPrison(rayPos);
 }
 
-float distPrison(vec3 rayPos) {
-    float dist;
+float sdMengerPrison(vec3 rayPos) {
+    vec3 prisonRay = mod(rayPos, boxDimen * 2.0);
+    prisonRay -= boxDimen;
+    float mengerPrisonDist = sdCross(prisonRay, vec3(halfBoxDimen));
+    if(mengerPrisonDist > HIT_DIST) return mengerPrisonDist; // use dist of biggest crosses as bounding volume
 
-    vec3 ray = mod(rayPos, boxDimen);
-    ray -= halfBoxDimen;
-    ray *= 3.0;
+    float scale = 1.0;
+    for(int i = 0; i < iterations; ++i) {
+        float boxedWorldDimen = boxDimen / scale;
+        vec3 ray = mod(rayPos + boxedWorldDimen / 2.0, boxedWorldDimen);
+        ray -= boxedWorldDimen / 2.0;
+        ray *= scale;
+        float crossesDist = sdCross(ray * 3.0, vec3(halfBoxDimen));
+        scale *= 3.0;
+        crossesDist /= scale;
+        mengerPrisonDist = max(mengerPrisonDist, -crossesDist);
+    }
 
-    return sdCross(ray, vec3(halfBoxDimen)) / 3.0;
+    return mengerPrisonDist;
 }
 
 float sdRect(vec2 rayPos, vec2 dimen) {

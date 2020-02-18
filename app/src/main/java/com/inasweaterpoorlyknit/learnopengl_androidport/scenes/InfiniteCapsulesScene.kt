@@ -61,7 +61,7 @@ class InfiniteCapsulesScene(context: Context) : Scene(context), SensorEventListe
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         initializeRotationMat()
 
-        rayMarchingProgram = Program(context, R.raw.uv_coord_vertex_shader, R.raw.ray_marching_fragment_shader)
+        rayMarchingProgram = Program(context, R.raw.uv_coord_vertex_shader, R.raw.infinite_capsules_fragment_shader)
 
         // setup vertex attributes for quad
         val quadVAOBuffer = IntBuffer.allocate(1)

@@ -17,8 +17,8 @@ import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-const val zoomScaleSpeed = 0.25f
-const val actionTimeFrame = 0.15f
+private const val zoomScaleSpeed = 0.25f
+private const val actionTimeFrame = 0.15f
 
 class MandelbrotScene(context: Context) : Scene(context) {
 
