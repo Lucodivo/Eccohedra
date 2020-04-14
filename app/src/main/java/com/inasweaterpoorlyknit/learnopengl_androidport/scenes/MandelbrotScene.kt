@@ -49,7 +49,7 @@ class MandelbrotScene(context: Context) : Scene(context) {
 
         mandelbrotProgram.use()
         glBindVertexArray(quadVAO)
-        mandelbrotProgram.setUniform("viewPortResolution", Vec2(viewportWidth, viewportHeight))
+        mandelbrotProgram.setUniform("viewPortResolution", Vec2(windowWidth, windowHeight))
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {

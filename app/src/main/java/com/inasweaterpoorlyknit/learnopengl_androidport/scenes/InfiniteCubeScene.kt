@@ -192,8 +192,8 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
         super.onSurfaceChanged(gl, width, height)
         frameBuffers = arrayOf(FrameBuffer(), FrameBuffer())
 
-        initializeFrameBuffer(frameBuffers[0], viewportWidth, viewportHeight)
-        initializeFrameBuffer(frameBuffers[1], viewportWidth, viewportHeight)
+        initializeFrameBuffer(frameBuffers[0], windowWidth, windowHeight)
+        initializeFrameBuffer(frameBuffers[1], windowWidth, windowHeight)
 
         // start frame buffer with single color
         glClearColor(0.5f, 1.0f, 0.5f, 1.0f)
@@ -210,11 +210,11 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
         glBindTexture(GL_TEXTURE_2D, frameBuffers[1].textureBufferIndex[0])
         glActiveTexture(GL_TEXTURE0)
 
-        projectionMat = glm.perspective(glm.radians(ZOOM), viewportWidth.toFloat()/viewportHeight, 0.1f, 100.0f)
+        projectionMat = glm.perspective(glm.radians(ZOOM), windowWidth.toFloat()/windowHeight, 0.1f, 100.0f)
 
         cubeProgram.use()
-        cubeProgram.setUniform("texWidth", viewportWidth.toFloat())
-        cubeProgram.setUniform("texHeight", viewportHeight.toFloat())
+        cubeProgram.setUniform("texWidth", windowWidth.toFloat())
+        cubeProgram.setUniform("texHeight", windowHeight.toFloat())
         cubeProgram.setUniform("projection", projectionMat)
 
         cubeOutlineProgram.use()

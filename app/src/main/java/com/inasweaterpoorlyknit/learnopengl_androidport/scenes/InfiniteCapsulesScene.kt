@@ -76,7 +76,7 @@ class InfiniteCapsulesScene(context: Context) : Scene(context), SensorEventListe
 
         rayMarchingProgram.use()
         glBindVertexArray(quadVAO)
-        rayMarchingProgram.setUniform("viewPortResolution", Vec2(viewportWidth, viewportHeight))
+        rayMarchingProgram.setUniform("viewPortResolution", Vec2(windowWidth, windowHeight))
         rayMarchingProgram.setUniform("lightColor", Vec3(0.5, 0.5, 0.5))
         rayMarchingProgram.setUniform("lightPos", Vec3(0.0f, 0.0f, 0.0f))
         camera.position = Vec3(0.0f, 1.0f, 0.0f)

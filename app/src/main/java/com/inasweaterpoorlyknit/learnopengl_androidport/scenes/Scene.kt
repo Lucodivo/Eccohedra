@@ -14,16 +14,16 @@ interface ExternalInputListener {
 }
 
 abstract class Scene(protected val context: Context) : GLSurfaceView.Renderer, ExternalInputListener {
-    protected var viewportHeight: Int = -1
-    protected var viewportWidth: Int = -1
+    protected var windowHeight: Int = -1
+    protected var windowWidth: Int = -1
 
     protected var orientation: Int = context.resources.configuration.orientation
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
-        viewportWidth = width
-        viewportHeight = height
+        windowWidth = width
+        windowHeight = height
 
-        GLES20.glViewport(0, 0, viewportWidth, viewportHeight)
+        GLES20.glViewport(0, 0, windowWidth, windowHeight)
     }
 
     override fun onOrientationChange(orientation: Int) {

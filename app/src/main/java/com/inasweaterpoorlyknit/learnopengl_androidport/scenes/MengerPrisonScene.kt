@@ -6,10 +6,12 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.opengl.GLES20.*
+import android.opengl.GLES20
 import android.opengl.GLES20.GL_UNSIGNED_INT
 import android.opengl.GLES20.glClear
-import android.opengl.GLES30.glBindVertexArray
+import android.opengl.GLES30.*
+import android.util.Log
+import android.util.Log.DEBUG
 import android.view.MotionEvent
 import android.widget.Toast
 import com.inasweaterpoorlyknit.learnopengl_androidport.Camera
@@ -32,6 +34,23 @@ private const val maxIterations = 5
 
 class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener {
 
+    data class Resolution (
+        val width: Int,
+        val height: Int
+    )
+
+    private val landscape get() = windowWidth > windowHeight
+
+    private val landscapeResolutions = arrayOf(
+        Resolution(120, 68),
+        Resolution(240, 135),
+        Resolution(480, 270),
+        Resolution(960, 540),
+        Resolution(1920, 1080)
+    )
+
+    private val TAG = MengerPrisonScene::class.java.canonicalName
+
     private val camera = Camera()
     private lateinit var mengerPrisonProgram: Program
     private var quadVAO: Int = -1
@@ -41,7 +60,6 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener 
     private var firstFrameTime: Double = -1.0
 
     private var actionDownTime: Double = 0.0
-    private var currentIterations: Int = 0
 
     private val sensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private val sensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
@@ -49,7 +67,17 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener 
 
     private var cameraSpeed = 0.5f
 
+    private var currentResolutionIndex = 0
+    private var prevFrameResolutionIndex: Int = currentResolutionIndex // informs us of a resolution change within onDrawFrame()
+    private val resolutionWidth get() = if(landscape) landscapeResolutions[currentResolutionIndex].width else landscapeResolutions[currentResolutionIndex].height
+    private val resolutionHeight get() = if(landscape) landscapeResolutions[currentResolutionIndex].height else landscapeResolutions[currentResolutionIndex].width
+
+    private var frameBuffer = IntArray(1)
+    private var rbo = IntArray(1)
+    private var frameBufferTexture = IntArray(1)
+
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
+
         initializeRotationMat()
 
         mengerPrisonProgram = Program(context, R.raw.uv_coord_vertex_shader, R.raw.menger_prison_fragment_shader)
@@ -67,34 +95,53 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener 
 
         mengerPrisonProgram.use()
         glBindVertexArray(quadVAO)
-        mengerPrisonProgram.setUniform("viewPortResolution", Vec2(viewportWidth, viewportHeight))
-        mengerPrisonProgram.setUniform("iterations", currentIterations)
+        mengerPrisonProgram.setUniform("viewPortResolution", Vec2(resolutionWidth, resolutionHeight))
+        mengerPrisonProgram.setUniform("iterations", maxIterations)
         camera.position = Vec3(0.0f, 0.0f, 0.0f)
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
         super.onSurfaceChanged(gl, width, height)
+        initializeFrameBuffer(resolutionWidth, resolutionHeight)
 
         mengerPrisonProgram.use()
-        mengerPrisonProgram.setUniform("viewPortResolution", Vec2(width, height))
+        mengerPrisonProgram.setUniform("viewPortResolution", Vec2(resolutionWidth, resolutionHeight))
     }
 
     override fun onDrawFrame(gl: GL10?) {
+        // NOTE: OpenGL calls must be called within specified call back functions
+        // Calling OpenGL functions in other functions will surely result in bugs
+
         elapsedTime = systemTimeInDeciseconds() - firstFrameTime
         val deltaTime = elapsedTime - lastFrameTime
         lastFrameTime = elapsedTime
+
+        if(prevFrameResolutionIndex != currentResolutionIndex) {
+            initializeFrameBuffer(resolutionWidth, resolutionHeight)
+            prevFrameResolutionIndex = currentResolutionIndex
+            mengerPrisonProgram.setUniform("viewPortResolution", Vec2(resolutionWidth, resolutionHeight))
+        }
+
+        glViewport(0, 0, resolutionWidth, resolutionHeight)
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer[0])
 
         glClear(GL_COLOR_BUFFER_BIT)
 
         val rotationMat = camera.getRotationMatrix(deltaTime.toFloat())
         camera.position.plusAssign(camera.front * deltaTime * cameraSpeed)
+        mengerPrisonProgram.use()
         mengerPrisonProgram.setUniform("rayOrigin", camera.position)
         mengerPrisonProgram.setUniform("viewRotationMat", rotationMat)
-        mengerPrisonProgram.setUniform("iterations", currentIterations)
         glDrawElements(GL_TRIANGLES, // drawing mode
             6, // number of elements to draw (3 vertices per triangle * 2 triangles per quad)
             GL_UNSIGNED_INT, // type of the indices
             0) // offset in the EBO
+
+        glViewport(0, 0, windowWidth, windowHeight)
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, frameBuffer[0])
+        glBlitFramebuffer(0, 0, resolutionWidth, resolutionHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST)
     }
 
     override fun onAttach() {
@@ -112,10 +159,8 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener 
     }
 
     private fun action() {
-        if(currentIterations == maxIterations) {
-            currentIterations = 0
-        } else {
-            currentIterations++
+        if(++currentResolutionIndex >= landscapeResolutions.size) {
+            currentResolutionIndex = 0
         }
     }
 
@@ -143,6 +188,49 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener 
         rotationSensorMatrix[4] = 1.0f
         rotationSensorMatrix[8] = 1.0f
         rotationSensorMatrix[12] = 1.0f
+    }
+
+    private fun initializeFrameBuffer(width: Int, height: Int) {
+
+        glDeleteFramebuffers(1, frameBuffer, 0)
+        glDeleteRenderbuffers(1, rbo, 0)
+        glDeleteTextures(1, frameBufferTexture, 0)
+
+        // creating frame buffer
+        glGenFramebuffers(1, frameBuffer, 0)
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer[0])
+
+        // creating frame buffer texture
+        glGenTextures(1, frameBufferTexture, 0)
+        glBindTexture(GL_TEXTURE_2D, frameBufferTexture[0])
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, null)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glBindTexture(GL_TEXTURE_2D, 0) // unbind
+
+        // attach texture w/ color to frame buffer
+        glFramebufferTexture2D(GL_FRAMEBUFFER, // frame buffer we're targeting (draw, read, or both)
+            GL_COLOR_ATTACHMENT0, // type of attachment
+            GL_TEXTURE_2D, // type of texture
+            frameBufferTexture[0], // texture
+            0) // mipmap level
+
+        // creating render buffer to be depth/stencil buffer
+        glGenRenderbuffers(1, rbo, 0)
+        glBindRenderbuffer(GL_RENDERBUFFER, rbo[0])
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height)
+        glBindRenderbuffer(GL_RENDERBUFFER, 0) // unbind
+        // attach render buffer w/ depth & stencil to frame buffer
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, // frame buffer target
+            GL_DEPTH_STENCIL_ATTACHMENT, // attachment point of frame buffer
+            GL_RENDERBUFFER, // render buffer target
+            rbo[0])  // render buffer
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            Log.println(DEBUG, TAG,"ERROR::FRAMEBUFFER:: Framebuffer is not complete!")
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
     }
 
     private fun deviceRotation(mat4: Mat4) {
