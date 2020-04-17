@@ -6,7 +6,6 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.opengl.GLES20
 import android.opengl.GLES20.GL_UNSIGNED_INT
 import android.opengl.GLES20.glClear
 import android.opengl.GLES30.*
@@ -41,13 +40,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener 
 
     private val landscape get() = windowWidth > windowHeight
 
-    private val landscapeResolutions = arrayOf(
-        Resolution(120, 68),
-        Resolution(240, 135),
-        Resolution(480, 270),
-        Resolution(960, 540),
-        Resolution(1920, 1080)
-    )
+    private lateinit var landscapeResolutions: Array<Resolution>
 
     private val TAG = MengerPrisonScene::class.java.canonicalName
 
@@ -69,8 +62,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener 
 
     private var currentResolutionIndex = 0
     private var prevFrameResolutionIndex: Int = currentResolutionIndex // informs us of a resolution change within onDrawFrame()
-    private val resolutionWidth get() = if(landscape) landscapeResolutions[currentResolutionIndex].width else landscapeResolutions[currentResolutionIndex].height
-    private val resolutionHeight get() = if(landscape) landscapeResolutions[currentResolutionIndex].height else landscapeResolutions[currentResolutionIndex].width
+    private val resolution get() = landscapeResolutions[currentResolutionIndex]
 
     private var frameBuffer = IntArray(1)
     private var rbo = IntArray(1)
@@ -95,17 +87,27 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener 
 
         mengerPrisonProgram.use()
         glBindVertexArray(quadVAO)
-        mengerPrisonProgram.setUniform("viewPortResolution", Vec2(resolutionWidth, resolutionHeight))
         mengerPrisonProgram.setUniform("iterations", maxIterations)
         camera.position = Vec3(0.0f, 0.0f, 0.0f)
     }
 
+    private fun initResolutions(width: Int, height: Int) {
+        landscapeResolutions = arrayOf(
+            Resolution(width / 32, height / 32),
+            Resolution(width / 16, height / 16),
+            Resolution(width / 8, height / 8),
+            Resolution(width / 4, height / 4),
+            Resolution(width / 2, height / 2)
+        )
+    }
+
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
         super.onSurfaceChanged(gl, width, height)
-        initializeFrameBuffer(resolutionWidth, resolutionHeight)
+        initResolutions(width, height)
+        initializeFrameBuffer(resolution.width, resolution.height)
 
         mengerPrisonProgram.use()
-        mengerPrisonProgram.setUniform("viewPortResolution", Vec2(resolutionWidth, resolutionHeight))
+        mengerPrisonProgram.setUniform("viewPortResolution", Vec2(resolution.width, resolution.height))
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -117,12 +119,12 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener 
         lastFrameTime = elapsedTime
 
         if(prevFrameResolutionIndex != currentResolutionIndex) {
-            initializeFrameBuffer(resolutionWidth, resolutionHeight)
+            initializeFrameBuffer(resolution.width, resolution.height)
             prevFrameResolutionIndex = currentResolutionIndex
-            mengerPrisonProgram.setUniform("viewPortResolution", Vec2(resolutionWidth, resolutionHeight))
+            mengerPrisonProgram.setUniform("viewPortResolution", Vec2(resolution.width, resolution.height))
         }
 
-        glViewport(0, 0, resolutionWidth, resolutionHeight)
+        glViewport(0, 0, resolution.width, resolution.height)
         glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer[0])
 
         glClear(GL_COLOR_BUFFER_BIT)
@@ -141,7 +143,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
         glBindFramebuffer(GL_READ_FRAMEBUFFER, frameBuffer[0])
-        glBlitFramebuffer(0, 0, resolutionWidth, resolutionHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST)
+        glBlitFramebuffer(0, 0, resolution.width, resolution.height, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST)
     }
 
     override fun onAttach() {
