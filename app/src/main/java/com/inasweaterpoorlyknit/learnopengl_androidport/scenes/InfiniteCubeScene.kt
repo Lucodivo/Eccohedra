@@ -106,6 +106,8 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
     }
 
     override fun onDrawFrame(unused: GL10) {
+        // NOTE: OpenGL calls must be called within specified call back functions
+        // Calling OpenGL functions in other functions will surely result in bugs
         val t = systemTimeInDeciseconds()
         val deltaDeciseconds = (t - lastFrameTime)
         lastFrameTime = t

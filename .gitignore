@@ -84,3 +84,5 @@ lint/tmp/
 #etc
 *.pro
 .idea/
+
+kotlin-graphics-glm-1.0.1/

@@ -60,6 +60,8 @@ class MandelbrotScene(context: Context) : Scene(context) {
     }
 
     override fun onDrawFrame(gl: GL10?) {
+        // NOTE: OpenGL calls must be called within specified call back functions
+        // Calling OpenGL functions in other functions will surely result in bugs
         glClear(GL_COLOR_BUFFER_BIT)
 
         mandelbrotProgram.setUniform("zoom", zoom)

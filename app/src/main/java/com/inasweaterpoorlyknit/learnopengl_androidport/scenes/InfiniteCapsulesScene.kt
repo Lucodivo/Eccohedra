@@ -90,6 +90,8 @@ class InfiniteCapsulesScene(context: Context) : Scene(context), SensorEventListe
     }
 
     override fun onDrawFrame(gl: GL10?) {
+        // NOTE: OpenGL calls must be called within specified call back functions
+        // Calling OpenGL functions in other functions will surely result in bugs
         elapsedTime = systemTimeInDeciseconds() - firstFrameTime
         val deltaTime = elapsedTime - lastFrameTime
         lastFrameTime = elapsedTime
