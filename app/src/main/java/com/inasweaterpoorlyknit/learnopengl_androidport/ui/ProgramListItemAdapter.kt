@@ -1,4 +1,4 @@
-package com.inasweaterpoorlyknit.learnopengl_androidport.activities
+package com.inasweaterpoorlyknit.learnopengl_androidport.ui
 
 import android.view.LayoutInflater
 import android.view.View

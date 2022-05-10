@@ -1,20 +1,20 @@
-package com.inasweaterpoorlyknit.learnopengl_androidport.activities
+package com.inasweaterpoorlyknit.learnopengl_androidport.ui
 
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.InfiniteCapsulesScene
+import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.MengerPrisonScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.SceneSurfaceView
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.hideSystemUI
 
-class InfiniteCapsulesActivity : AppCompatActivity() {
+class MengerPrisonActivity : AppCompatActivity() {
 
     private lateinit var scene: SceneSurfaceView
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        scene = SceneSurfaceView(this, InfiniteCapsulesScene(this))
+        scene = SceneSurfaceView(this, MengerPrisonScene(this))
         setContentView(scene)
     }
 

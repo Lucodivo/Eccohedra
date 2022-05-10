@@ -1,20 +1,20 @@
-package com.inasweaterpoorlyknit.learnopengl_androidport.activities
+package com.inasweaterpoorlyknit.learnopengl_androidport.ui
 
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.InfiniteCubeScene
+import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.MandelbrotScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.scenes.SceneSurfaceView
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.hideSystemUI
 
-class InfiniteCubeActivity : AppCompatActivity() {
+class MandelbrotActivity : AppCompatActivity() {
 
     private lateinit var scene: SceneSurfaceView
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        scene = SceneSurfaceView(this, InfiniteCubeScene(this))
+        scene = SceneSurfaceView(this, MandelbrotScene(this))
         setContentView(scene)
     }
 
