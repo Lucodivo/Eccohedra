@@ -12,29 +12,29 @@
             android:label="@string/app_name"
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
-            android:theme="@style/AppTheme"
+            android:theme="@style/Theme.LearnOpenGLScenes"
             tools:ignore="AllowBackup,GoogleAppIndexingWarning">
 
         <activity android:name=".ui.InfiniteCubeActivity"
-                  android:theme="@style/AppTheme.NoActionBar"
+                  android:theme="@style/Theme.LearnOpenGLScenes.NoActionBar"
                   android:configChanges="orientation|screenSize"
                 android:exported="true"/>
         <activity android:name=".ui.InfiniteCapsulesActivity"
-                  android:theme="@style/AppTheme.NoActionBar"
+                  android:theme="@style/Theme.LearnOpenGLScenes.NoActionBar"
                   android:configChanges="orientation|screenSize"
                 android:exported="true"/>
         <activity android:name=".ui.MandelbrotActivity"
-                android:theme="@style/AppTheme.NoActionBar"
+                android:theme="@style/Theme.LearnOpenGLScenes.NoActionBar"
                 android:configChanges="orientation|screenSize"
                 android:exported="true"/>
         <activity android:name=".ui.MengerPrisonActivity"
-                android:theme="@style/AppTheme.NoActionBar"
+                android:theme="@style/Theme.LearnOpenGLScenes.NoActionBar"
                 android:configChanges="orientation|screenSize"
                 android:exported="true"/>
         <activity
                 android:name=".ui.HomeActivity"
                 android:configChanges="orientation|keyboardHidden|screenSize"
-                android:theme="@style/AppTheme.NoActionBar"
+                android:theme="@style/Theme.LearnOpenGLScenes.NoActionBar"
                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

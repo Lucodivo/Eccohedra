@@ -1,8 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#008577</color>
-    <color name="colorPrimaryDark">#00574B</color>
-    <color name="colorAccent">#D81B60</color>
 
-    <color name="black_overlay">#66000000</color>
+    <!-- Palette 1-->
+    <color name="AntiqueWhite">#F8ECD1</color>
+    <color name="RosyBrown2">#DEB6AB</color>
+    <color name="Rosy">#AC7D88</color>
+    <color name="Pink4">#85586F</color>
+
+    <!-- Palette 2-->
+    <color name="RosyBrown1">#F3C5C5</color>
+    <color name="RosyBrown3">#C1A3A3</color>
+    <color name="RosyBrown4">#886F6F</color>
+    <color name="DarkBrown">#694E4E</color>
+
+    <!-- Grayscale -->
+    <color name="Grayscale0">#000000</color>
+    <color name="Grayscale1">#333333</color>
+    <color name="Grayscale2">#666666</color>
+    <color name="Grayscale3">#999999</color>
+    <color name="Grayscale4">#CCCCCC</color>
+    <color name="Grayscale5">#EEEEEE</color>
+
+    <color name="Crimson">#800000</color>
+
+    <color name="ic_launcher_background">#0086D5</color>
+
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
 </resources>
