@@ -3,6 +3,7 @@ package com.inasweaterpoorlyknit.learnopengl_androidport.ui
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
@@ -24,8 +25,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.inasweaterpoorlyknit.learnopengl_androidport.R
 import com.inasweaterpoorlyknit.learnopengl_androidport.ui.theme.OpenGLScenesTheme
+import com.inasweaterpoorlyknit.learnopengl_androidport.viewmodels.HomeViewModel
 
 // TODO: Single Activity application
 // HomeActivity encompasses two fragments
@@ -34,10 +35,17 @@ import com.inasweaterpoorlyknit.learnopengl_androidport.ui.theme.OpenGLScenesThe
 // Fragments communicate through Activity view model?
 // TODO: Pinch to zoom for Mandelbrot set
 
-class ProgramListItemData(@DrawableRes val imageResId: Int,
-                          @StringRes val displayTextResId: Int,
-                          @StringRes val descTextResId: Int,
-                          val activityJavaClass: Class<*>)
+interface ListItemDataI {
+    val imageResId: Int
+    val displayTextResId: Int
+    val descTextResId: Int
+}
+
+data class ListItemData(
+    @DrawableRes override val imageResId: Int,
+    @StringRes override val displayTextResId: Int,
+    @StringRes override val descTextResId: Int
+) : ListItemDataI
 
 class HomeActivity : AppCompatActivity() {
 
@@ -46,37 +54,20 @@ class HomeActivity : AppCompatActivity() {
     private val listPadding = 8.dp
     private val halfListPadding = listPadding / 2
 
-    companion object {
-        // TODO: Acquire this list from view model?
-        val programListItemsData = arrayOf(
-            ProgramListItemData(imageResId = R.drawable.infinite_cube_thumbnail,
-                                displayTextResId = R.string.infinite_cube_scene_title,
-                                descTextResId = R.string.infinite_cube_thumbnail_description,
-                                activityJavaClass = InfiniteCubeActivity::class.java),
-            ProgramListItemData(imageResId = R.drawable.infinite_capsules_thumbnail,
-                                displayTextResId = R.string.infinite_capsules_scene_title,
-                                descTextResId = R.string.infinite_capsules_thumbnail_description,
-                                activityJavaClass = InfiniteCapsulesActivity::class.java),
-            ProgramListItemData(imageResId = R.drawable.mandelbrot_thumbnail,
-                                displayTextResId = R.string.mandelbrot_scene_title,
-                                descTextResId = R.string.mandelbrot_thumbnail_description,
-                                activityJavaClass = MandelbrotActivity::class.java),
-            ProgramListItemData(imageResId = R.drawable.menger_prison_thumbnail,
-                                displayTextResId = R.string.menger_prison_scene_title,
-                                descTextResId = R.string.menger_prison_thumbnail_description,
-                                activityJavaClass = MengerPrisonActivity::class.java))
-    }
-
+    private val viewModel: HomeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel.startActivityRequest.observe(this) { activity ->
+            startActivity(Intent(this, activity))
+        }
         setContent {
-            programList(programListItemsData)
+            HomeList(viewModel.getListItems())
         }
     }
 
     @Composable
-    fun programList(programs: Array<ProgramListItemData>) {
+    fun HomeList(itemDataList: List<ListItemDataI>) {
         OpenGLScenesTheme {
             LazyColumn(
                 contentPadding = PaddingValues(vertical = halfListPadding),
@@ -85,16 +76,15 @@ class HomeActivity : AppCompatActivity() {
                     .fillMaxSize()
             ) {
                 //item { } // optional header
-                items(programs) { program ->
-                    ProgramListItem(programListItemData = program)
+                items(itemDataList) { listItemData ->
+                    HomeListItem(listItemData)
                 }
             }
         }
     }
 
     @Composable
-    fun ProgramListItem(programListItemData: ProgramListItemData) {
-
+    fun HomeListItem(listItemData: ListItemDataI) {
         Surface(
             elevation = 1.dp,
             shape = MaterialTheme.shapes.large,
@@ -102,20 +92,20 @@ class HomeActivity : AppCompatActivity() {
                 .padding(horizontal = listPadding, vertical = halfListPadding)
                 .fillMaxWidth()
                 .clickable {
-                    startActivity(Intent(this, programListItemData.activityJavaClass))
+                    viewModel.itemSelected(listItemData)
                 }
         ) {
             Row {
                 Image(
-                    painter = painterResource(programListItemData.imageResId),
-                    contentDescription = stringResource(programListItemData.descTextResId), // TODO: content descriptions are considerate
+                    painter = painterResource(listItemData.imageResId),
+                    contentDescription = stringResource(listItemData.descTextResId), // TODO: content descriptions are considerate
                     modifier = Modifier
                         .height(listItemHeight)
 //                        .clip(CircleShape)
                 )
 
                 Text(
-                    text = stringResource(programListItemData.displayTextResId),
+                    text = stringResource(listItemData.displayTextResId),
                     fontSize = listItemFontSize,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -129,7 +119,7 @@ class HomeActivity : AppCompatActivity() {
 
     @Preview
     @Composable
-    fun programListPreview() {
-        programList(programListItemsData)
+    fun HomeListPreview() {
+        HomeList(HomeViewModel.listItemDataForComposePreview)
     }
 }

@@ -1,4 +1,4 @@
-package com.inasweaterpoorlyknit.learnopengl_androidport.activities
+package com.inasweaterpoorlyknit.learnopengl_androidport.ui
 
 import android.content.res.Configuration
 import android.os.Bundle
