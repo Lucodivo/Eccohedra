@@ -1,4 +1,4 @@
-package com.inasweaterpoorlyknit.learnopengl_androidport.utils
+package com.inasweaterpoorlyknit.learnopengl_androidport
 
 const val BYTES_PER_FLOAT = 4
 const val BYTES_PER_INT = 4

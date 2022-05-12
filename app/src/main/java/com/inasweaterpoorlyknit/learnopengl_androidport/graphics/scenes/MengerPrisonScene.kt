@@ -1,4 +1,4 @@
-package com.inasweaterpoorlyknit.learnopengl_androidport.scenes
+package com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes
 
 import android.content.Context
 import android.content.res.Configuration
@@ -13,12 +13,13 @@ import android.util.Log
 import android.util.Log.DEBUG
 import android.view.MotionEvent
 import android.widget.Toast
-import com.inasweaterpoorlyknit.learnopengl_androidport.Camera
-import com.inasweaterpoorlyknit.learnopengl_androidport.Program
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
-import com.inasweaterpoorlyknit.learnopengl_androidport.initializeFrameBufferQuadVertexAttBuffers
-import com.inasweaterpoorlyknit.learnopengl_androidport.utils.MAT_4x4_SIZE
-import com.inasweaterpoorlyknit.learnopengl_androidport.utils.glClearColor
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Camera
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Program
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Scene
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.initializeFrameBufferQuadVertexAttBuffers
+import com.inasweaterpoorlyknit.learnopengl_androidport.MAT_4x4_SIZE
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.glClearColor
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.systemTimeInDeciseconds
 import com.inasweaterpoorlyknit.learnopengl_androidport.utils.systemTimeInSeconds
 import glm_.mat4x4.Mat4

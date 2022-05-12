@@ -11,7 +11,7 @@ fun systemTimeInDeciseconds(): Double {
   return System.nanoTime().toDouble() / 100000000
 }
 
-fun androidx.appcompat.app.AppCompatActivity.hideSystemUI() {
+fun androidx.appcompat.app.AppCompatActivity.hideSystemUI() { // TODO: System visibility is deprecated
   window.decorView.systemUiVisibility = (
       View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or // hide the navigation
       View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or // lay out view as if the navigation will be hidden

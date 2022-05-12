@@ -1,4 +1,4 @@
-package com.inasweaterpoorlyknit.learnopengl_androidport.scenes
+package com.inasweaterpoorlyknit.learnopengl_androidport.graphics
 
 import android.content.Context
 import android.opengl.GLES20

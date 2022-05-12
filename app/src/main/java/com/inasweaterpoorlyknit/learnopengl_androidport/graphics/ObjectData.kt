@@ -1,9 +1,9 @@
-package com.inasweaterpoorlyknit.learnopengl_androidport
+package com.inasweaterpoorlyknit.learnopengl_androidport.graphics
 
 import android.opengl.GLES30.*
 import android.util.Log
-import com.inasweaterpoorlyknit.learnopengl_androidport.utils.BYTES_PER_FLOAT
-import com.inasweaterpoorlyknit.learnopengl_androidport.utils.BYTES_PER_INT
+import com.inasweaterpoorlyknit.learnopengl_androidport.BYTES_PER_FLOAT
+import com.inasweaterpoorlyknit.learnopengl_androidport.BYTES_PER_INT
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
 

@@ -1,12 +1,22 @@
 <resources>
     <string name="app_name">Scenes</string>
+
+    <!-- Infinite Cube Scene -->
+    <string name="infinite_cube_scene_title">Infinite Cube Scene</string>
     <string name="infinite_cube_thumbnail_description">Screen shot of infinite cube scene</string>
-    <string name="ray_marching_thumbnail_description">Screen shot of ray marching scene</string>
-    <string name="infinite_cube_scene_bottom_text">Infinite Cube Scene</string>
-    <string name="infinite_capsules_scene_bottom_text">Infinite Capsules Scene</string>
-    <string name="menger_prison_scene_bottom_text">Menger Prison Scene</string>
-    <string name="no_rotation_sensor">No rotation sensor found on device</string>
-    <string name="mandelbrot_scene_bottom_text">Mandelbrot Scene</string>
+
+    <!-- Infinite Capsules Scene -->
+    <string name="infinite_capsules_scene_title">Infinite Capsules Scene</string>
+    <string name="infinite_capsules_thumbnail_description">Screen shot of Infinite Capsules scene</string>
+
+    <!-- Menger Prison Scene -->
+    <string name="menger_prison_scene_title">Menger Prison Scene</string>
+    <string name="menger_prison_thumbnail_description">Screen shot of Menger Prison scene</string>
+
+    <!-- Mandelbrot Scene -->
+    <string name="mandelbrot_scene_title">Mandelbrot Scene</string>
     <string name="mandelbrot_thumbnail_description">Screen shot of Mandelbrot scene</string>
-    <string name="program_list_item">Program list item</string>
+
+    <!-- Errors -->
+    <string name="no_rotation_sensor">No rotation sensor found on device</string>
 </resources>

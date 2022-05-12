@@ -1,4 +1,4 @@
-package com.inasweaterpoorlyknit.learnopengl_androidport
+package com.inasweaterpoorlyknit.learnopengl_androidport.graphics
 
 import glm_.vec3.Vec3
 import glm_.mat4x4.Mat4
@@ -111,12 +111,10 @@ class Camera {
 
     private fun changePositioning()
     {
-        // multiplying a vec3(0,0,0) by small fractions may lead to NAN values
-        if (deltaPosition.x != 0.0f || deltaPosition.y != 0.0f || deltaPosition.z != 0.0f)
-        {
-            position.plusAssign(deltaPosition)
-        }
-        deltaPosition = Vec3(0.0f)
+        position.plusAssign(deltaPosition)
+        deltaPosition.x = 0.0f
+        deltaPosition.y = 0.0f
+        deltaPosition.z = 0.0f
     }
 
     fun processPanWalk(vec2: Vec2) {
