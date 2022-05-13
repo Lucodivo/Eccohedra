@@ -62,7 +62,7 @@ class HomeActivity : AppCompatActivity() {
             startActivity(Intent(this, activity))
         }
         setContent {
-            HomeList(viewModel.getListItems())
+            HomeList(viewModel.listItemData)
         }
     }
 

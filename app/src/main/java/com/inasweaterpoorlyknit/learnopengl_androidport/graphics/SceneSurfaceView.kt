@@ -8,12 +8,10 @@ import android.widget.Toast
 import android.app.ActivityManager
 import android.view.MotionEvent
 
-
 @SuppressLint("ViewConstructor")
-class SceneSurfaceView(context: Activity, private var scene: Scene) : GLSurfaceView(context) {
+class SceneSurfaceView(activity: Activity, private val scene: Scene) : GLSurfaceView(activity) {
 
     init {
-        val activity: Activity = context
         val activityManager = activity.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager?
         val configurationInfo = activityManager!!.deviceConfigurationInfo
         val openGLESVersion = java.lang.Double.parseDouble(configurationInfo.glEsVersion)
@@ -22,7 +20,7 @@ class SceneSurfaceView(context: Activity, private var scene: Scene) : GLSurfaceV
             // We have at least ES 3.0
             setEGLContextClientVersion(3)
         } else {
-            val openGLVersionToast: Toast = Toast.makeText(context, "Device only supports OpenGL $openGLESVersion. \n Scene requires at least OpenGL 3.0", Toast.LENGTH_LONG)
+            val openGLVersionToast: Toast = Toast.makeText(activity, "Device only supports OpenGL $openGLESVersion. \n Scene requires at least OpenGL 3.0", Toast.LENGTH_LONG)
             openGLVersionToast.show()
             activity.finish()
         }

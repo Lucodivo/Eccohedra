@@ -1,7 +1,11 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.utils
 
+import android.app.Activity
+import android.content.Context
+import android.content.res.Configuration
 import android.os.Build.VERSION.SDK_INT
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
@@ -14,7 +18,7 @@ fun systemTimeInDeciseconds(): Double {
   return System.nanoTime().toDouble() / 100000000
 }
 
-fun androidx.appcompat.app.AppCompatActivity.hideSystemUI() {
+fun AppCompatActivity.hideSystemUI() {
   if(SDK_INT >= 30) {
     window.setDecorFitsSystemWindows(false)
     WindowInsetsControllerCompat(window, window.decorView).let { controller ->
@@ -31,3 +35,12 @@ fun androidx.appcompat.app.AppCompatActivity.hideSystemUI() {
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE) // stable view of content (layout view size doesn't change)
   }
 }
+
+val Context.orientation: Int
+  get() = resources.configuration.orientation
+
+val Context.orientationIsLandscape: Boolean
+  get() = orientation == Configuration.ORIENTATION_LANDSCAPE
+
+val Context.orientationIsPortrait: Boolean
+  get() = orientation == Configuration.ORIENTATION_PORTRAIT
