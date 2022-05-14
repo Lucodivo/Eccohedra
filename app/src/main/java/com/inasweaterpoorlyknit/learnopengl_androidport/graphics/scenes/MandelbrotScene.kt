@@ -11,7 +11,7 @@ import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Program
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Scene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.initializeFrameBufferQuadVertexAttBuffers
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.glClearColor
-import com.inasweaterpoorlyknit.learnopengl_androidport.utils.systemTimeInSeconds
+import com.inasweaterpoorlyknit.learnopengl_androidport.systemTimeInSeconds
 import glm_.vec2.Vec2
 import glm_.vec3.Vec3
 import java.nio.IntBuffer

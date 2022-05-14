@@ -1,8 +1,8 @@
-package com.inasweaterpoorlyknit.learnopengl_androidport.utils
+package com.inasweaterpoorlyknit.learnopengl_androidport
 
-import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Build.VERSION.SDK_INT
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -20,9 +20,15 @@ fun systemTimeInDeciseconds(): Double {
 
 fun AppCompatActivity.hideSystemUI() {
   if(SDK_INT >= 30) {
-    window.setDecorFitsSystemWindows(false)
+    window.apply {
+      setDecorFitsSystemWindows(false) // fill window
+      statusBarColor = Color.TRANSPARENT // set
+    }
+
     WindowInsetsControllerCompat(window, window.decorView).let { controller ->
-      controller.hide(WindowInsetsCompat.Type.systemBars())
+      // hide navigation buttons
+      controller.hide(WindowInsetsCompat.Type.navigationBars())
+      // allow navbar to show up after swipe
       controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     }
   } else { // TODO: System visibility is deprecated, remove when minSDK is 30

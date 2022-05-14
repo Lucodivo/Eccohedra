@@ -14,8 +14,8 @@ import com.inasweaterpoorlyknit.learnopengl_androidport.*
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.loadTexture
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.glClearColor
-import com.inasweaterpoorlyknit.learnopengl_androidport.utils.systemTimeInSeconds
-import com.inasweaterpoorlyknit.learnopengl_androidport.utils.systemTimeInDeciseconds
+import com.inasweaterpoorlyknit.learnopengl_androidport.systemTimeInSeconds
+import com.inasweaterpoorlyknit.learnopengl_androidport.systemTimeInDeciseconds
 import glm_.glm
 import glm_.mat4x4.Mat4
 import glm_.vec3.Vec3

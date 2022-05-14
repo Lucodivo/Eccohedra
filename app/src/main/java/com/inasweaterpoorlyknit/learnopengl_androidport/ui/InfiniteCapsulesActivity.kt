@@ -5,7 +5,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.InfiniteCapsulesScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.SceneSurfaceView
-import com.inasweaterpoorlyknit.learnopengl_androidport.utils.hideSystemUI
+import com.inasweaterpoorlyknit.learnopengl_androidport.hideSystemUI
 
 class InfiniteCapsulesActivity : AppCompatActivity() {
 
