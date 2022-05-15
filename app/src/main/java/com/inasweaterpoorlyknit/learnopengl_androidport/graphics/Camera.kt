@@ -1,9 +1,9 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.graphics
 
-import glm_.vec3.Vec3
-import glm_.mat4x4.Mat4
 import glm_.glm
+import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
+import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 
 const val PITCH = 0.0f

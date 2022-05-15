@@ -13,13 +13,9 @@ import android.util.Log
 import android.util.Log.DEBUG
 import android.view.MotionEvent
 import android.widget.Toast
-import com.inasweaterpoorlyknit.learnopengl_androidport.R
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Camera
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Program
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Scene
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.initializeFrameBufferQuadVertexAttBuffers
 import com.inasweaterpoorlyknit.learnopengl_androidport.MAT_4x4_SIZE
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.glClearColor
+import com.inasweaterpoorlyknit.learnopengl_androidport.R
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
 import com.inasweaterpoorlyknit.learnopengl_androidport.systemTimeInDeciseconds
 import com.inasweaterpoorlyknit.learnopengl_androidport.systemTimeInSeconds
 import glm_.mat4x4.Mat4

@@ -10,7 +10,8 @@ import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.Infinite
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.InfiniteCubeScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MandelbrotScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MengerPrisonScene
-import com.inasweaterpoorlyknit.learnopengl_androidport.ui.*
+import com.inasweaterpoorlyknit.learnopengl_androidport.ui.ListItemData
+import com.inasweaterpoorlyknit.learnopengl_androidport.ui.ListItemDataI
 
 class SceneListDetailViewModel : ViewModel() {
 

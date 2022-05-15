@@ -7,8 +7,8 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
-import com.inasweaterpoorlyknit.learnopengl_androidport.viewmodels.SceneListDetailViewModel
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
+import com.inasweaterpoorlyknit.learnopengl_androidport.viewmodels.SceneListDetailViewModel
 
 // TODO: Single Activity application
 // HomeActivity encompasses two fragments

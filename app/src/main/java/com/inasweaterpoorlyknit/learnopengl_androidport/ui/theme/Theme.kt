@@ -5,8 +5,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.colorResource
-import com.inasweaterpoorlyknit.learnopengl_androidport.R
 
 private val DarkColorPalette = darkColors(
 //    primary = Purple200,

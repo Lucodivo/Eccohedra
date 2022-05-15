@@ -10,21 +10,20 @@ import android.opengl.GLES20.*
 import android.opengl.GLES30.glBindVertexArray
 import android.view.MotionEvent
 import android.widget.Toast
-import com.inasweaterpoorlyknit.learnopengl_androidport.*
+import com.inasweaterpoorlyknit.learnopengl_androidport.MAT_4x4_SIZE
+import com.inasweaterpoorlyknit.learnopengl_androidport.R
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.loadTexture
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.glClearColor
-import com.inasweaterpoorlyknit.learnopengl_androidport.systemTimeInSeconds
 import com.inasweaterpoorlyknit.learnopengl_androidport.systemTimeInDeciseconds
+import com.inasweaterpoorlyknit.learnopengl_androidport.systemTimeInSeconds
 import glm_.glm
 import glm_.mat4x4.Mat4
+import glm_.vec2.Vec2
 import glm_.vec3.Vec3
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 import kotlin.math.cos
 import kotlin.math.sin
-import glm_.vec2.Vec2
 
 const val cubeRotationAngle = 2.5f
 val cubeRotationAxis = Vec3(1.0f, 0.3f, 0.5f)
