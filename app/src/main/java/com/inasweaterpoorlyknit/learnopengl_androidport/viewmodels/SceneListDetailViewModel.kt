@@ -72,9 +72,12 @@ class SceneListDetailViewModel : ViewModel() {
     fun onBackPress() {
         _presentationMode.value?.let {
             when (it) {
-                ListDetailPresentationMode.LIST -> { _presentationMode.value = ListDetailPresentationMode.FINISH }
+                ListDetailPresentationMode.LIST -> {
+                    _presentationMode.value = ListDetailPresentationMode.FINISH // register a finish
+                    _presentationMode.value = ListDetailPresentationMode.LIST // ensure state is LIST if user comes back to app
+                }
                 ListDetailPresentationMode.DETAIL -> { _presentationMode.value = ListDetailPresentationMode.LIST }
-                else -> {}
+                else -> { }
             }
         }
     }
