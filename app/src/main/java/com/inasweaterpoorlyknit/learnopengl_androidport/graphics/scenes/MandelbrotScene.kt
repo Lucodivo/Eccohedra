@@ -77,11 +77,11 @@ class MandelbrotScene(context: Context) : Scene(context) {
         centerOffset = centerOffset.minus(Vec2(deltaX / zoom, -deltaY / zoom))
     }
 
-    override fun onTouchEvent(ev: MotionEvent): Boolean {
-        val x: Float = ev.x
-        val y: Float = ev.y
+    override fun onTouchEvent(motionEvent: MotionEvent): Boolean {
+        val x: Float = motionEvent.x
+        val y: Float = motionEvent.y
 
-        when (ev.action) {
+        when (motionEvent.action) {
             MotionEvent.ACTION_DOWN -> {
                 val time = systemTimeInSeconds()
                 if((time - lastSingleTapTime) <= actionTimeFrame) {
@@ -125,7 +125,7 @@ class MandelbrotScene(context: Context) : Scene(context) {
                 return true
             }
             else -> {
-                return super.onTouchEvent(ev)
+                return super.onTouchEvent(motionEvent)
             }
         }
     }

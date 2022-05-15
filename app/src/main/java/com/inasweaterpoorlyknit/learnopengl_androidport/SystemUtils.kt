@@ -1,11 +1,11 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport
 
+import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build.VERSION.SDK_INT
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
@@ -18,7 +18,19 @@ fun systemTimeInDeciseconds(): Double {
   return System.nanoTime().toDouble() / 100000000
 }
 
-fun AppCompatActivity.hideSystemUI() {
+fun Activity.showSystemUI() {
+  if(SDK_INT >= 30) {
+    window.apply {
+      setDecorFitsSystemWindows(true)
+      statusBarColor = Color.BLACK
+    }
+    WindowInsetsControllerCompat(window, window.decorView).show(WindowInsetsCompat.Type.navigationBars())
+  } else { // TODO: Test if this even works
+    window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+  }
+}
+
+fun Activity.hideSystemUI() {
   if(SDK_INT >= 30) {
     window.apply {
       setDecorFitsSystemWindows(false) // fill window

@@ -1,36 +1,30 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.graphics
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
+import android.content.res.Configuration
 import android.opengl.GLSurfaceView
-import android.widget.Toast
-import android.app.ActivityManager
 import android.view.MotionEvent
 
 @SuppressLint("ViewConstructor")
-class SceneSurfaceView(activity: Activity, private val scene: Scene) : GLSurfaceView(activity) {
+class SceneSurfaceView(context: Context, private val scene: Scene) : GLSurfaceView(context) {
 
     init {
-        val activityManager = activity.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager?
-        val configurationInfo = activityManager!!.deviceConfigurationInfo
-        val openGLESVersion = java.lang.Double.parseDouble(configurationInfo.glEsVersion)
-
-        if (openGLESVersion >= 3.0) {
-            // We have at least ES 3.0
-            setEGLContextClientVersion(3)
-        } else {
-            val openGLVersionToast: Toast = Toast.makeText(activity, "Device only supports OpenGL $openGLESVersion. \n Scene requires at least OpenGL 3.0", Toast.LENGTH_LONG)
-            openGLVersionToast.show()
-            activity.finish()
-        }
-
-        setRenderer(scene)
+        // We have at least ES 3.0
+        setEGLContextClientVersion(3)
+        setRenderer(this.scene)
     }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         return scene.onTouchEvent(event) || super.onTouchEvent(event)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        newConfig.orientation.let {
+            scene.onOrientationChange(it)
+        }
     }
 
     override fun onAttachedToWindow() {
@@ -41,9 +35,5 @@ class SceneSurfaceView(activity: Activity, private val scene: Scene) : GLSurface
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         scene.onDetach()
-    }
-
-    fun orientationChange(orientation: Int) {
-        scene.onOrientationChange(orientation)
     }
 }
