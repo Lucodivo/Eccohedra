@@ -16,12 +16,16 @@ import com.inasweaterpoorlyknit.learnopengl_androidport.ui.ListItemDataI
 class SceneListDetailViewModel : ViewModel() {
 
     enum class ListDetailPresentationMode {
-        LIST, DETAIL, FINISH //, LIST_DETAIL
+        LIST, DETAIL,
     }
 
     private val _presentationMode = MutableLiveData<ListDetailPresentationMode>()
     val presentationMode: LiveData<ListDetailPresentationMode>
         get() = _presentationMode
+
+    private val _finishTrigger = MutableLiveData<Unit>()
+    val finishTrigger: LiveData<Unit>
+        get() = _finishTrigger
 
     private lateinit var _sceneCreator : (Context) -> Scene
     val sceneCreator: (Context) -> Scene
@@ -72,12 +76,8 @@ class SceneListDetailViewModel : ViewModel() {
     fun onBackPress() {
         _presentationMode.value?.let {
             when (it) {
-                ListDetailPresentationMode.LIST -> {
-                    _presentationMode.value = ListDetailPresentationMode.FINISH // register a finish
-                    _presentationMode.value = ListDetailPresentationMode.LIST // ensure state is LIST if user comes back to app
-                }
+                ListDetailPresentationMode.LIST -> { _finishTrigger.value = Unit }
                 ListDetailPresentationMode.DETAIL -> { _presentationMode.value = ListDetailPresentationMode.LIST }
-                else -> { }
             }
         }
     }

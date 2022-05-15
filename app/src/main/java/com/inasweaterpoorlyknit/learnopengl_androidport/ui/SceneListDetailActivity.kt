@@ -9,6 +9,8 @@ import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
 import com.inasweaterpoorlyknit.learnopengl_androidport.viewmodels.SceneListDetailViewModel
+import com.inasweaterpoorlyknit.learnopengl_androidport.viewmodels.SceneListDetailViewModel.ListDetailPresentationMode
+import java.lang.IllegalStateException
 
 // TODO: Single Activity application
 // HomeActivity encompasses two fragments
@@ -42,11 +44,15 @@ class SceneListDetailActivity : AppCompatActivity() {
             supportFragmentManager.commit {
                 setReorderingAllowed(true) // recommended for FragmentTransactions if able
                 when (presentationMode) {
-                    SceneListDetailViewModel.ListDetailPresentationMode.LIST -> replace<SceneListFragment>(R.id.fragment_container)
-                    SceneListDetailViewModel.ListDetailPresentationMode.DETAIL -> replace<SceneFragment>(R.id.fragment_container)
-                    SceneListDetailViewModel.ListDetailPresentationMode.FINISH -> super.onBackPressed()
+                    ListDetailPresentationMode.LIST -> replace<SceneListFragment>(R.id.fragment_container)
+                    ListDetailPresentationMode.DETAIL -> replace<SceneFragment>(R.id.fragment_container)
+                    null -> { throw IllegalStateException("${ListDetailPresentationMode::class.java} contained a null value.") }
                 }
             }
+        }
+
+        viewModel.finishTrigger.observe(this) {
+            super.onBackPressed()
         }
 
         window.apply {
