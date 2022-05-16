@@ -1,5 +1,7 @@
 # OpenGL Scenes (Android)
 
+[Available on Google Play](https://play.google.com/store/apps/details?id=com.inasweaterpoorlyknit.learnopengl_androidport)
+
 ## Documents
 - [Scene List & Scene Potential Architecture](SceneListAndScenePotentialArchitecture.md)
 - [Hilt](app/src/main/java/com/inasweaterpoorlyknit/learnopengl_androidport/di/Hilt.md)

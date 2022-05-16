@@ -39,4 +39,14 @@ class SceneFragment: Fragment() {
   ): View {
     return sceneSurfaceView
   }
+
+  override fun onPause() {
+    super.onPause()
+    sceneSurfaceView.onPause()
+  }
+
+  override fun onResume() {
+    super.onResume()
+    sceneSurfaceView.onResume()
+  }
 }
