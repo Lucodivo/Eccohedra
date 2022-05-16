@@ -14,25 +14,8 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.LearnOpenGLScenes"
             tools:ignore="AllowBackup,GoogleAppIndexingWarning">
-
-        <activity android:name=".ui.InfiniteCubeActivity"
-                  android:theme="@style/Theme.LearnOpenGLScenes.NoActionBar"
-                  android:configChanges="orientation|screenSize"
-                android:exported="true"/>
-        <activity android:name=".ui.InfiniteCapsulesActivity"
-                  android:theme="@style/Theme.LearnOpenGLScenes.NoActionBar"
-                  android:configChanges="orientation|screenSize"
-                android:exported="true"/>
-        <activity android:name=".ui.MandelbrotActivity"
-                android:theme="@style/Theme.LearnOpenGLScenes.NoActionBar"
-                android:configChanges="orientation|screenSize"
-                android:exported="true"/>
-        <activity android:name=".ui.MengerPrisonActivity"
-                android:theme="@style/Theme.LearnOpenGLScenes.NoActionBar"
-                android:configChanges="orientation|screenSize"
-                android:exported="true"/>
         <activity
-                android:name=".ui.HomeActivity"
+                android:name=".ui.SceneListDetailActivity"
                 android:configChanges="orientation|keyboardHidden|screenSize"
                 android:theme="@style/Theme.LearnOpenGLScenes.NoActionBar"
                 android:exported="true">

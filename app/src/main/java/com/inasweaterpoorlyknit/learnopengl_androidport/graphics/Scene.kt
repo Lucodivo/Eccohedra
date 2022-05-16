@@ -4,7 +4,6 @@ import android.content.Context
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.view.MotionEvent
-import com.inasweaterpoorlyknit.learnopengl_androidport.orientation
 import javax.microedition.khronos.opengles.GL10
 
 interface ExternalInputListener {

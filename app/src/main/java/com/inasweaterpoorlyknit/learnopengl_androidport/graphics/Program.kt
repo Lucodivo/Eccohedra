@@ -4,7 +4,6 @@ import android.content.Context
 import android.opengl.GLES20.*
 import android.util.Log
 import androidx.annotation.RawRes
-import com.inasweaterpoorlyknit.learnopengl_androidport.MAT_4x4_SIZE
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec3.Vec3

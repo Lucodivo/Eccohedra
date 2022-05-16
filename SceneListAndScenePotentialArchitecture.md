@@ -31,7 +31,7 @@ Concerns:
   Debugging scenes could be done by just hardcoding specific scene in SceneActivity w/ run configuration
   set to SceneActivity.
 
-### Potential Solution #2: Activity ViewModel w/ SceneList Fragment & Scene Fragment
+### Potential Solution #3: Activity ViewModel w/ SceneList Fragment & Scene Fragment
 
 Positives:
 - Android ViewModels are already a pattern taken in this project.
@@ -54,3 +54,11 @@ Concerns:
   this method should have its limits. Tacking on additional views onto this ViewModel should be cautioned/avoided.
 - Debugging: Editing run configurations to debug a scene would require debug code in the encompassing Activity.
   Not terrible but not as dead simple as having an Activity for each scene.
+
+### Potential Solution #4: Static Scene Array Index w/ SceneList(Activity/Fragment) & Scene(Activity/Fragment)
+
+Notes: 
+- Array index could be passed in through Intent.putExtra()/Bundle.getInt() or through navArgs ()
+
+Positives:
+- Array index is dead simple and the scene array/list/container should never change at runtime anyways

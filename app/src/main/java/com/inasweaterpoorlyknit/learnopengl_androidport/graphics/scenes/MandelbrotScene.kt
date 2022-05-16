@@ -2,16 +2,10 @@ package com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes
 
 import android.content.Context
 import android.opengl.GLES20.*
-import android.opengl.GLES20.GL_UNSIGNED_INT
-import android.opengl.GLES20.glClear
 import android.opengl.GLES30.glBindVertexArray
 import android.view.MotionEvent
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Program
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Scene
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.initializeFrameBufferQuadVertexAttBuffers
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.glClearColor
-import com.inasweaterpoorlyknit.learnopengl_androidport.systemTimeInSeconds
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
 import glm_.vec2.Vec2
 import glm_.vec3.Vec3
 import java.nio.IntBuffer
@@ -77,11 +71,11 @@ class MandelbrotScene(context: Context) : Scene(context) {
         centerOffset = centerOffset.minus(Vec2(deltaX / zoom, -deltaY / zoom))
     }
 
-    override fun onTouchEvent(ev: MotionEvent): Boolean {
-        val x: Float = ev.x
-        val y: Float = ev.y
+    override fun onTouchEvent(motionEvent: MotionEvent): Boolean {
+        val x: Float = motionEvent.x
+        val y: Float = motionEvent.y
 
-        when (ev.action) {
+        when (motionEvent.action) {
             MotionEvent.ACTION_DOWN -> {
                 val time = systemTimeInSeconds()
                 if((time - lastSingleTapTime) <= actionTimeFrame) {
@@ -125,7 +119,7 @@ class MandelbrotScene(context: Context) : Scene(context) {
                 return true
             }
             else -> {
-                return super.onTouchEvent(ev)
+                return super.onTouchEvent(motionEvent)
             }
         }
     }
