@@ -8,8 +8,6 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.SceneSurfaceView
-import com.inasweaterpoorlyknit.learnopengl_androidport.hideSystemUI
-import com.inasweaterpoorlyknit.learnopengl_androidport.showSystemUI
 import com.inasweaterpoorlyknit.learnopengl_androidport.viewmodels.SceneListDetailViewModel
 
 class SceneFragment: Fragment() {

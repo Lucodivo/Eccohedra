@@ -10,7 +10,6 @@ import androidx.fragment.app.replace
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
 import com.inasweaterpoorlyknit.learnopengl_androidport.viewmodels.SceneListDetailViewModel
 import com.inasweaterpoorlyknit.learnopengl_androidport.viewmodels.SceneListDetailViewModel.ListDetailPresentationMode
-import java.lang.IllegalStateException
 
 // TODO: Single Activity application
 // HomeActivity encompasses two fragments

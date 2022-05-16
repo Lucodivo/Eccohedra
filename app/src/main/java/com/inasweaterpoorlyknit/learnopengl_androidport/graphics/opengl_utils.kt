@@ -5,9 +5,7 @@ import android.graphics.BitmapFactory
 import android.opengl.GLES20.*
 import android.util.Log
 import androidx.annotation.RawRes
-import com.inasweaterpoorlyknit.learnopengl_androidport.getResourceRawFileAsString
 import glm_.vec3.Vec3
-import glm_.vec4.Vec4
 import java.nio.IntBuffer
 
 // NOTE: OpenGL ES does not support geometry shaders
@@ -104,8 +102,4 @@ fun createShader(shaderText: String, shaderType: Int): Int? {
 
 fun glClearColor(vec3: Vec3) {
     glClearColor(vec3.r, vec3.g, vec3.b, 1.0f)
-}
-
-fun glClearColor(vec4: Vec4) {
-    glClearColor(vec4.r, vec4.g, vec4.b, vec4.a)
 }

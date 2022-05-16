@@ -5,11 +5,7 @@ import android.opengl.GLES20.*
 import android.opengl.GLES30.glBindVertexArray
 import android.view.MotionEvent
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Program
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Scene
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.glClearColor
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.initializeFrameBufferQuadVertexAttBuffers
-import com.inasweaterpoorlyknit.learnopengl_androidport.systemTimeInSeconds
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
 import glm_.vec2.Vec2
 import glm_.vec3.Vec3
 import java.nio.IntBuffer
