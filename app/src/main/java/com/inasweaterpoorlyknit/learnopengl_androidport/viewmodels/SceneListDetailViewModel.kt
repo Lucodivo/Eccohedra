@@ -33,6 +33,14 @@ class SceneListDetailViewModel : ViewModel() {
 
     init {
         _presentationMode.value = ListDetailPresentationMode.LIST
+
+        //debugScene(::MandelbrotScene)
+    }
+
+    // NOTE: Call this in init() to jump right into a scene for debugging
+    fun debugScene(sceneConstructor: (Context) -> Scene) {
+        _sceneCreator = sceneConstructor
+        _presentationMode.value = ListDetailPresentationMode.DETAIL
     }
 
     companion object {
