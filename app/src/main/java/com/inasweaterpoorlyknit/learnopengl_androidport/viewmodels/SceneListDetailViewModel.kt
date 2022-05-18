@@ -55,22 +55,22 @@ class SceneListDetailViewModel : ViewModel() {
 
         private val programListItemsData = listOf(
             ProgramListItemData(ListItemData(
-                imageResId = R.drawable.infinite_cube_1440_720,
+                imageResId = R.drawable.infinite_cube_2720_1440,
                 displayTextResId = R.string.infinite_cube_scene_title,
                 descTextResId = R.string.infinite_cube_thumbnail_description),
                 sceneCreator = ::InfiniteCubeScene),
             ProgramListItemData(ListItemData(
-                imageResId = R.drawable.infinite_capsules_1440_720,
+                imageResId = R.drawable.infinite_capsules_2720_1440,
                 displayTextResId = R.string.infinite_capsules_scene_title,
                 descTextResId = R.string.infinite_capsules_thumbnail_description),
                 sceneCreator = ::InfiniteCapsulesScene),
             ProgramListItemData(ListItemData(
-                imageResId = R.drawable.mandelbrot_1440_720,
+                imageResId = R.drawable.mandelbrot_2720_1440,
                 displayTextResId = R.string.mandelbrot_scene_title,
                 descTextResId = R.string.mandelbrot_thumbnail_description),
                 sceneCreator = ::MandelbrotScene),
             ProgramListItemData(ListItemData(
-                imageResId = R.drawable.menger_prison_1440_720,
+                imageResId = R.drawable.menger_prison_2720_1440,
                 displayTextResId = R.string.menger_prison_scene_title,
                 descTextResId = R.string.menger_prison_thumbnail_description),
                 sceneCreator = ::MengerPrisonScene)
