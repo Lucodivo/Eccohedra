@@ -1,5 +1,6 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.ui
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.annotation.DrawableRes
@@ -52,6 +53,11 @@ class SceneListDetailActivity : AppCompatActivity() {
 
         viewModel.finishTrigger.observe(this) {
             super.onBackPressed()
+        }
+
+        viewModel.startActivityRequest.observe(this) {
+            val startActivityIntent = Intent(this, InfoActivity::class.java)
+            startActivity(startActivityIntent)
         }
 
         window.apply {

@@ -1,11 +1,20 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.ui
 
 import android.app.Activity
+import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.view.View
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+
+fun Activity.openWebPage(url: String) {
+    val webpage: Uri =
+        Uri.parse(url)
+    val intent = Intent(Intent.ACTION_VIEW, webpage)
+    startActivity(intent)
+}
 
 fun Activity.showSystemUI() {
     if(Build.VERSION.SDK_INT >= 30) {

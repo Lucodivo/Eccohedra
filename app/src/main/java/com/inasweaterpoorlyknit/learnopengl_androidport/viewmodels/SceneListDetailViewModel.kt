@@ -10,6 +10,7 @@ import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.Infinite
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.InfiniteCubeScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MandelbrotScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MengerPrisonScene
+import com.inasweaterpoorlyknit.learnopengl_androidport.ui.InfoActivity
 import com.inasweaterpoorlyknit.learnopengl_androidport.ui.ListItemData
 import com.inasweaterpoorlyknit.learnopengl_androidport.ui.ListItemDataI
 
@@ -18,6 +19,10 @@ class SceneListDetailViewModel : ViewModel() {
     enum class ListDetailPresentationMode {
         LIST, DETAIL,
     }
+
+    private val _startActivityRequest = MutableLiveData<Class<*>>()
+    val startActivityRequest: LiveData<Class<*>>
+        get() = _startActivityRequest
 
     private val _presentationMode = MutableLiveData<ListDetailPresentationMode>()
     val presentationMode: LiveData<ListDetailPresentationMode>
@@ -88,6 +93,10 @@ class SceneListDetailViewModel : ViewModel() {
                 ListDetailPresentationMode.DETAIL -> { _presentationMode.value = ListDetailPresentationMode.LIST }
             }
         }
+    }
+
+    fun onInfoPress() {
+        _startActivityRequest.value = InfoActivity::class.java
     }
 
     val listItemData: List<ListItemDataI>
