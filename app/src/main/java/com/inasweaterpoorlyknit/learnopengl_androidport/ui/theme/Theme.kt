@@ -39,8 +39,11 @@ fun OpenGLScenesTheme(
     content: @Composable () -> Unit
 ) {
     val darkMode = remember { mutableStateOf(true) }
-    (LocalContext.current.applicationContext as OpenGLScenesApplication).darkMode.observe(lifeCycleOwner) {
-        darkMode.value = it
+    val app = LocalContext.current.applicationContext
+    if(app is OpenGLScenesApplication) { // this check is only necessary for compose preview
+        app.darkMode.observe(lifeCycleOwner) {
+            darkMode.value = it
+        }
     }
 
     MaterialTheme(

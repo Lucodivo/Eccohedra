@@ -15,6 +15,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -81,17 +82,14 @@ class SceneListFragment: Fragment() {
                     activityViewModel.itemSelected(listItemData)
                 }
         ) {
-            Row {
                 Image(
                     painter = painterResource(listItemData.imageResId),
-                    contentDescription = stringResource(listItemData.descTextResId), // TODO: content descriptions are considerate
+                    contentDescription = stringResource(listItemData.descTextResId),
+                    contentScale = ContentScale.FillWidth,
                     modifier = Modifier
-                        .height(sceneListItemHeight)
+                        .heightIn(min = 0.dp, max = sceneListItemHeight)
+                        .fillMaxWidth()
                 )
-
-                ListItemText(text = stringResource(listItemData.displayTextResId),
-                    modifier = Modifier.height(sceneListItemHeight))
-            }
         }
     }
 

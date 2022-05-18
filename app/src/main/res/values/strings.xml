@@ -3,19 +3,32 @@
 
     <!-- Infinite Cube Scene -->
     <string name="infinite_cube_scene_title">Infinite Cube Scene</string>
-    <string name="infinite_cube_thumbnail_description">Screen shot of infinite cube scene</string>
+    <string name="infinite_cube_thumbnail_description">
+        Screen shot of infinite cube scene. A blue background with a single cube.
+        The entire scene projected onto the cube, creating an infinite mirror effect.
+    </string>
 
     <!-- Infinite Capsules Scene -->
     <string name="infinite_capsules_scene_title">Infinite Capsules Scene</string>
-    <string name="infinite_capsules_thumbnail_description">Screen shot of Infinite Capsules scene</string>
+    <string name="infinite_capsules_thumbnail_description">
+        Screen shot of Infinite Capsules scene. Black and white.
+        A sea of capsules with a black orb ahead, emitting light that shades each capsule.
+    </string>
 
     <!-- Menger Prison Scene -->
     <string name="menger_prison_scene_title">Menger Prison Scene</string>
-    <string name="menger_prison_thumbnail_description">Screen shot of Menger Prison scene</string>
+    <string name="menger_prison_thumbnail_description">
+        Screen shot of Menger Prison scene. A space made out of a fractal geometry called a Menger Sponge.
+        The Menger Sponge is built using a cube made from smaller cubes, but missing its center on each face, as well as
+        the core of the cube. These "core-less" cubes are built to make bigger "core-less" cubes and the pattern repeats.
+    </string>
 
     <!-- Mandelbrot Scene -->
     <string name="mandelbrot_scene_title">Mandelbrot Scene</string>
-    <string name="mandelbrot_thumbnail_description">Screen shot of Mandelbrot scene</string>
+    <string name="mandelbrot_thumbnail_description">
+        Screen shot of Mandelbrot scene.
+        A rosy accented fractal pattern from the famous Mandelbrot set.
+    </string>
 
     <!-- Errors -->
     <string name="no_rotation_sensor">No rotation sensor found on device</string>

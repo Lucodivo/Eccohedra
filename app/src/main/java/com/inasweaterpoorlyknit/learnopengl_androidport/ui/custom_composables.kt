@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -23,10 +24,10 @@ val listItemTextPadding = 8.dp
 val ScenesIcons = Icons.Rounded
 
 @Composable
-fun ScenesListItem(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+fun ScenesListItem(shape: Shape = MaterialTheme.shapes.large, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Surface(
         elevation = 1.dp,
-        shape = MaterialTheme.shapes.large,
+        shape = shape,
         content = content,
         modifier = modifier
             .padding(horizontal = listPadding, vertical = halfListPadding)
