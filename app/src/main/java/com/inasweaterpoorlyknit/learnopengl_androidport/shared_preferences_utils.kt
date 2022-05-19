@@ -2,8 +2,8 @@ package com.inasweaterpoorlyknit.learnopengl_androidport
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MandelbrotScene
 
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MandelbrotScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MengerPrisonScene
 
 object SharedPrefKeys {

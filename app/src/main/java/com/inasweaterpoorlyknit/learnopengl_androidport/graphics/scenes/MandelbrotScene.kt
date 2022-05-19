@@ -20,17 +20,18 @@ import javax.microedition.khronos.opengles.GL10
 
 class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.OnScaleGestureListener, SharedPreferences.OnSharedPreferenceChangeListener {
 
+    // The Mandelbrot scene has two pre-defined colors
+    // - Black: The point is in the Mandelbrot set
+    // - White: The point's starting point couldn't even be considered for the Mandelbrot set
+    // The "colorSub" represents the factors in which colors are taken away from White on their way to Black
+    data class Color(val name: String, val colorSub: Vec3)
+
     companion object {
-        // The Mandelbrot scene has two pre-defined colors
-        // - Black: The point is in the Mandelbrot set
-        // - White: The point's starting point couldn't even be considered for the Mandelbrot set
-        // The "colorSub" represents the factors in which colors are taken away from White on their way to Black
-        data class Color(val name: String, val colorSub: Vec3)
 
         val colors = arrayOf(
-            Color("Red", Vec3(1.0f, 4.0f, 2.0f)), // red
-            Color("Green", Vec3( 5.0f, 1.0f, 4.0f)), // green
-            Color("Blue", Vec3(6.0f, 3.0f, 1.0f)) // blue
+            Color("🔴", Vec3(1.0f, 4.0f, 2.0f)), // red
+            Color("🟢", Vec3( 5.0f, 1.0f, 4.0f)), // green
+            Color("🔵", Vec3(6.0f, 3.0f, 1.0f)) // blue
         )
 
         const val defaultColorIndex = 0

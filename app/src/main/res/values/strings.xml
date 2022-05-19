@@ -30,6 +30,15 @@
         A rosy accented fractal pattern from the famous Mandelbrot set.
     </string>
 
+    <!-- Info Screen -->
+    <string name="info">Info</string>
+    <string name="scenes">Scenes</string>
+    <string name="source">Source</string>
+    <string name="settings">Settings</string>
+    <string name="dark_mode">Dark Mode 🌙</string>
+    <string name="menger_sponge_resolution">Menger Sponge Resolution</string>
+    <string name="mandelbrot_color">Mandelbrot Color</string>
+
     <!-- Errors -->
     <string name="no_rotation_sensor">No rotation sensor found on device</string>
 </resources>

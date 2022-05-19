@@ -19,7 +19,6 @@ import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-
 class InfiniteCapsulesScene(context: Context) : Scene(context), SensorEventListener {
 
     private val camera = Camera()

@@ -14,9 +14,11 @@ import androidx.compose.material.icons.rounded.ContactPage
 import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.inasweaterpoorlyknit.learnopengl_androidport.R
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MandelbrotScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MengerPrisonScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.ui.theme.OpenGLScenesTheme
@@ -55,7 +57,7 @@ class InfoActivity : AppCompatActivity() {
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Info",
+                        text = stringResource(R.string.info),
                         color = MaterialTheme.colors.onBackground,
                         fontSize = listItemFontSize,
                         textAlign = TextAlign.Center,
@@ -68,7 +70,7 @@ class InfoActivity : AppCompatActivity() {
                 // Scenes Title
                 item {
                     ScenesListItem {
-                        ListItemText(text = "Scenes", color = MaterialTheme.colors.onPrimary, modifier = Modifier.background(color = MaterialTheme.colors.primary))
+                        ListItemText(text = stringResource(R.string.scenes), color = MaterialTheme.colors.onPrimary, modifier = Modifier.background(color = MaterialTheme.colors.primary))
                     }
                 }
 
@@ -83,7 +85,7 @@ class InfoActivity : AppCompatActivity() {
                 // Source Code
                 item {
                     ScenesListItem {
-                        ListItemTextWithRightIcon(text = "Source", icon = ScenesIcons.OpenInNew,
+                        ListItemTextWithRightIcon(text = stringResource(R.string.source), icon = ScenesIcons.OpenInNew,
                             modifier = Modifier.clickable { viewModel.onSourcePress() })
                     }
                 }
@@ -92,7 +94,7 @@ class InfoActivity : AppCompatActivity() {
                 item {
                     Spacer(modifier = Modifier.height(40.dp))
                     Text(
-                        text = "Settings",
+                        text = stringResource(R.string.settings),
                         color = MaterialTheme.colors.onBackground,
                         fontSize = listItemFontSize,
                         textAlign = TextAlign.Center,
@@ -105,7 +107,7 @@ class InfoActivity : AppCompatActivity() {
                 // Dark Mode
                 item {
                     ScenesListItem {
-                        ListItemSwitch("Dark Mode 🌙", initDarkMode) {
+                        ListItemSwitch(stringResource(R.string.dark_mode), initDarkMode) {
                             viewModel.onNightModeToggle(it)
                         }
                     }
@@ -115,7 +117,7 @@ class InfoActivity : AppCompatActivity() {
                 item {
                     ScenesListItem {
                         ListItemDropdown(
-                            titleText = "Menger Sponge Resolution",
+                            titleText = stringResource(R.string.menger_sponge_resolution),
                             items = InfoViewModel.mengerPrisonResolutions,
                             initSelectedIndex = initMengerResolutionIndex,
                             selectedDecorationText = "🎞"
@@ -127,10 +129,10 @@ class InfoActivity : AppCompatActivity() {
                 item {
                     ScenesListItem {
                         ListItemDropdown(
-                            titleText = "Mandelbrot Color",
+                            titleText = stringResource(R.string.mandelbrot_color),
                             items = InfoViewModel.mandelbrotColors,
                             initSelectedIndex = initMandelbrotColorIndex,
-                            selectedDecorationText = "🎨"
+                            selectedDecorationText = "🖌"
                         ){ viewModel.onMandelbrotColorSelected(it) }
                     }
                 }
