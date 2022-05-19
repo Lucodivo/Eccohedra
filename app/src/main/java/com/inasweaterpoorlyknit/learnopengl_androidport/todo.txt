@@ -1,0 +1,2 @@
+- Inject SharedPreferences?
+- Pull out user facing string values

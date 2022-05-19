@@ -1,23 +1,27 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.ui
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.rounded.ContactPage
 import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.inasweaterpoorlyknit.learnopengl_androidport.OpenGLScenesApplication
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MengerPrisonScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.ui.theme.OpenGLScenesTheme
 import com.inasweaterpoorlyknit.learnopengl_androidport.viewmodels.InfoViewModel
 
@@ -29,7 +33,7 @@ class InfoActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            InfoList()
+            InfoList(viewModel.getDarkMode(), viewModel.getMengerSpongeResolutionIndex())
         }
 
         viewModel.webRequest.observe(this) { openWebPage(it) }
@@ -37,7 +41,12 @@ class InfoActivity : AppCompatActivity() {
 
     @Preview
     @Composable
-    fun InfoList() {
+    fun InfoListPreview() {
+        InfoList(true, MengerPrisonScene.defaultResolutionIndex)
+    }
+
+    @Composable
+    fun InfoList(initDarkMode: Boolean, initMengerResolutionIndex: Int) {
         OpenGLScenesTheme(this) {
             LazyColumn(
                 contentPadding = PaddingValues(vertical = halfListPadding),
@@ -62,7 +71,7 @@ class InfoActivity : AppCompatActivity() {
                 // Scenes Title
                 item {
                     ScenesListItem {
-                        ListItemText("Scenes", MaterialTheme.colors.onPrimary, modifier = Modifier.background(color = MaterialTheme.colors.primary))
+                        ListItemText(text = "Scenes", color = MaterialTheme.colors.onPrimary, modifier = Modifier.background(color = MaterialTheme.colors.primary))
                     }
                 }
 
@@ -99,17 +108,39 @@ class InfoActivity : AppCompatActivity() {
                 // Dark Mode
                 item {
                     ScenesListItem {
-                        ListItemSwitch("Dark Mode 🌙", getDarkMode()) {
+                        ListItemSwitch("Dark Mode 🌙", initDarkMode) {
                             viewModel.onNightModeToggle(it)
+                        }
+                    }
+                }
+
+                // Menger Prison Resolution
+                item {
+                    ScenesListItem {
+                        val expanded = remember { mutableStateOf(false) }
+                        val selectedIndex = remember { mutableStateOf(initMengerResolutionIndex) }
+                        Row(horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.clickable {
+                                expanded.value = !expanded.value
+                            }) {
+                            ListItemText(text = "Menger Sponge Resolution", textAlign = TextAlign.Start)
+                            ListItemText(text = "(${InfoViewModel.mengerPrisonResolutions[selectedIndex.value]})", textAlign = TextAlign.Start)
+                        }
+                        DropdownMenu(expanded = expanded.value, onDismissRequest = { expanded.value = !expanded.value }) {
+                            InfoViewModel.mengerPrisonResolutions.forEachIndexed { index, s ->
+                                DropdownMenuItem(onClick = {
+                                    selectedIndex.value = index
+                                    expanded.value = false
+                                    viewModel.onMengerPrisonResolutionSelected(index)
+                                }) {
+                                    val selectedEmoji = if (index == selectedIndex.value) "  🎞" else ""
+                                    Text(text = s + selectedEmoji)
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-    }
-
-    private fun getDarkMode(): Boolean {
-        val scenesApp = application as OpenGLScenesApplication
-        return scenesApp.darkMode.value ?: true
     }
 }

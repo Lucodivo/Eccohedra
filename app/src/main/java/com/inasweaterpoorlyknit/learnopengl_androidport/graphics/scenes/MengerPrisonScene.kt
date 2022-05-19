@@ -1,6 +1,7 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -14,6 +15,9 @@ import android.util.Log.DEBUG
 import android.view.MotionEvent
 import android.widget.Toast
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
+import com.inasweaterpoorlyknit.learnopengl_androidport.SharedPrefKeys
+import com.inasweaterpoorlyknit.learnopengl_androidport.getMengerSpongeResolutionIndex
+import com.inasweaterpoorlyknit.learnopengl_androidport.getSharedPreferences
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
@@ -25,16 +29,27 @@ import javax.microedition.khronos.opengles.GL10
 private const val actionTimeFrame = 0.25f
 private const val maxIterations = 5
 
-class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener {
+data class Resolution (
+    val width: Int,
+    val height: Int
+)
 
-    data class Resolution (
-        val width: Int,
-        val height: Int
-    )
+class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener, SharedPreferences.OnSharedPreferenceChangeListener {
 
-    private val landscape get() = windowWidth > windowHeight
+    companion object {
+        val resolutionFactorOptions = arrayOf(
+            1.0f/32.0f,
+            1.0f/16.0f,
+            1.0f/8.0f,
+            1.0f/4.0f,
+            1.0f/2.0f,
+            1.0f,
+        )
 
-    private lateinit var landscapeResolutions: Array<Resolution>
+        val defaultResolutionIndex = 3
+    }
+
+    private lateinit var resolutions: Array<Resolution>
 
     private val TAG = MengerPrisonScene::class.java.canonicalName
 
@@ -54,13 +69,27 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener 
 
     private var cameraSpeed = 0.5f
 
-    private var currentResolutionIndex = 0
-    private var prevFrameResolutionIndex: Int = currentResolutionIndex // informs us of a resolution change within onDrawFrame()
-    private val resolution get() = landscapeResolutions[currentResolutionIndex]
+    private var currentResolutionIndex: Int
+    private var prevFrameResolutionIndex: Int // informs us of a resolution change within onDrawFrame()
+    private val resolution get() = resolutions[currentResolutionIndex]
 
     private var frameBuffer = IntArray(1)
     private var rbo = IntArray(1)
     private var frameBufferTexture = IntArray(1)
+
+    init {
+        val sharedPreferences = context.getSharedPreferences()
+        currentResolutionIndex = sharedPreferences.getMengerSpongeResolutionIndex()
+        prevFrameResolutionIndex = currentResolutionIndex
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this)
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+        // NOTE: This could become costly if SharedPreferences are being edited all the time
+        if(key == SharedPrefKeys.mengerPrisonResolutionIndex) {
+            currentResolutionIndex = sharedPreferences.getMengerSpongeResolutionIndex()
+        }
+    }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
 
@@ -86,13 +115,10 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener 
     }
 
     private fun initResolutions(width: Int, height: Int) {
-        landscapeResolutions = arrayOf(
-            Resolution(width / 32, height / 32),
-            Resolution(width / 16, height / 16),
-            Resolution(width / 8, height / 8),
-            Resolution(width / 4, height / 4),
-            Resolution(width / 2, height / 2)
-        )
+        resolutions = Array(resolutionFactorOptions.size) { i ->
+            val resFactor = resolutionFactorOptions[i]
+            Resolution((width * resFactor).toInt(), (height * resFactor).toInt())
+        }
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
@@ -155,9 +181,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener 
     }
 
     private fun action() {
-        if(++currentResolutionIndex >= landscapeResolutions.size) {
-            currentResolutionIndex = 0
-        }
+        // TODO: Click action?
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {

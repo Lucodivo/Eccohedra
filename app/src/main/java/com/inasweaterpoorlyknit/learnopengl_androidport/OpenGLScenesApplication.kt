@@ -7,7 +7,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import dagger.hilt.android.HiltAndroidApp
 
-
 @HiltAndroidApp
 class OpenGLScenesApplication : Application() {
 
@@ -53,10 +52,5 @@ class OpenGLScenesApplication : Application() {
 
     private fun getSystemDarkMode(configuration: Configuration): Boolean {
         return (configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-    }
-
-    private fun getSharedPreferences(): SharedPreferences {
-        val globalSharedPreferencesName = "global_preferences"
-        return getSharedPreferences(globalSharedPreferencesName, 0)
     }
 }

@@ -7,7 +7,10 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import androidx.core.math.MathUtils.clamp
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Program
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Scene
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.glClearColor
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.initializeFrameBufferQuadVertexAttBuffers
 import glm_.vec2.Vec2
 import glm_.vec3.Vec3
 import java.nio.IntBuffer

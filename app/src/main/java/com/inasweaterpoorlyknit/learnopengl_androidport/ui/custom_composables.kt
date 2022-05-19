@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.sp
 val listItemFontSize = 20.sp
 val listPadding = 8.dp
 val halfListPadding = listPadding / 2
-val listItemTextPadding = 8.dp
+val listItemTextPadding = 10.dp
 
 val ScenesIcons = Icons.Rounded
 
@@ -36,11 +36,11 @@ fun ScenesListItem(shape: Shape = MaterialTheme.shapes.large, modifier: Modifier
 }
 
 @Composable
-fun ListItemText(text: String, color: Color = Color.Unspecified, modifier: Modifier = Modifier) {
+fun ListItemText(text: String, textAlign: TextAlign = TextAlign.Center, color: Color = Color.Unspecified, modifier: Modifier = Modifier) {
     Text(
         text = text,
         fontSize = listItemFontSize,
-        textAlign = TextAlign.Center,
+        textAlign = textAlign,
         color = color,
         modifier = modifier
             .wrapContentHeight(Alignment.CenterVertically) // center vertically
@@ -85,7 +85,7 @@ fun ListItemSwitch(text: String, defaultState: Boolean, onClick: (Boolean) -> Un
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .align(alignment = Alignment.CenterVertically)
-                .padding(start = 10.dp, end = listItemTextPadding)
+                .padding(horizontal = listItemTextPadding)
         )
         Switch(checked = checkedState.value,
             modifier = Modifier
