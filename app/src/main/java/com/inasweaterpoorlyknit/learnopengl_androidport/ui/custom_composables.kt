@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.inasweaterpoorlyknit.learnopengl_androidport.viewmodels.InfoViewModel
 
 val listItemFontSize = 20.sp
 val listPadding = 8.dp
@@ -96,5 +97,30 @@ fun ListItemSwitch(text: String, defaultState: Boolean, onClick: (Boolean) -> Un
                 checkedState.value = newState
                 onClick(newState)
             })
+    }
+}
+
+@Composable
+fun ListItemDropdown(titleText: String, items: Array<String>, initSelectedIndex: Int, selectedDecorationText: String = "", onItemClicked: (index: Int) -> Unit) {
+    val expanded = remember { mutableStateOf(false) }
+    val selectedIndex = remember { mutableStateOf(initSelectedIndex) }
+    Row(horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.clickable {
+            expanded.value = !expanded.value
+        }) {
+        ListItemText(text = titleText, textAlign = TextAlign.Start)
+        ListItemText(text = "(${items[selectedIndex.value]})", textAlign = TextAlign.Start)
+    }
+    DropdownMenu(expanded = expanded.value, onDismissRequest = { expanded.value = !expanded.value }) {
+        items.forEachIndexed { index, s ->
+            DropdownMenuItem(onClick = {
+                onItemClicked(index)
+                selectedIndex.value = index
+                expanded.value = false
+            }) {
+                val selectedDecoration = if (index == selectedIndex.value) "  $selectedDecorationText" else ""
+                Text(text = s + selectedDecoration)
+            }
+        }
     }
 }

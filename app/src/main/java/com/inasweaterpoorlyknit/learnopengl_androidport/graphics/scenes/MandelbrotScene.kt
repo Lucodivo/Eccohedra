@@ -1,12 +1,13 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.opengl.GLES20.*
 import android.opengl.GLES30.glBindVertexArray
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import androidx.core.math.MathUtils.clamp
-import com.inasweaterpoorlyknit.learnopengl_androidport.R
+import com.inasweaterpoorlyknit.learnopengl_androidport.*
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Program
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Scene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.glClearColor
@@ -17,7 +18,23 @@ import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.OnScaleGestureListener {
+class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.OnScaleGestureListener, SharedPreferences.OnSharedPreferenceChangeListener {
+
+    companion object {
+        // The Mandelbrot scene has two pre-defined colors
+        // - Black: The point is in the Mandelbrot set
+        // - White: The point's starting point couldn't even be considered for the Mandelbrot set
+        // The "colorSub" represents the factors in which colors are taken away from White on their way to Black
+        data class Color(val name: String, val colorSub: Vec3)
+
+        val colors = arrayOf(
+            Color("Red", Vec3(1.0f, 4.0f, 2.0f)), // red
+            Color("Green", Vec3( 5.0f, 1.0f, 4.0f)), // green
+            Color("Blue", Vec3(6.0f, 3.0f, 1.0f)) // blue
+        )
+
+        const val defaultColorIndex = 0
+    }
 
     private lateinit var mandelbrotProgram: Program
     private var quadVAO: Int = -1
@@ -34,12 +51,37 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
     private var previousX: Float = 0.0f
     private var previousY: Float = 0.0f
 
+    private var colorSubIndex: Int
+    private var prevColorSubIndex: Int
+
     private var scaleGestureDetector: ScaleGestureDetector
 
     init {
         scaleGestureDetector = ScaleGestureDetector(context, this)
         scaleGestureDetector.isQuickScaleEnabled = true
         scaleGestureDetector.isStylusScaleEnabled = true
+
+        val sharedPreferences = context.getSharedPreferences()
+        colorSubIndex = sharedPreferences.getMandelbrotColorIndex()
+        prevColorSubIndex = colorSubIndex
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this)
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+        // NOTE: This could become costly if SharedPreferences are being edited all the time
+        if(key == SharedPrefKeys.mandelbrotScene) {
+            colorSubIndex = resolveColorIndex(sharedPreferences)
+        }
+    }
+
+    // Ensuring index is never out of bounds
+    private fun resolveColorIndex(sharedPreferences: SharedPreferences): Int {
+        val newColorIndex = sharedPreferences.getMandelbrotColorIndex()
+        if(newColorIndex < 0 || newColorIndex >= colors.size) {
+            sharedPreferences.setMandelbrotColorIndex(defaultColorIndex)
+            return defaultColorIndex
+        }
+        return newColorIndex
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
@@ -57,6 +99,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         mandelbrotProgram.use()
         glBindVertexArray(quadVAO)
         mandelbrotProgram.setUniform("viewPortResolution", Vec2(windowWidth, windowHeight))
+        mandelbrotProgram.setUniform("colorSub", colors[colorSubIndex].colorSub)
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
@@ -71,6 +114,10 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         // Calling OpenGL functions in other functions will surely result in bugs
         glClear(GL_COLOR_BUFFER_BIT)
 
+        if(colorSubIndex != prevColorSubIndex) {
+            prevColorSubIndex = colorSubIndex
+            mandelbrotProgram.setUniform("colorSub", colors[colorSubIndex].colorSub)
+        }
         mandelbrotProgram.setUniform("zoom", zoom)
         mandelbrotProgram.setUniform("centerOffset", centerOffset)
         glDrawElements(GL_TRIANGLES, // drawing mode

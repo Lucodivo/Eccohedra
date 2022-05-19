@@ -9,11 +9,8 @@ out vec4 FragColor;
 
 uniform vec2 viewPortResolution;
 uniform vec2 centerOffset;
+uniform vec3 colorSub;
 uniform float zoom;
-
-const vec3 redSub = vec3(1.0, 3.0, 1.5);
-const vec3 blueSub = vec3(6.0, 3.0, 1.0);
-const vec3 greenSub = vec3( 2.0, 1.0, 2.0);
 
 void main() {
     // Move (0,0) from bottom left to center
@@ -34,9 +31,8 @@ void main() {
         iterations += 1.0;
     }
 
-    vec3 color = vec3(1.0);
     float iterFraction = (iterations / MAX_ITERATIONS);
-    color -= redSub * iterFraction;
+    vec3 color = vec3(1.0) - (colorSub * iterFraction);
 
     FragColor = vec4(color, 0.0);
 }

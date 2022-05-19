@@ -14,10 +14,7 @@ import android.util.Log
 import android.util.Log.DEBUG
 import android.view.MotionEvent
 import android.widget.Toast
-import com.inasweaterpoorlyknit.learnopengl_androidport.R
-import com.inasweaterpoorlyknit.learnopengl_androidport.SharedPrefKeys
-import com.inasweaterpoorlyknit.learnopengl_androidport.getMengerSpongeResolutionIndex
-import com.inasweaterpoorlyknit.learnopengl_androidport.getSharedPreferences
+import com.inasweaterpoorlyknit.learnopengl_androidport.*
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
@@ -79,16 +76,9 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener,
 
     init {
         val sharedPreferences = context.getSharedPreferences()
-        currentResolutionIndex = sharedPreferences.getMengerSpongeResolutionIndex()
+        currentResolutionIndex = resolveResolutionIndex(sharedPreferences)
         prevFrameResolutionIndex = currentResolutionIndex
         sharedPreferences.registerOnSharedPreferenceChangeListener(this)
-    }
-
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
-        // NOTE: This could become costly if SharedPreferences are being edited all the time
-        if(key == SharedPrefKeys.mengerPrisonResolutionIndex) {
-            currentResolutionIndex = sharedPreferences.getMengerSpongeResolutionIndex()
-        }
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
@@ -114,13 +104,6 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener,
         camera.position = Vec3(0.0f, 0.0f, 0.0f)
     }
 
-    private fun initResolutions(width: Int, height: Int) {
-        resolutions = Array(resolutionFactorOptions.size) { i ->
-            val resFactor = resolutionFactorOptions[i]
-            Resolution((width * resFactor).toInt(), (height * resFactor).toInt())
-        }
-    }
-
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
         super.onSurfaceChanged(gl, width, height)
         initResolutions(width, height)
@@ -128,6 +111,13 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener,
 
         mengerPrisonProgram.use()
         mengerPrisonProgram.setUniform("viewPortResolution", Vec2(resolution.width, resolution.height))
+    }
+
+    private fun initResolutions(width: Int, height: Int) {
+        resolutions = Array(resolutionFactorOptions.size) { i ->
+            val resFactor = resolutionFactorOptions[i]
+            Resolution((width * resFactor).toInt(), (height * resFactor).toInt())
+        }
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -200,6 +190,23 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener,
                 super.onTouchEvent(event)
             }
         }
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+        // NOTE: This could become costly if SharedPreferences are being edited all the time
+        if(key == SharedPrefKeys.mengerPrisonResolutionIndex) {
+            currentResolutionIndex = resolveResolutionIndex(sharedPreferences)
+        }
+    }
+
+    // Ensuring index is never out of bounds
+    private fun resolveResolutionIndex(sharedPreferences: SharedPreferences): Int {
+        val newResolutionIndex = sharedPreferences.getMengerSpongeResolutionIndex()
+        if(newResolutionIndex < 0 || newResolutionIndex >= resolutionFactorOptions.size) {
+            sharedPreferences.setMengerSpongeResolutionIndex(defaultResolutionIndex)
+            return defaultResolutionIndex
+        }
+        return newResolutionIndex
     }
 
     private fun initializeRotationMat() {

@@ -8,19 +8,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.rounded.ContactPage
 import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MandelbrotScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MengerPrisonScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.ui.theme.OpenGLScenesTheme
 import com.inasweaterpoorlyknit.learnopengl_androidport.viewmodels.InfoViewModel
@@ -33,7 +30,7 @@ class InfoActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            InfoList(viewModel.getDarkMode(), viewModel.getMengerSpongeResolutionIndex())
+            InfoList(viewModel.getDarkMode(), viewModel.getMengerSpongeResolutionIndex(), viewModel.getMandelbrotColorIndex())
         }
 
         viewModel.webRequest.observe(this) { openWebPage(it) }
@@ -42,11 +39,11 @@ class InfoActivity : AppCompatActivity() {
     @Preview
     @Composable
     fun InfoListPreview() {
-        InfoList(true, MengerPrisonScene.defaultResolutionIndex)
+        InfoList(true, MengerPrisonScene.defaultResolutionIndex, MandelbrotScene.defaultColorIndex)
     }
 
     @Composable
-    fun InfoList(initDarkMode: Boolean, initMengerResolutionIndex: Int) {
+    fun InfoList(initDarkMode: Boolean, initMengerResolutionIndex: Int, initMandelbrotColorIndex: Int) {
         OpenGLScenesTheme(this) {
             LazyColumn(
                 contentPadding = PaddingValues(vertical = halfListPadding),
@@ -117,27 +114,24 @@ class InfoActivity : AppCompatActivity() {
                 // Menger Prison Resolution
                 item {
                     ScenesListItem {
-                        val expanded = remember { mutableStateOf(false) }
-                        val selectedIndex = remember { mutableStateOf(initMengerResolutionIndex) }
-                        Row(horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.clickable {
-                                expanded.value = !expanded.value
-                            }) {
-                            ListItemText(text = "Menger Sponge Resolution", textAlign = TextAlign.Start)
-                            ListItemText(text = "(${InfoViewModel.mengerPrisonResolutions[selectedIndex.value]})", textAlign = TextAlign.Start)
-                        }
-                        DropdownMenu(expanded = expanded.value, onDismissRequest = { expanded.value = !expanded.value }) {
-                            InfoViewModel.mengerPrisonResolutions.forEachIndexed { index, s ->
-                                DropdownMenuItem(onClick = {
-                                    selectedIndex.value = index
-                                    expanded.value = false
-                                    viewModel.onMengerPrisonResolutionSelected(index)
-                                }) {
-                                    val selectedEmoji = if (index == selectedIndex.value) "  🎞" else ""
-                                    Text(text = s + selectedEmoji)
-                                }
-                            }
-                        }
+                        ListItemDropdown(
+                            titleText = "Menger Sponge Resolution",
+                            items = InfoViewModel.mengerPrisonResolutions,
+                            initSelectedIndex = initMengerResolutionIndex,
+                            selectedDecorationText = "🎞"
+                        ){ viewModel.onMengerPrisonResolutionSelected(it) }
+                    }
+                }
+
+                // Mandelbrot Color
+                item {
+                    ScenesListItem {
+                        ListItemDropdown(
+                            titleText = "Mandelbrot Color",
+                            items = InfoViewModel.mandelbrotColors,
+                            initSelectedIndex = initMandelbrotColorIndex,
+                            selectedDecorationText = "🎨"
+                        ){ viewModel.onMandelbrotColorSelected(it) }
                     }
                 }
             }

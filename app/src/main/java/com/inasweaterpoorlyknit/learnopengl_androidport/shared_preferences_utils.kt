@@ -2,6 +2,7 @@ package com.inasweaterpoorlyknit.learnopengl_androidport
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MandelbrotScene
 
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MengerPrisonScene
 
@@ -9,6 +10,7 @@ object SharedPrefKeys {
     const val darkModeName = "dark_mode"
     const val cachedSystemDarkMode = "dark_mode_system"
     const val mengerPrisonResolutionIndex = "menger_prison_resolution_index"
+    const val mandelbrotScene = "mandelbrot_color_index"
 }
 
 fun Context.getSharedPreferences(): SharedPreferences {
@@ -26,3 +28,6 @@ fun SharedPreferences.getCachedSystemDarkMode(default: Boolean = true) = getBool
 
 fun SharedPreferences.getMengerSpongeResolutionIndex(default: Int = MengerPrisonScene.defaultResolutionIndex) = getInt(SharedPrefKeys.mengerPrisonResolutionIndex, default)
 fun SharedPreferences.setMengerSpongeResolutionIndex(resIndex: Int) = edit().putInt(SharedPrefKeys.mengerPrisonResolutionIndex, resIndex).apply()
+
+fun SharedPreferences.getMandelbrotColorIndex(default: Int = MandelbrotScene.defaultColorIndex) = getInt(SharedPrefKeys.mandelbrotScene, default)
+fun SharedPreferences.setMandelbrotColorIndex(colorIndex: Int) = edit().putInt(SharedPrefKeys.mandelbrotScene, colorIndex).apply()
