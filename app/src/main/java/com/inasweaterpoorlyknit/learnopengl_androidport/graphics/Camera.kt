@@ -26,7 +26,7 @@ class Camera(position: Vec3 = Vec3(0.0f, 0.0f, 0.0f)) {
     }
 
     // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
-    fun getViewMatrix(deltaTime: Float) : Mat4
+    fun getViewMatrix() : Mat4
     {
         changePositioning()
         updateCameraVectors()
@@ -34,7 +34,7 @@ class Camera(position: Vec3 = Vec3(0.0f, 0.0f, 0.0f)) {
         return lookAt()
     }
 
-    fun getRotationMatrix(deltaTime: Float) : Mat4
+    fun getRotationMatrix() : Mat4
     {
         changePositioning()
         updateCameraVectors()

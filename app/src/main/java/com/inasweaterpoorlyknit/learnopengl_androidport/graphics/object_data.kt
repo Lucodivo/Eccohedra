@@ -197,25 +197,28 @@ fun initializeFrameBufferQuadVertexAttBuffers(vaoIntBuffer: IntBuffer, vboIntBuf
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
 }
 
-data class FrameBuffer(val index: IntBuffer = IntBuffer.allocate(1),
-                       val renderBufferIndex: IntBuffer = IntBuffer.allocate(1),
-                       val textureBufferIndex: IntBuffer = IntBuffer.allocate(1))
+data class FrameBuffer(var index: Int = -1,
+                       var renderBufferIndex: Int = -1,
+                       var textureBufferIndex: Int = -1)
 fun FrameBuffer.delete() {
-    glDeleteFramebuffers(1, index)
-    glDeleteRenderbuffers(1, renderBufferIndex)
-    glDeleteTextures(1, textureBufferIndex)
+    glDeleteFramebuffers(1, IntBuffer.wrap(intArrayOf(index)))
+    glDeleteRenderbuffers(1, IntBuffer.wrap(intArrayOf(renderBufferIndex)))
+    glDeleteTextures(1, IntBuffer.wrap(intArrayOf(textureBufferIndex)))
 }
 
-fun initializeFrameBuffer(frameBuffer: FrameBuffer, width: Int, height: Int) {
+fun initializeFrameBuffer(width: Int, height: Int): FrameBuffer {
+    val frameBuffer = FrameBuffer()
+    val tmpIntBuffer = IntBuffer.allocate(1)
+
     // creating frame buffer
-    glGenFramebuffers(1, frameBuffer.index)
-    val frameBufferIndex = frameBuffer.index[0]
-    glBindFramebuffer(GL_FRAMEBUFFER, frameBufferIndex)
+    glGenFramebuffers(1, tmpIntBuffer)
+    frameBuffer.index = tmpIntBuffer[0]
+    glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.index)
 
     // creating frame buffer texture
-    glGenTextures(1, frameBuffer.textureBufferIndex)
-    val frameBufferTextureIndex = frameBuffer.textureBufferIndex[0]
-    glBindTexture(GL_TEXTURE_2D, frameBufferTextureIndex)
+    glGenTextures(1, tmpIntBuffer)
+    frameBuffer.textureBufferIndex = tmpIntBuffer[0]
+    glBindTexture(GL_TEXTURE_2D, frameBuffer.textureBufferIndex)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, null)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -225,20 +228,20 @@ fun initializeFrameBuffer(frameBuffer: FrameBuffer, width: Int, height: Int) {
     glFramebufferTexture2D(GL_FRAMEBUFFER, // frame buffer we're tageting (draw, read, or both)
         GL_COLOR_ATTACHMENT0, // type of attachment
         GL_TEXTURE_2D, // type of texture
-        frameBufferTextureIndex, // texture
+        frameBuffer.textureBufferIndex, // texture
         0) // mipmap level
 
     // creating render buffer to be depth/stencil buffer
-    glGenRenderbuffers(1, frameBuffer.renderBufferIndex)
-    val rboIndex = frameBuffer.renderBufferIndex[0]
-    glBindRenderbuffer(GL_RENDERBUFFER, rboIndex)
+    glGenRenderbuffers(1, tmpIntBuffer)
+    frameBuffer.renderBufferIndex = tmpIntBuffer[0]
+    glBindRenderbuffer(GL_RENDERBUFFER, frameBuffer.renderBufferIndex)
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height)
     glBindRenderbuffer(GL_RENDERBUFFER, 0) // unbind
     // attach render buffer w/ depth & stencil to frame buffer
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, // frame buffer target
         GL_DEPTH_STENCIL_ATTACHMENT, // attachment point of frame buffer
         GL_RENDERBUFFER, // render buffer target
-        rboIndex)  // render buffer
+        frameBuffer.renderBufferIndex)  // render buffer
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
@@ -246,4 +249,6 @@ fun initializeFrameBuffer(frameBuffer: FrameBuffer, width: Int, height: Int) {
         throw RuntimeException("Error creating OpenGL frame buffer.")
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+    return frameBuffer
 }

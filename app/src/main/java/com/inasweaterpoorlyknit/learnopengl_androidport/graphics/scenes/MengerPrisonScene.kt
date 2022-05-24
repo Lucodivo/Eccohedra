@@ -136,7 +136,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener,
 
         glClear(GL_COLOR_BUFFER_BIT)
 
-        val rotationMat = camera.getRotationMatrix(deltaTime.toFloat())
+        val rotationMat = camera.getRotationMatrix()
         camera.moveForward((deltaTime * cameraSpeed).toFloat())
         mengerPrisonProgram.use()
         mengerPrisonProgram.setUniform("rayOrigin", camera.position)
