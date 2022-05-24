@@ -5,8 +5,6 @@ import android.content.SharedPreferences
 import android.opengl.GLES20.GL_UNSIGNED_INT
 import android.opengl.GLES20.glClear
 import android.opengl.GLES30.*
-import android.util.Log
-import android.util.Log.DEBUG
 import android.view.MotionEvent
 import com.inasweaterpoorlyknit.learnopengl_androidport.*
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
@@ -15,7 +13,6 @@ import glm_.vec3.Vec3
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
-
 
 data class Resolution (
     val width: Int,
@@ -50,8 +47,12 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
 
     private lateinit var mengerPrisonProgram: Program
     private var quadVAO: Int = -1
+    private var offscreenFramebuffer = FrameBuffer()
 
     private lateinit var resolutions: Array<Resolution>
+    private var currentResolutionIndex: Int
+    private var prevFrameResolutionIndex: Int // informs us of a resolution change within onDrawFrame()
+    private val resolution get() = resolutions[currentResolutionIndex]
 
     private val cameraPos = Vec3(0.0f, 0.0f, 0.0f)
     private var cameraForward = defaultCameraForward
@@ -63,17 +64,6 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
     private var actionDown = false
 
     private val rotationSensorHelper = RotationSensorHelper()
-
-    private var currentResolutionIndex: Int
-    private var prevFrameResolutionIndex: Int // informs us of a resolution change within onDrawFrame()
-    private val resolution get() = resolutions[currentResolutionIndex]
-
-    private var frameBufferIndex_IntArray = IntArray(1)
-    private val frameBufferIndex get() = frameBufferIndex_IntArray[0]
-    private var frameBufferRenderBufferIndex_IntArray = IntArray(1)
-    private val frameBufferRenderBufferIndex get() = frameBufferRenderBufferIndex_IntArray[0]
-    private var frameBufferTexture_IntArray = IntArray(1)
-    private val frameBufferTexture get() = frameBufferTexture_IntArray[0]
 
     init {
         val sharedPreferences = context.getSharedPreferences()
@@ -102,8 +92,11 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
         super.onSurfaceChanged(gl, width, height)
+
+        // surface resolution has changed, adjust accordingly
         initResolutions(width, height)
-        initializeFrameBuffer(resolution.width, resolution.height)
+        offscreenFramebuffer.delete()
+        offscreenFramebuffer = initializeFrameBuffer(resolution.width, resolution.height)
 
         mengerPrisonProgram.use()
         mengerPrisonProgram.setUniform(uniform.viewPortResolution, Vec2(resolution.width, resolution.height))
@@ -126,35 +119,31 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         // Update scene
         val rotationMat = rotationSensorHelper.getRotationMatrix(sceneOrientation)
         cameraForward = rotationMat * defaultCameraForward
-        if(actionDown) {
-            cameraPos.plusAssign(cameraForward * (deltaTime * cameraFastSpeed).toFloat())
-        } else {
-            cameraPos.plusAssign(cameraForward * (deltaTime * cameraNormalSpeed).toFloat())
-        }
+        val cameraSpeed = if(actionDown) cameraFastSpeed else cameraNormalSpeed
+        cameraPos.plusAssign(cameraForward * cameraSpeed * deltaTime)
 
         if(prevFrameResolutionIndex != currentResolutionIndex) {
-            initializeFrameBuffer(resolution.width, resolution.height)
+            // new resolution index changed by user, adjust accordingly
+            offscreenFramebuffer.delete()
+            offscreenFramebuffer = initializeFrameBuffer(resolution.width, resolution.height)
             prevFrameResolutionIndex = currentResolutionIndex
             mengerPrisonProgram.setUniform(uniform.viewPortResolution, Vec2(resolution.width, resolution.height))
         }
 
+        // draw to offscreen framebuffer
         glViewport(0, 0, resolution.width, resolution.height)
-        glBindFramebuffer(GL_FRAMEBUFFER, frameBufferIndex)
-
+        glBindFramebuffer(GL_FRAMEBUFFER, offscreenFramebuffer.index)
         glClear(GL_COLOR_BUFFER_BIT)
 
         mengerPrisonProgram.use()
         mengerPrisonProgram.setUniform(uniform.rayOrigin, cameraPos)
         mengerPrisonProgram.setUniform(uniform.cameraRotationMat, rotationMat)
-        glDrawElements(GL_TRIANGLES, // drawing mode
-            6, // number of elements to draw (3 vertices per triangle * 2 triangles per quad)
-            GL_UNSIGNED_INT, // type of the indices
-            0) // offset in the EBO
+        glDrawElements(GL_TRIANGLES, frameBufferQuadNumVertices, GL_UNSIGNED_INT, 0 /* offset in the EBO */)
 
+        // blit rendered image onto onscreen buffer, scaling with "blocky"/"point" sampling where needed
         glViewport(0, 0, windowWidth, windowHeight)
-        glBindFramebuffer(GL_FRAMEBUFFER, 0)
-
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, frameBufferIndex)
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0)
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, offscreenFramebuffer.index)
         glBlitFramebuffer(0, 0, resolution.width, resolution.height, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST)
     }
 
@@ -197,48 +186,5 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
             return defaultResolutionIndex
         }
         return newResolutionIndex
-    }
-
-    private fun initializeFrameBuffer(width: Int, height: Int) {
-
-        glDeleteFramebuffers(1, frameBufferIndex_IntArray, 0)
-        glDeleteRenderbuffers(1, frameBufferRenderBufferIndex_IntArray, 0)
-        glDeleteTextures(1, frameBufferTexture_IntArray, 0)
-
-        // creating frame buffer
-        glGenFramebuffers(1, frameBufferIndex_IntArray, 0)
-        glBindFramebuffer(GL_FRAMEBUFFER, frameBufferIndex)
-
-        // creating frame buffer texture
-        glGenTextures(1, frameBufferTexture_IntArray, 0)
-        glBindTexture(GL_TEXTURE_2D, frameBufferTexture)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, null)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        glBindTexture(GL_TEXTURE_2D, 0) // unbind
-
-        // attach texture w/ color to frame buffer
-        glFramebufferTexture2D(GL_FRAMEBUFFER, // frame buffer we're targeting (draw, read, or both)
-            GL_COLOR_ATTACHMENT0, // type of attachment
-            GL_TEXTURE_2D, // type of texture
-            frameBufferTexture, // texture
-            0) // mipmap level
-
-        // creating render buffer to be depth/stencil buffer
-        glGenRenderbuffers(1, frameBufferRenderBufferIndex_IntArray, 0)
-        glBindRenderbuffer(GL_RENDERBUFFER, frameBufferRenderBufferIndex)
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height)
-        glBindRenderbuffer(GL_RENDERBUFFER, 0) // unbind
-        // attach render buffer w/ depth & stencil to frame buffer
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, // frame buffer target
-            GL_DEPTH_STENCIL_ATTACHMENT, // attachment point of frame buffer
-            GL_RENDERBUFFER, // render buffer target
-            frameBufferRenderBufferIndex)  // render buffer
-
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        {
-            Log.println(DEBUG, MengerPrisonScene::class.java.canonicalName,"ERROR::FRAMEBUFFER:: Framebuffer is not complete!")
-        }
-        glBindFramebuffer(GL_FRAMEBUFFER, 0)
     }
 }

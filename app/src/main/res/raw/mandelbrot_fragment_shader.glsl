@@ -1,6 +1,5 @@
 #version 300 es
 
-// define float precision
 precision highp float;
 
 out vec4 FragColor;

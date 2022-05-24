@@ -1,6 +1,5 @@
 #version 300 es
 
-// define float precision
 precision highp float;
 
 out vec4 FragColor;
@@ -9,7 +8,6 @@ out vec4 FragColor;
 #define MISS_DIST 60.0
 #define HIT_DIST 0.01
 
-float distPosToScene(vec3 pos);
 vec2 distanceRayToScene(vec3 rayOrigin, vec3 rayDir);
 float sdCross(vec3 rayPos, vec3 dimen);
 float sdRect(vec2 rayPos, vec2 dimen);
@@ -52,17 +50,13 @@ vec2 distanceRayToScene(vec3 rayOrigin, vec3 rayDir) {
 
     for(int i = 0; i < MAX_STEPS; i++) {
         vec3 pos = rayOrigin + (dist * rayDir);
-        float posToScene = distPosToScene(pos);
+        float posToScene = sdMengerPrison(pos);
         dist += posToScene;
-        if(abs(posToScene) < HIT_DIST) return vec2(dist, i); // absolute value for posToScene incase the ray makes its way inside an object
+        if(posToScene < HIT_DIST) return vec2(dist, i); // absolute value for posToScene incase the ray makes its way inside an object
         if(posToScene > MISS_DIST) break;
     }
 
     return vec2(-1.0f, MAX_STEPS);
-}
-
-float distPosToScene(vec3 rayPos) {
-    return sdMengerPrison(rayPos);
 }
 
 float sdMengerPrison(vec3 rayPos) {
@@ -74,8 +68,8 @@ float sdMengerPrison(vec3 rayPos) {
     float scale = 1.0;
     for(int i = 0; i < iterations; ++i) {
         float boxedWorldDimen = boxDimen / scale;
-        vec3 ray = mod(rayPos + boxedWorldDimen / 2.0, boxedWorldDimen);
-        ray -= boxedWorldDimen / 2.0;
+        vec3 ray = mod(rayPos + boxedWorldDimen * 0.5, boxedWorldDimen);
+        ray -= boxedWorldDimen * 0.5;
         ray *= scale;
         float crossesDist = sdCross(ray * 3.0, vec3(halfBoxDimen));
         scale *= 3.0;
@@ -93,8 +87,8 @@ float sdRect(vec2 rayPos, vec2 dimen) {
 }
 
 float sdCross(vec3 rayPos, vec3 dimen) {
-    float da = sdRect(rayPos.xy, dimen.xy);
-    float db = sdRect(rayPos.xz, dimen.xz);
-    float dc = sdRect(rayPos.yz, dimen.yz);
-    return min(da,min(db,dc));
+    float distA = sdRect(rayPos.xy, dimen.xy);
+    float distB = sdRect(rayPos.xz, dimen.xz);
+    float distC = sdRect(rayPos.yz, dimen.yz);
+    return min(distA,min(distB,distC));
 }

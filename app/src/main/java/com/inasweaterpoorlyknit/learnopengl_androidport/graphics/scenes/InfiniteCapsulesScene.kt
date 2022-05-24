@@ -104,10 +104,7 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
         }
 
         // Draw triangles from the forever-bounded quadVAO
-        glDrawElements(GL_TRIANGLES, // drawing mode
-            6, // number of elements to draw (3 vertices per triangle * 2 triangles per quad)
-            GL_UNSIGNED_INT, // type of the indices
-            0) // offset in the EBO
+        glDrawElements(GL_TRIANGLES, frameBufferQuadNumVertices, GL_UNSIGNED_INT, 0 /* offset in the EBO */)
     }
 
     override fun onAttach() {

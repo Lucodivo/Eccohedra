@@ -144,7 +144,6 @@ fun initializeCubePosTexNormAttBuffers(vaoIntBuffer: IntBuffer, vboIntBuffer: In
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
 }
 
-
 fun initializeFrameBufferQuadVertexAttBuffers(vaoIntBuffer: IntBuffer, vboIntBuffer: IntBuffer, eboIntBuffer: IntBuffer)
 {
     glGenVertexArrays(1, vaoIntBuffer)
