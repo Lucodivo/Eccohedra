@@ -17,7 +17,7 @@ float sdMengerPrison(vec3 rayPos);
 
 uniform vec2 viewPortResolution;
 uniform vec3 rayOrigin;
-uniform mat4 viewRotationMat;
+uniform mat3 cameraRotationMat;
 uniform int iterations;
 
 const float boxDimen = 20.0;
@@ -31,8 +31,7 @@ void main()
     pixelCoord = pixelCoord / viewPortResolution.y;
 
     vec3 rayDir = vec3(pixelCoord.x, pixelCoord.y, 1.0);
-    rayDir = vec3(vec4(rayDir, 0.0) * viewRotationMat);
-    rayDir = normalize(rayDir);
+    rayDir = normalize(cameraRotationMat * rayDir);
 
     vec2 dist = distanceRayToScene(rayOrigin, rayDir);
 

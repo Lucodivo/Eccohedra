@@ -21,7 +21,7 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
             const val viewPortResolution = "viewPortResolution"
             const val rayOrigin = "rayOrigin"
             const val elapsedTime = "elapsedTime"
-            const val rotationMatrix = "rotationMat"
+            const val cameraRotationMat = "cameraRotationMat"
         }
 
         private val defaultCameraForward = Vec3(0.0f, 0.0f, 1.0f)
@@ -85,15 +85,15 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
         val deltaTime = elapsedTime - lastFrameTime
         lastFrameTime = elapsedTime
 
-        val rotationMatrix = rotationSensorHelper.getRotationMatrix(sceneOrientation)
-        cameraForward = rotationMatrix * defaultCameraForward
+        val rotationMat = rotationSensorHelper.getRotationMatrix(sceneOrientation)
+        cameraForward = rotationMat * defaultCameraForward
         cameraPos.plusAssign(cameraForward * (deltaTime * cameraSpeed).toFloat())
 
         glClear(GL_COLOR_BUFFER_BIT)
 
         program.setUniform(uniform.rayOrigin, cameraPos)
         program.setUniform(uniform.elapsedTime, elapsedTime.toFloat())
-        program.setUniform(uniform.rotationMatrix, rotationMatrix)
+        program.setUniform(uniform.cameraRotationMat, rotationMat)
         if(lightAlive) {
             program.setUniform(uniform.lightPosition, lightPosition)
             val deltaDistDelta = (deltaTime * lightSpeed).toFloat()

@@ -21,7 +21,7 @@ vec3 getNormal(vec3 surfacePos);
 uniform vec2 viewPortResolution;
 uniform vec3 rayOrigin;
 uniform float elapsedTime;
-uniform mat3 rotationMat;
+uniform mat3 cameraRotationMat;
 uniform vec3 lightPos;
 uniform vec3 lightColor;
 
@@ -40,11 +40,11 @@ void main()
     vec2 uv = (gl_FragCoord.xy - (0.5 * viewPortResolution.xy))/viewPortResolution.y;
 
     vec3 rayDir = vec3(uv.x, uv.y, 1.0); // NOTE: Expected to be normalized!
-    rayDir = normalize(rotationMat * rayDir);
+    rayDir = normalize(cameraRotationMat * rayDir);
 
     // move capsule centers
-    capsuleCenterPosA = rotationMat * capsuleCenterPosA;
-    capsuleCenterPosB = rotationMat * capsuleCenterPosB;
+    capsuleCenterPosA = cameraRotationMat * capsuleCenterPosA;
+    capsuleCenterPosB = cameraRotationMat * capsuleCenterPosB;
     capsuleCenterPosA = capsuleCenterPosA + offset;
     capsuleCenterPosB = capsuleCenterPosB + offset;
 

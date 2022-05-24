@@ -32,8 +32,6 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
         private const val zFar = 100.0f
 
         private const val generalPanScaleFactor = 0.005f
-        private const val cameraForwardMax = -2.15f
-        private const val cameraForwardMin = -10.0f
 
         private const val actionDownWindow = 0.3f
 
