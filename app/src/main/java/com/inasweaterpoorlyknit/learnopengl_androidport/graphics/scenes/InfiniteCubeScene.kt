@@ -27,9 +27,17 @@ val cubeRotationAxis = Vec3(1.0f, 0.3f, 0.5f)
 const val outlineTextureIndex = 2
 const val SMOOTH_TRANSITIONS = true
 
+// TODO: Have pan either rotate around the cube or spin the cube?
 class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener {
 
-    private val camera = Camera()
+    companion object {
+        // TODO: Is a projection matrix the camera's job?
+        const val fovY = 45.0f
+        const val zNear = 0.1f
+        const val zFar = 100.0f
+    }
+
+    private val camera = Camera(Vec3(0.0f, 0.0f, if (sceneOrientation.isLandscape()) -3.0f else -4.0f))
     private lateinit var cubeProgram: Program
     private lateinit var cubeOutlineProgram: Program
     private lateinit var frameBufferProgram: Program
@@ -206,7 +214,7 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
         glBindTexture(GL_TEXTURE_2D, frameBuffers[1].textureBufferIndex[0])
         glActiveTexture(GL_TEXTURE0)
 
-        projectionMat = glm.perspective(glm.radians(ZOOM), windowWidth.toFloat()/windowHeight, 0.1f, 100.0f)
+        projectionMat = glm.perspective(glm.radians(fovY), aspectRatio, zNear, zFar)
 
         cubeProgram.use()
         cubeProgram.setUniform("texWidth", windowWidth.toFloat())
@@ -234,7 +242,7 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
     }
 
     private fun pan(vec2: Vec2) {
-        camera.processPanWalk(vec2)
+        camera.processScreenPanWalk(vec2)
     }
 
     fun action() {
@@ -243,7 +251,7 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
     }
 
     private fun deviceRotation(mat4: Mat4) {
-        camera.processRotationSensor(Mat4(mat4))
+//        camera.processRotationSensor(Mat4(mat4))
     }
 
     override fun onAttach() {
@@ -299,7 +307,7 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
         when(event.sensor.type){
             Sensor.TYPE_ROTATION_VECTOR -> {
                 SensorManager.getRotationMatrixFromVector(rotationSensorMatrix, event.values)
-                if(orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                if(sceneOrientation.isLandscape()) {
                     SensorManager.remapCoordinateSystem(rotationSensorMatrix, SensorManager.AXIS_Y, SensorManager.AXIS_MINUS_X, rotationSensorMatrix)
                 }
                 deviceRotation(Mat4(rotationSensorMatrix))

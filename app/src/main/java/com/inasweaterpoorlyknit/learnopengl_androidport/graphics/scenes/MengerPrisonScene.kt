@@ -2,7 +2,6 @@ package com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.content.res.Configuration
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -43,7 +42,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener,
             1.0f,
         )
 
-        val defaultResolutionIndex = 3
+        const val defaultResolutionIndex = 3
     }
 
     private lateinit var resolutions: Array<Resolution>
@@ -96,12 +95,10 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener,
 
         firstFrameTime = systemTimeInDeciseconds()
         glClearColor(Vec3(1.0f, 0.0f, 0.0f))
-        camera.movementSpeed *= 4.0f
 
         mengerPrisonProgram.use()
         glBindVertexArray(quadVAO)
         mengerPrisonProgram.setUniform("iterations", maxIterations)
-        camera.position = Vec3(0.0f, 0.0f, 0.0f)
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
@@ -140,7 +137,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener,
         glClear(GL_COLOR_BUFFER_BIT)
 
         val rotationMat = camera.getRotationMatrix(deltaTime.toFloat())
-        camera.position.plusAssign(camera.front * deltaTime * cameraSpeed)
+        camera.moveForward((deltaTime * cameraSpeed).toFloat())
         mengerPrisonProgram.use()
         mengerPrisonProgram.setUniform("rayOrigin", camera.position)
         mengerPrisonProgram.setUniform("viewRotationMat", rotationMat)
@@ -261,14 +258,14 @@ class MengerPrisonScene(context: Context) : Scene(context), SensorEventListener,
     }
 
     private fun deviceRotation(mat4: Mat4) {
-        camera.processRotationSensor(Mat4(mat4))
+//        camera.processRotationSensor(Mat4(mat4))
     }
 
     override fun onSensorChanged(event: SensorEvent) {
         when(event.sensor.type){
             Sensor.TYPE_ROTATION_VECTOR -> {
                 SensorManager.getRotationMatrixFromVector(rotationSensorMatrix, event.values)
-                if(orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                if(sceneOrientation.isLandscape()) {
                     SensorManager.remapCoordinateSystem(rotationSensorMatrix, SensorManager.AXIS_Y, SensorManager.AXIS_MINUS_X, rotationSensorMatrix)
                 }
                 deviceRotation(Mat4(rotationSensorMatrix))

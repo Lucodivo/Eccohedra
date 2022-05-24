@@ -8,25 +8,28 @@ import glm_.vec4.Vec4
 
 const val PITCH = 0.0f
 const val YAW = -90.0f
-const val ZOOM = 45.0f
 
-class Camera {
-    var position: Vec3 = Vec3(0.0f, 0.0f, 3.0f)
-    var movementSpeed = 1.0f
+class Camera(position: Vec3 = Vec3(0.0f, 0.0f, 0.0f)) {
+
+    var position = position
+        private set
+
     private var up: Vec3 = Vec3(0.0f, 1.0f, 0.0f)
     private var yaw: Float = YAW
     private var pitch: Float = PITCH
 
-    var front = Vec3(0.0f, 0.0f, -1.0f)
+    var front = Vec3(0.0f, 0.0f, 1.0f)
     private var right = Vec3(1.0f, 0.0f, 0.0f)
     private var worldUp = Vec3(0.0f, 1.0f, 0.0f)
 
     var deltaPosition = Vec3(0.0f, 0.0f, 0.0f)
 
-    var rotMat = Mat4(1.0f)
-
     // startingInverse Matrix
     lateinit var startingMat4Inverse: Mat4
+
+    companion object {
+        private const val panSpeedMultiplier = 1.0f / 200.0f
+    }
 
     init {
         updateCameraVectors()
@@ -89,24 +92,23 @@ class Camera {
         // Calculate camera up vector
         val yAxis = glm.cross(zAxis, xAxis)
 
-        val rotation = Mat4(
+        return Mat4(
             xAxis.x, yAxis.x, -zAxis.x, 0.0f,
             xAxis.y, yAxis.y, -zAxis.y, 0.0f,
             xAxis.z, yAxis.z, -zAxis.z, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f)
-
-        return rotation
+            0.0f, 0.0f, 0.0f, 1.0f
+        )
     }
 
     // Calculates the front vector from the Camera's (updated) Eular Angles
     private fun updateCameraVectors() {
         // Calculate the new front vector
-        val newFront = rotMat * Vec4(0.0f, 0.0f, -1.0f, 1.0f)
+//        val newFront = rotMat * Vec4(0.0f, 0.0f, -1.0f, 1.0f)
 
-        front = glm.normalize(newFront.toVec3())
-        // Also re-calculate the right and Up vector
-        right = glm.normalize(glm.cross(front, worldUp))  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-        up = glm.normalize(glm.cross(right, front))
+//        front = glm.normalize(newFront.toVec3())
+//        // Also re-calculate the right and Up vector
+//        right = glm.normalize(glm.cross(front, worldUp))  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+//        up = glm.normalize(glm.cross(right, front))
     }
 
     private fun changePositioning()
@@ -117,18 +119,18 @@ class Camera {
         deltaPosition.z = 0.0f
     }
 
-    fun processPanWalk(vec2: Vec2) {
-        val panSpeedMultiplier = (movementSpeed/200.0f)
-        deltaPosition = (Vec3(front.x, 0.0f, front.z) * vec2.y * panSpeedMultiplier) + (right * -vec2.x * panSpeedMultiplier)
+    fun moveForward(unitsForward: Float) = position.plusAssign(front * unitsForward)
+
+    // Left handed coordinate system: X is right, Z is forward, Y is up
+    // screenPan.x: move along the right vector (negated to feel like a "drag")
+    // screenPan.y: +Y is a downward pan movement. Panning down moves forward. Panning up moves back. (pulling things toward you, pushing them away)
+    fun processScreenPanWalk(screenPan: Vec2, panSpeed: Float = 1.0f) {
+        val speed = panSpeed * panSpeedMultiplier
+        deltaPosition = (Vec3(front.x, 0.0f, front.z).normalize() * screenPan.y * speed) + (right * -screenPan.x * speed)
     }
 
-    fun processPanFly(vec2: Vec2) {
-        val panSpeedMultiplier = (movementSpeed/200.0f)
-        deltaPosition = (front * vec2.y * panSpeedMultiplier) + (right * -vec2.x * panSpeedMultiplier)
-    }
-
-    fun processRotationSensor(inverseRotMat: Mat4) {
-        if(!::startingMat4Inverse.isInitialized) startingMat4Inverse = inverseRotMat
-        this.rotMat = startingMat4Inverse * inverseRotMat.inverse()
+    fun processScreenPanFly(vec2: Vec2, panSpeed: Float = 1.0f) {
+        val speed = panSpeed * panSpeedMultiplier
+        deltaPosition = (front * vec2.y * speed) + (right * -vec2.x * speed)
     }
 }

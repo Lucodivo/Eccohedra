@@ -4,6 +4,7 @@ import android.content.Context
 import android.opengl.GLES20.*
 import android.util.Log
 import androidx.annotation.RawRes
+import glm_.mat3x3.Mat3
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec3.Vec3
@@ -42,7 +43,6 @@ class Program(context: Context, @RawRes vertexShaderResId: Int, @RawRes fragment
     fun setUniform(name: String, value: Vec2) = setUniform(name, value.x, value.y)
     fun setUniform(name: String, value: Vec3) = setUniform(name, value.x, value.y, value.z)
     fun setUniform(name: String, value: Int) = glUniform1i(glGetUniformLocation(id, name), value)
-    fun setUniform(name: String, value: Mat4) = glUniformMatrix4fv(glGetUniformLocation(id, name), 1, false, value to FloatBuffer.allocate(
-        MAT_4x4_SIZE
-    ))
+    fun setUniform(name: String, value: Mat3) = glUniformMatrix3fv(glGetUniformLocation(id, name), 1, false, value to FloatBuffer.allocate(3*3))
+    fun setUniform(name: String, value: Mat4) = glUniformMatrix4fv(glGetUniformLocation(id, name), 1, false, value to FloatBuffer.allocate(4*4))
 }
