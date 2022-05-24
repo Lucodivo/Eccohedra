@@ -6,6 +6,9 @@ import android.view.Surface
 import android.view.WindowManager
 import androidx.annotation.RawRes
 
+const val RadiansPerDegree = 0.0174533f
+const val DegreesPerRadian = 114.59156f
+
 enum class Orientation {
   Portrait,
   Landscape,

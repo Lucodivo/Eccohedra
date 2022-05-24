@@ -4,32 +4,22 @@ import glm_.glm
 import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec3.Vec3
-import glm_.vec4.Vec4
-
-const val PITCH = 0.0f
-const val YAW = -90.0f
 
 class Camera(position: Vec3 = Vec3(0.0f, 0.0f, 0.0f)) {
+
+    companion object {
+        private val worldUp = Vec3(0.0f, 1.0f, 0.0f)
+    }
 
     var position = position
         private set
 
-    private var up: Vec3 = Vec3(0.0f, 1.0f, 0.0f)
-    private var yaw: Float = YAW
-    private var pitch: Float = PITCH
-
     var front = Vec3(0.0f, 0.0f, 1.0f)
+        private set
     private var right = Vec3(1.0f, 0.0f, 0.0f)
-    private var worldUp = Vec3(0.0f, 1.0f, 0.0f)
+    private var up: Vec3 = Vec3(0.0f, 1.0f, 0.0f)
 
     var deltaPosition = Vec3(0.0f, 0.0f, 0.0f)
-
-    // startingInverse Matrix
-    lateinit var startingMat4Inverse: Mat4
-
-    companion object {
-        private const val panSpeedMultiplier = 1.0f / 200.0f
-    }
 
     init {
         updateCameraVectors()
@@ -124,13 +114,11 @@ class Camera(position: Vec3 = Vec3(0.0f, 0.0f, 0.0f)) {
     // Left handed coordinate system: X is right, Z is forward, Y is up
     // screenPan.x: move along the right vector (negated to feel like a "drag")
     // screenPan.y: +Y is a downward pan movement. Panning down moves forward. Panning up moves back. (pulling things toward you, pushing them away)
-    fun processScreenPanWalk(screenPan: Vec2, panSpeed: Float = 1.0f) {
-        val speed = panSpeed * panSpeedMultiplier
-        deltaPosition = (Vec3(front.x, 0.0f, front.z).normalize() * screenPan.y * speed) + (right * -screenPan.x * speed)
+    fun processScreenPanWalk(screenPan: Vec2) {
+        deltaPosition = (Vec3(front.x, 0.0f, front.z).normalize() * screenPan.y) + (right * -screenPan.x)
     }
 
-    fun processScreenPanFly(vec2: Vec2, panSpeed: Float = 1.0f) {
-        val speed = panSpeed * panSpeedMultiplier
-        deltaPosition = (front * vec2.y * speed) + (right * -vec2.x * speed)
+    fun processScreenPanFly(vec2: Vec2) {
+        deltaPosition = (front * vec2.y) + (right * -vec2.x)
     }
 }

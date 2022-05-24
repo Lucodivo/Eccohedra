@@ -7,7 +7,8 @@ import java.nio.IntBuffer
 
 // ===== cube values =====
 const val cubePosTexNormAttSizeInBytes = 8 * BYTES_PER_FLOAT // 8 times size in bytes
-const val cubePosTextNormNumElements = 12 // 2 triangles per side * 6 sides per cube
+const val cubePosTextNormNumTriangles = 2 * 6 // 2 triangles per side * 6 sides per cube
+const val cubePosTextNormNumVertices = cubePosTextNormNumTriangles * 3
 val cubePosTexNormAttributes = floatArrayOf(
     // positions           // normals            // texture positions
     // face #1
@@ -58,6 +59,8 @@ val cubePosNormIndices = intArrayOf(
 
 // ===== frame buffer quad values =====
 const val frameBufferQuadVertexAttSizeInBytes = 4 * BYTES_PER_FLOAT
+const val frameBufferQuadNumTriangles = 2
+const val frameBufferQuadNumVertices = frameBufferQuadNumTriangles * 3
 val frameBufferQuadVertexAttributes = floatArrayOf(
     // positions   // texCoords
     -1.0f,  1.0f,  0.0f, 1.0f,

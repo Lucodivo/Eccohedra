@@ -1,15 +1,10 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes
 
 import android.content.Context
-import android.content.res.Configuration
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
 import android.opengl.GLES20.*
 import android.opengl.GLES30.glBindVertexArray
 import android.view.MotionEvent
-import android.widget.Toast
+import androidx.core.math.MathUtils.clamp
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
 import glm_.glm
@@ -22,62 +17,77 @@ import javax.microedition.khronos.opengles.GL10
 import kotlin.math.cos
 import kotlin.math.sin
 
-const val cubeRotationAngle = 2.5f
-val cubeRotationAxis = Vec3(1.0f, 0.3f, 0.5f)
-const val outlineTextureIndex = 2
-const val SMOOTH_TRANSITIONS = true
 
 // TODO: Have pan either rotate around the cube or spin the cube?
-class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener {
+// NOTE: DS means deciseconds
+class InfiniteCubeScene(context: Context) : Scene(context) {
 
     companion object {
+        private const val cubeRotationAnglePerDS = 0.3125f * RadiansPerDegree
+        private val cubeRotationAxis = Vec3(1.0f, 0.3f, 0.5f)
+        private const val cubeScale: Float = 1.0f
+        private const val outlineTextureIndex = 2
+        private const val SMOOTH_TRANSITIONS = true
+        private val cubeScaleMatrix = Mat4(cubeScale)
+
         // TODO: Is a projection matrix the camera's job?
-        const val fovY = 45.0f
-        const val zNear = 0.1f
-        const val zFar = 100.0f
+        private const val fovY = 45.0f
+        private const val zNear = 0.1f
+        private const val zFar = 100.0f
+
+        private const val generalPanScaleFactor = 0.005f
+        private const val cameraForwardMax = -1.5f
+        private const val cameraForwardMin = -10.0f
+
+        private const val actionDownWindow = 0.3f
+
+        private object uniform {
+            const val diffuseTexture = "diffTexture"
+            const val viewMat = "view"
+            const val modelMat = "model"
+            const val projectionMat = "projection"
+            const val screenTexture = "screenTexture"
+            const val textureWidth = "texWidth"
+            const val textureHeight = "texHeight"
+        }
     }
 
     private val camera = Camera(Vec3(0.0f, 0.0f, if (sceneOrientation.isLandscape()) -3.0f else -4.0f))
+
+    // GL handles
     private lateinit var cubeProgram: Program
     private lateinit var cubeOutlineProgram: Program
     private lateinit var frameBufferProgram: Program
-    private lateinit var frameBuffers: Array<FrameBuffer>
+    private val frameBuffers = arrayOf(FrameBuffer(), FrameBuffer()) // TODO: Consider using render buffers instead, since we don't need to read directly from them
     private var cubeVAO: Int = -1
     private var quadVAO: Int = -1
     private var outlineTextureId: Int = -1
-    private var projectionMat = Mat4()
 
     private var currentFrameBufferIndex: Int = 0
     private var previousFrameBufferIndex: Int = 1
-    private var cubeScale: Float = 1.0f
 
-    private var lastFrameTime: Double = -1.0
-    private var elapsedTime: Double = 0.0
-    private var staggeredTimer: Double = 0.0
-
+    private var lastFrameTimeDS: Double = -1.0
+    private var elapsedTimeDS: Double = 0.0
     private var timeColorOffset = 0.0f
-
-    private val sensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    private val sensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
-    private val rotationSensorMatrix: FloatArray = FloatArray(MAT_4x4_SIZE)
-
-    private val touchScaleFactor: Float = 180.0f / 320f
     private var previousX: Float = 0.0f
     private var previousY: Float = 0.0f
     private var actionDownTime: Double = 0.0
+    private var staggeredTimerDS: Double = 0.0 // only used when SMOOTH_TRANSITIONS is set to false, for staggered captures
+
+    private val rotationSensorHelper = RotationSensorHelper()
 
     override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
-        initializeRotationMat()
-
         cubeProgram = Program(context, R.raw.pos_norm_tex_vertex_shader, R.raw.crop_center_square_tex_fragment_shader)
         cubeOutlineProgram = Program(context, R.raw.pos_norm_tex_vertex_shader, R.raw.discard_alpha_fragment_shader)
         frameBufferProgram = Program(context, R.raw.frame_buffer_vertex_shader, R.raw.basic_texture_fragment_shader)
 
-        // setup vertex attribute objects
+        // setup vertex attribute objects for cube
         val cubeVAOBuffer = IntBuffer.allocate(1)
         val cubeVBOBuffer = IntBuffer.allocate(1)
         val cubeEBOBuffer = IntBuffer.allocate(1)
         initializeCubePosTexNormAttBuffers(cubeVAOBuffer, cubeVBOBuffer, cubeEBOBuffer)
+
+        // setup vertex attribute objects for frame buffer
         val quadVAOBuffer = IntBuffer.allocate(1)
         val quadVBOBuffer = IntBuffer.allocate(1)
         val quadEBOBuffer = IntBuffer.allocate(1)
@@ -86,6 +96,7 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
         cubeVAO = cubeVAOBuffer[0]
         quadVAO = quadVAOBuffer[0]
 
+        // Load cube outline texture and bind it
         outlineTextureId = loadTexture(context, R.raw.cube_outline)
         glActiveTexture(GL_TEXTURE0 + outlineTextureIndex)
         glBindTexture(GL_TEXTURE_2D, outlineTextureId)
@@ -102,105 +113,99 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
         glDepthFunc(GL_LESS)
 
         cubeOutlineProgram.use()
-        cubeOutlineProgram.setUniform("diffTexture", outlineTextureIndex)
+        cubeOutlineProgram.setUniform(uniform.diffuseTexture, outlineTextureIndex)
 
-        lastFrameTime = systemTimeInDeciseconds()
+        lastFrameTimeDS = systemTimeInDeciseconds()
     }
 
     override fun onDrawFrame(unused: GL10) {
         // NOTE: OpenGL calls must be called within specified call back functions
         // Calling OpenGL functions in other functions will surely result in bugs
         val t = systemTimeInDeciseconds()
-        val deltaDeciseconds = (t - lastFrameTime)
-        lastFrameTime = t
-        elapsedTime += deltaDeciseconds
+        val deltaTimeDS = (t - lastFrameTimeDS)
+        lastFrameTimeDS = t
+        elapsedTimeDS += deltaTimeDS
 
         if(SMOOTH_TRANSITIONS) {
             // constant frame changes for cube
-            previousFrameBufferIndex = currentFrameBufferIndex;
+            previousFrameBufferIndex = currentFrameBufferIndex
             currentFrameBufferIndex = if (currentFrameBufferIndex == 0) 1 else 0
         } else {
-            staggeredTimer += deltaDeciseconds
+            staggeredTimerDS += deltaTimeDS
             // control when we "change frames" for the cube
-            if (staggeredTimer > 0.75f)
+            if (staggeredTimerDS > 0.5f)
             {
-                staggeredTimer = 0.0
+                staggeredTimerDS = 0.0
                 previousFrameBufferIndex = currentFrameBufferIndex
                 currentFrameBufferIndex = if (currentFrameBufferIndex == 0) 1 else 0
             }
         }
 
         // set background color
-        val timeColor = getTimeColor(elapsedTime)
-        glClearColor(timeColor)
+        val backgroundColor = getTimeColor(elapsedTimeDS)
+        glClearColor(backgroundColor)
 
-        // bind default frame buffer
+        // === Draw scene to off screen frame buffer ====
         glBindFramebuffer(GL_FRAMEBUFFER, frameBuffers[currentFrameBufferIndex].index[0])
 
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
 
         val viewMat = camera.getViewMatrix(deltaDeciseconds.toFloat())
+        val viewMat = camera.getViewMatrix(deltaTimeDS.toFloat())
 
         // draw cube
         // rotate with time
-        var cubeModelMatrix = Mat4()
-        cubeModelMatrix = glm.scale(
-            cubeModelMatrix,
-            Vec3(cubeScale)
-        )
-        cubeModelMatrix = glm.rotate(
-            cubeModelMatrix,
-            (elapsedTime.toFloat() / 8.0f) * glm.radians(cubeRotationAngle),
+        val cubeModelMatrix = glm.rotate(
+            cubeScaleMatrix,
+            elapsedTimeDS.toFloat() * cubeRotationAnglePerDS,
             cubeRotationAxis
         )
 
         // draw cube outline
-        cubeOutlineProgram.use()
         glBindVertexArray(cubeVAO)
-        cubeOutlineProgram.setUniform("view", viewMat)
-        cubeOutlineProgram.setUniform("model", cubeModelMatrix)
+        cubeOutlineProgram.use()
+        cubeOutlineProgram.setUniform(uniform.viewMat, viewMat)
+        cubeOutlineProgram.setUniform(uniform.modelMat, cubeModelMatrix)
         glDrawElements(
             GL_TRIANGLES,
-            cubePosTextNormNumElements * 3, // number of elements to draw (3 vertices per triangle * 2 triangles per face * 6 faces)
+            cubePosTextNormNumVertices,
             GL_UNSIGNED_INT,
-            0
+            0 // offset in the EBO
         )
 
         // draw texture within cube
         cubeProgram.use()
-        glBindVertexArray(cubeVAO)
-        cubeProgram.setUniform("view", viewMat)
-        cubeProgram.setUniform("model", cubeModelMatrix)
-        cubeProgram.setUniform("diffTexture", previousFrameBufferIndex)
+        cubeProgram.setUniform(uniform.viewMat, viewMat)
+        cubeProgram.setUniform(uniform.modelMat, cubeModelMatrix)
+        cubeProgram.setUniform(uniform.diffuseTexture, previousFrameBufferIndex)
         glDrawElements(
             GL_TRIANGLES,
-            cubePosTextNormNumElements * 3, // number of elements to draw (3 vertices per triangle * 2 triangles per face * 6 faces)
+            cubePosTextNormNumVertices,
             GL_UNSIGNED_INT,
             0
         )
 
-        // draw scene to quad
+        // === Draw off screen frame buffer to screen ====
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
-
-        frameBufferProgram.use()
         glBindVertexArray(quadVAO)
-        frameBufferProgram.setUniform("screenTexture", currentFrameBufferIndex)
-        glDrawElements(GL_TRIANGLES, // drawing mode
-            6, // number of elements to draw (3 vertices per triangle * 2 triangles per quad)
-            GL_UNSIGNED_INT, // type of the indices
-            0) // offset in the EBO
+        frameBufferProgram.use()
+        frameBufferProgram.setUniform(uniform.screenTexture, currentFrameBufferIndex)
+        glDrawElements(
+            GL_TRIANGLES,
+            frameBufferQuadNumVertices,
+            GL_UNSIGNED_INT,
+            0
+        )
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
         super.onSurfaceChanged(gl, width, height)
-        frameBuffers = arrayOf(FrameBuffer(), FrameBuffer())
-
         initializeFrameBuffer(frameBuffers[0], windowWidth, windowHeight)
         initializeFrameBuffer(frameBuffers[1], windowWidth, windowHeight)
 
         // start frame buffer with single color
-        glClearColor(0.5f, 1.0f, 0.5f, 1.0f)
+        glClearColor(getTimeColor(elapsedTimeDS))
 
         glBindFramebuffer(GL_FRAMEBUFFER, frameBuffers[0].index[0])
         glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT)
@@ -214,35 +219,31 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
         glBindTexture(GL_TEXTURE_2D, frameBuffers[1].textureBufferIndex[0])
         glActiveTexture(GL_TEXTURE0)
 
-        projectionMat = glm.perspective(glm.radians(fovY), aspectRatio, zNear, zFar)
+        val projectionMat = glm.perspective(glm.radians(fovY), aspectRatio, zNear, zFar)
 
         cubeProgram.use()
-        cubeProgram.setUniform("texWidth", windowWidth.toFloat())
-        cubeProgram.setUniform("texHeight", windowHeight.toFloat())
-        cubeProgram.setUniform("projection", projectionMat)
+        cubeProgram.setUniform(uniform.textureWidth, windowWidth.toFloat())
+        cubeProgram.setUniform(uniform.textureHeight, windowHeight.toFloat())
+        cubeProgram.setUniform(uniform.projectionMat, projectionMat)
 
         cubeOutlineProgram.use()
-        cubeOutlineProgram.setUniform("projection", projectionMat)
-    }
-
-    private fun initializeRotationMat() {
-        // set rotation matrix to identity matrix
-        rotationSensorMatrix[0] = 1.0f
-        rotationSensorMatrix[4] = 1.0f
-        rotationSensorMatrix[8] = 1.0f
-        rotationSensorMatrix[12] = 1.0f
+        cubeOutlineProgram.setUniform(uniform.projectionMat, projectionMat)
     }
 
     private fun getTimeColor(time: Double = systemTimeInDeciseconds()) : Vec3 {
         val t = time + timeColorOffset
-        val lightR = (sin(glm.radians(t)) / 2.0f) + 0.5f
-        val lightG = (cos(glm.radians(t) / 2.0f)) + 0.5f
-        val lightB = (sin(glm.radians(t + 180.0f)) / 2.0f) + 0.5f
+        val lightR = (sin(glm.radians(t)) * 0.5f) + 0.5f
+        val lightG = (cos(glm.radians(t) * 0.5f)) + 0.5f
+        val lightB = (sin(glm.radians(t + 180.0f)) * 0.5f) + 0.5f
         return Vec3(lightR, lightG, lightB)
     }
 
-    private fun pan(vec2: Vec2) {
-        camera.processScreenPanWalk(vec2)
+    private fun pan(panVal: Vec2) {
+        val maxPanY = cameraForwardMax - camera.position.z
+        val minPanY = cameraForwardMin - camera.position.z
+        val scaledAndClampedPanY = clamp(panVal.y * generalPanScaleFactor, minPanY, maxPanY)
+
+        camera.moveForward(scaledAndClampedPanY)
     }
 
     fun action() {
@@ -250,49 +251,35 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
         if(timeColorOffset >= 1000.0f) timeColorOffset = 0.0f
     }
 
-    private fun deviceRotation(mat4: Mat4) {
-//        camera.processRotationSensor(Mat4(mat4))
-    }
-
     override fun onAttach() {
-        // enable our sensor when attached
-        if(sensor == null) {
-            Toast.makeText(context, R.string.no_rotation_sensor, Toast.LENGTH_LONG).show()
-        } else {
-            sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)
-        }
+        rotationSensorHelper.init(context)
     }
 
     override fun onDetach() {
-        // Turn our sensor off on detached
-        sensorManager.unregisterListener(this)
+        rotationSensorHelper.deinit(context)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-
-        val x: Float = event.x
-        val y: Float = event.y
-
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                previousX = x
-                previousY = y
+                previousX = event.x
+                previousY = event.y
                 actionDownTime = systemTimeInSeconds()
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
 
-                val dx: Float = x - previousX
-                val dy: Float = y - previousY
+                val dx: Float = event.x - previousX
+                val dy: Float = event.y - previousY
 
-                pan(Vec2(dx, dy) * touchScaleFactor)
+                pan(Vec2(dx, dy))
 
-                previousX = x
-                previousY = y
+                previousX = event.x
+                previousY = event.y
                 return true
             }
             MotionEvent.ACTION_UP -> {
-                if((systemTimeInSeconds() - actionDownTime) <= 0.3f) {
+                if((systemTimeInSeconds() - actionDownTime) <= actionDownWindow) {
                     action()
                 }
                 return true
@@ -302,18 +289,4 @@ class InfiniteCubeScene(context: Context) : Scene(context), SensorEventListener 
             }
         }
     }
-
-    override fun onSensorChanged(event: SensorEvent) {
-        when(event.sensor.type){
-            Sensor.TYPE_ROTATION_VECTOR -> {
-                SensorManager.getRotationMatrixFromVector(rotationSensorMatrix, event.values)
-                if(sceneOrientation.isLandscape()) {
-                    SensorManager.remapCoordinateSystem(rotationSensorMatrix, SensorManager.AXIS_Y, SensorManager.AXIS_MINUS_X, rotationSensorMatrix)
-                }
-                deviceRotation(Mat4(rotationSensorMatrix))
-            }
-        }
-    }
-
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 }
