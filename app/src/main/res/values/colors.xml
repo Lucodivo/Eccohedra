@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <!-- Palette 1-->
     <color name="AntiqueWhite">#F8ECD1</color>
     <color name="RosyBrown2">#DEB6AB</color>
@@ -22,8 +21,6 @@
     <color name="Grayscale5">#EEEEEE</color>
 
     <color name="Crimson">#800000</color>
-
-    <color name="ic_launcher_background">#0086D5</color>
 
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
