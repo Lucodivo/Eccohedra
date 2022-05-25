@@ -19,7 +19,7 @@ uniform mat3 cameraRotationMat;
 uniform int iterations;
 
 const float boxDimen = 20.0;
-const float halfBoxDimen = boxDimen / 2.0;
+const float halfBoxDimen = boxDimen * 0.5f;
 
 void main()
 {
@@ -60,8 +60,8 @@ vec2 distanceRayToScene(vec3 rayOrigin, vec3 rayDir) {
 }
 
 float sdMengerPrison(vec3 rayPos) {
-    vec3 prisonRay = mod(rayPos, boxDimen * 2.0);
-    prisonRay -= boxDimen;
+    vec3 prisonRay = mod(rayPos, boxDimen * 2.0f);
+    prisonRay -= boxDimen; // move container origin to center
     float mengerPrisonDist = sdCross(prisonRay, vec3(halfBoxDimen));
     if(mengerPrisonDist > HIT_DIST) return mengerPrisonDist; // use dist of biggest crosses as bounding volume
 

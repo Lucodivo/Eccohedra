@@ -6,6 +6,7 @@ import android.opengl.GLES30.glBindVertexArray
 import android.view.MotionEvent
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
+import glm_.mat3x3.Mat3
 import glm_.vec2.Vec2
 import glm_.vec3.Vec3
 import java.nio.IntBuffer
@@ -15,6 +16,9 @@ import javax.microedition.khronos.opengles.GL10
 class InfiniteCapsulesScene(context: Context) : Scene(context) {
 
     companion object {
+        // TODO: Consider linking capsule/container dimen to uniform?
+        const val repeatedContainerDimen = 6.0f // NOTE: This value MUST match two times the boxDimens constant in the shader!!!
+
         private object uniform {
             const val lightColor = "lightColor"
             const val lightPosition = "lightPos"
@@ -78,6 +82,23 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
         program.setUniform(uniform.viewPortResolution, Vec2(width, height))
     }
 
+    private fun moveCameraForward(rotationMat: Mat3, units: Float) {
+        cameraForward = rotationMat * defaultCameraForward
+
+        cameraPos.plusAssign(cameraForward * units)
+
+        // prevent floating point values from growing to unreasonable values
+        val originalCameraPos = Vec3(cameraPos)
+        cameraPos.x = cameraPos.x % repeatedContainerDimen
+        cameraPos.y = cameraPos.y % repeatedContainerDimen
+        cameraPos.z = cameraPos.z % repeatedContainerDimen
+        lightPosition.plusAssign(Vec3(
+            cameraPos.x - originalCameraPos.x,
+            cameraPos.y - originalCameraPos.y,
+            cameraPos.z - originalCameraPos.z,
+        ))
+    }
+
     override fun onDrawFrame(gl: GL10?) {
         // NOTE: OpenGL calls must be called within specified call back functions
         // Calling OpenGL functions in other functions will surely result in bugs
@@ -86,16 +107,15 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
         lastFrameTime = elapsedTime
 
         val rotationMat = rotationSensorHelper.getRotationMatrix(sceneOrientation)
-        cameraForward = rotationMat * defaultCameraForward
-        cameraPos.plusAssign(cameraForward * (deltaTime * cameraSpeed).toFloat())
+        moveCameraForward(rotationMat, (deltaTime * cameraSpeed).toFloat())
 
         glClear(GL_COLOR_BUFFER_BIT)
 
         program.setUniform(uniform.rayOrigin, cameraPos)
         program.setUniform(uniform.elapsedTime, elapsedTime.toFloat())
         program.setUniform(uniform.cameraRotationMat, rotationMat)
+        program.setUniform(uniform.lightPosition, lightPosition)
         if(lightAlive) {
-            program.setUniform(uniform.lightPosition, lightPosition)
             val deltaDistDelta = (deltaTime * lightSpeed).toFloat()
             val lightPosDelta: Vec3 = lightMoveDir * deltaDistDelta
             lightPosition = lightPosition + lightPosDelta

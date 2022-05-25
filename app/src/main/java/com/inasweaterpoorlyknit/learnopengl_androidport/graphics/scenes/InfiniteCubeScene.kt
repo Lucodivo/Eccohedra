@@ -208,7 +208,7 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
                 cameraForwardVelocity = 0.0f
             }
         }
-        
+
         // rotate cube over time
         val cubeModelMatrix = glm.rotate(
             cubePanRotationMat * cubeScaleMatrix,

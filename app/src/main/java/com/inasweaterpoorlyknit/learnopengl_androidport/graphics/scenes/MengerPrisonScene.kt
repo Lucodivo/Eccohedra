@@ -22,6 +22,9 @@ data class Resolution (
 class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.OnSharedPreferenceChangeListener {
 
     companion object {
+        // TODO: Consider linking box/container dimen to uniform?
+        const val repeatedContainerDimen = 40.0f // NOTE: This value MUST be equal to the capsuleContainerDimens in the fragment shader!!
+
         private object uniform {
             const val iterations = "iterations"
             const val viewPortResolution = "viewPortResolution"
@@ -121,6 +124,10 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         cameraForward = rotationMat * defaultCameraForward
         val cameraSpeed = if(actionDown) cameraFastSpeed else cameraNormalSpeed
         cameraPos.plusAssign(cameraForward * cameraSpeed * deltaTime)
+        // prevent floating point values from growing to unreasonable values
+        cameraPos.x = cameraPos.x % repeatedContainerDimen
+        cameraPos.y = cameraPos.y % repeatedContainerDimen
+        cameraPos.z = cameraPos.z % repeatedContainerDimen
 
         if(prevFrameResolutionIndex != currentResolutionIndex) {
             // new resolution index changed by user, adjust accordingly

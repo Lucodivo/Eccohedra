@@ -31,8 +31,8 @@ const float capsuleLineHalfWidth = capsuleLineWidth * 0.5f;
 const float oneOverCapsuleLineWidth = 1.0f / capsuleLineWidth;
 vec3 capsuleCenterPosA = vec3(-capsuleLineHalfWidth, 0.0, 0.0);
 vec3 capsuleCenterPosB = vec3(capsuleLineHalfWidth, 0.0, 0.0);
-const vec3 capsuleContainerDimens = vec3(6.0f, 6.0f, 6.0f);
-const vec3 offset = capsuleContainerDimens * 0.5f; // this value also
+const float capsuleContainerDimens = 6.0f;
+const float offset = capsuleContainerDimens * 0.5f; // this value also
 
 void main()
 {
