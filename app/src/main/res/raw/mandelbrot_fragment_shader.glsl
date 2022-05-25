@@ -1,6 +1,5 @@
 #version 300 es
 
-// define float precision
 precision highp float;
 
 out vec4 FragColor;
@@ -11,6 +10,7 @@ uniform vec2 viewPortResolution;
 uniform vec2 centerOffset;
 uniform vec3 colorSub;
 uniform float zoom;
+uniform mat2 rotationMat;
 
 void main() {
     // Move (0,0) from bottom left to center
@@ -19,6 +19,7 @@ void main() {
     // Scale shortest dimension value to [-1.0, 1.0], scale other dimension by same factor
     float shortestDimension = (viewPortResolution.x > viewPortResolution.y) ? viewPortResolution.y : viewPortResolution.x;
     uv = uv / (shortestDimension * zoom);
+    uv = rotationMat * uv;
     uv += centerOffset / shortestDimension;
 
     float iterations = 0.0;

@@ -1,6 +1,5 @@
 #version 300 es
 
-// define float precision
 precision highp float;
 
 uniform sampler2D diffTexture;
@@ -16,15 +15,15 @@ out vec4 FragColor;
 void main()
 {
 	vec2 croppedTexCoord;
-	if(texWidth > texHeight) {
-		float texXStart = ((texWidth - texHeight) / 2.0) / texWidth;
-		float heightOverWidth = texHeight / texWidth;
-
+	if(texWidth > texHeight) { // we want to use the smaller dimen as new width and height
+		float oneOverWidth = 1.0 / texWidth;
+		float texXStart = ((texWidth - texHeight) * 0.5) * oneOverWidth;
+		float heightOverWidth = texHeight * oneOverWidth;
 		croppedTexCoord = vec2(texXStart + (TextureCoord.x * heightOverWidth), TextureCoord.y);
 	} else {
-		float texYStart = ((texHeight - texWidth) / 2.0) / texHeight;
-		float widthOverHeight = texWidth / texHeight;
-
+		float oneOverHeight = 1.0 / texHeight;
+		float texYStart = ((texHeight - texWidth) * 0.5) * oneOverHeight;
+		float widthOverHeight = texWidth * oneOverHeight;
 		croppedTexCoord = vec2(TextureCoord.x, texYStart + (TextureCoord.y * widthOverHeight));
 	}
 

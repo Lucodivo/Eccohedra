@@ -5,9 +5,9 @@ import android.content.SharedPreferences
 import android.content.res.Configuration
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import dagger.hilt.android.HiltAndroidApp
 
-@HiltAndroidApp
+// TODO: Hilt
+//@HiltAndroidApp
 class OpenGLScenesApplication : Application() {
 
     private val _darkMode = MutableLiveData<Boolean>()

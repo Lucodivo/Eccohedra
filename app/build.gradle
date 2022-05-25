@@ -4,8 +4,10 @@ plugins {
     id 'kotlin-android-extensions'
     id 'com.google.firebase.crashlytics'
     id 'com.google.gms.google-services'
-    id 'kotlin-kapt'
-    id 'dagger.hilt.android.plugin'
+
+    // TODO: Hilt
+//    id 'kotlin-kapt'
+//    id 'dagger.hilt.android.plugin' - uncomment to bring Hilt back into project
 }
 
 android {
@@ -14,8 +16,8 @@ android {
         applicationId "com.inasweaterpoorlyknit.learnopengl_androidport"
         minSdkVersion 24
         targetSdkVersion 31
-        versionCode 11
-        versionName "1.0.1"
+        versionCode 12
+        versionName "1.1.0"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
     buildFeatures {
@@ -108,6 +110,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
     // Hilt (Dependency Injection)
-    implementation "com.google.dagger:hilt-android:2.38.1"
-    kapt "com.google.dagger:hilt-compiler:2.38.1"
+    // TODO: Hilt
+//    implementation "com.google.dagger:hilt-android:2.38.1"
+//    kapt "com.google.dagger:hilt-compiler:2.38.1"
 }

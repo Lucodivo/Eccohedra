@@ -13,8 +13,9 @@ out vec2 TextureCoord;
 
 void main()
 {
-  gl_Position = projection * view * model * vec4(aPosition, 1.0);
-  FragPos = vec3(model * vec4(aPosition, 1.0));
+  vec4 worldSpace = model * vec4(aPosition, 1.0);
+  gl_Position = projection * view * worldSpace;
+  FragPos = vec3(worldSpace);
   mat3 normalMat = mat3(transpose(inverse(model)));
   Normal = normalMat * aNormal;
   TextureCoord = aTextureCoord;
