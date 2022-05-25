@@ -6,7 +6,6 @@ import android.content.res.Configuration
 import android.opengl.GLSurfaceView
 import android.view.MotionEvent
 
-@SuppressLint("ViewConstructor")
 class SceneSurfaceView(context: Context, private val scene: Scene) : GLSurfaceView(context) {
 
     init {
@@ -15,7 +14,6 @@ class SceneSurfaceView(context: Context, private val scene: Scene) : GLSurfaceVi
         setRenderer(this.scene)
     }
 
-    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         return scene.onTouchEvent(event) || super.onTouchEvent(event)
     }

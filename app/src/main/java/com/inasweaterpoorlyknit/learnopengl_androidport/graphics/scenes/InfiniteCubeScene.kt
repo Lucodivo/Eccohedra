@@ -2,17 +2,18 @@ package com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes
 
 import android.content.Context
 import android.opengl.GLES30.*
+import android.view.GestureDetector
 import android.view.MotionEvent
 import androidx.core.math.MathUtils.clamp
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
 import glm_.glm
 import glm_.mat4x4.Mat4
-import glm_.vec2.Vec2
 import glm_.vec3.Vec3
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -21,7 +22,8 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
 
     companion object {
         private const val cubeRotationAnglePerDS = 0.3125f * RadiansPerDegree
-        private val cubeRotationAxis = Vec3(1.0f, 0.3f, 0.5f)
+        private val cubeAutoRotationAxis = Vec3(1.0f, 0.3f, 0.5f)
+        private val cubePanRotationAxis = Vec3(0.0f, 1.0f, 0.0f)
         private const val cubeScale: Float = 1.0f
         private const val outlineTextureIndex = 2
         private const val SMOOTH_TRANSITIONS = true
@@ -31,9 +33,16 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
         private const val zNear = 0.1f
         private const val zFar = 100.0f
 
-        private const val generalPanScaleFactor = 0.005f
+        private const val cameraForwardPanScaleFactor = 0.005f
+        private const val panRotateScaleFactor = 0.001f
 
-        private const val actionDownWindow = 0.3f
+        private const val rotationDragPercent = 0.98f
+        private const val rotationVelocityMax = 10.0f
+        private const val rotationStopVelocity = 0.05f
+
+        private const val cameraForwardDragPercent = 0.92f
+        private const val cameraForwardVelocityMax = 10.0f
+        private const val cameraForwardStopVelocity = 0.05f
 
         private object uniform {
             const val diffuseTexture = "diffTexture"
@@ -62,12 +71,54 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
     private var lastFrameTimeDS: Double = -1.0
     private var elapsedTimeDS: Double = 0.0
     private var timeColorOffset = 0.0f
-    private var previousX: Float = 0.0f
-    private var previousY: Float = 0.0f
-    private var actionDownTime: Double = 0.0
     private var staggeredTimerDS: Double = 0.0 // only used when SMOOTH_TRANSITIONS is set to false, for staggered captures
 
     private var cubePanRotationMat = Mat4(1.0f)
+
+    private var rotationVelocity = 0.0f
+    private var cameraForwardVelocity = 0.0f
+
+    private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+        var firstEventSinceDown = true
+
+        override fun onDown(e: MotionEvent): Boolean { // must have or SimpleOnGestureListener doesn't work 🤷‍♀️
+            firstEventSinceDown = true
+            return true
+        }
+
+        override fun onSingleTapUp(e: MotionEvent): Boolean {
+            pokeTimeColorOffset()
+            return true
+        }
+
+        override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+            if(firstEventSinceDown) { // first event can contain distances that are jarringly large
+                firstEventSinceDown = false
+            } else {
+                val absDistX = abs(distanceX)
+                val distXIsBigger = absDistX > abs(distanceY)
+                if(distXIsBigger && absDistX > 0.01) {
+                    rotationVelocity = 0.0f
+                    rotateCube(-distanceX * panRotateScaleFactor)
+                } else {
+                    cameraForwardVelocity = 0.0f
+                    moveCameraForward(-distanceY * cameraForwardPanScaleFactor)
+                }
+            }
+            return true
+        }
+
+        override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+
+            val rotVel = (velocityX / windowWidth)
+            rotationVelocity = clamp(rotVel, -cameraForwardVelocityMax, cameraForwardVelocityMax)
+
+            val cameraForwardVel = (velocityY / windowWidth)
+            cameraForwardVelocity = clamp(cameraForwardVel, -rotationVelocityMax, rotationVelocityMax)
+
+            return true
+        }
+    })
 
     override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
         // TODO: We do not use normals and could consider avoiding unnecessary computation
@@ -137,12 +188,32 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
 
         val viewMat = camera.getViewMatrix()
 
-        // draw cube
-        // rotate with time
+        // spin cube from flick velocity
+        val deltaTimeSeconds = (deltaTimeDS * 0.1).toFloat()
+        if(rotationVelocity != 0.0f) {
+            rotateCube(rotationVelocity * deltaTimeSeconds)
+            rotationVelocity *= rotationDragPercent
+            if((rotationVelocity < 0 && rotationVelocity > -0.001) ||
+                (rotationVelocity > 0 && rotationVelocity < rotationStopVelocity)) {
+                rotationVelocity = 0.0f
+            }
+        }
+
+        // move camera forward based on flick velocity
+        if(cameraForwardVelocity != 0.0f) {
+            moveCameraForward(cameraForwardVelocity * deltaTimeSeconds)
+            cameraForwardVelocity *= cameraForwardDragPercent
+            if((cameraForwardVelocity < 0 && cameraForwardVelocity > -0.001) ||
+                (cameraForwardVelocity > 0 && cameraForwardVelocity < cameraForwardStopVelocity)) {
+                cameraForwardVelocity = 0.0f
+            }
+        }
+        
+        // rotate cube over time
         val cubeModelMatrix = glm.rotate(
             cubePanRotationMat * cubeScaleMatrix,
             elapsedTimeDS.toFloat() * cubeRotationAnglePerDS,
-            cubeRotationAxis
+            cubeAutoRotationAxis
         )
 
         // draw cube outline
@@ -161,9 +232,9 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
 
         // === Blit off screen render buffer to screen ====
         glBindFramebuffer(GL_READ_FRAMEBUFFER, frameBuffers[currentFrameBufferIndex].index)
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0)
         glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight,
-                          GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                          GL_COLOR_BUFFER_BIT, GL_NEAREST)
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
@@ -205,54 +276,26 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
         return Vec3(lightR, lightG, lightB)
     }
 
-    private fun pan(panVal: Vec2) {
-        val maxPanY = cameraForwardMax - camera.position.z
-        val minPanY = cameraForwardMin - camera.position.z
-        val scaledAndClampedPanY = clamp(panVal.y * generalPanScaleFactor, minPanY, maxPanY)
-
-        camera.moveForward(scaledAndClampedPanY)
-
-        // TODO: Maybe the pan could also "fling"? Meaning it continues to move after the user lets go.
+    private fun rotateCube(radians: Float) {
         cubePanRotationMat = glm.rotate(
-                cubePanRotationMat,
-                panVal.x * generalPanScaleFactor * 0.2f,
-                Vec3(0.0f, 1.0f, 0.0f)
+            cubePanRotationMat,
+            radians,
+            cubePanRotationAxis
         )
     }
 
-    fun action() {
+    private fun moveCameraForward(units: Float) {
+        val maxPanY = cameraForwardMax - camera.position.z
+        val minPanY = cameraForwardMin - camera.position.z
+        val scaledAndClampedPanY = clamp(units, minPanY, maxPanY)
+
+        camera.moveForward(scaledAndClampedPanY)
+    }
+
+    fun pokeTimeColorOffset() {
         timeColorOffset += 100.0f
         if(timeColorOffset >= 1000.0f) timeColorOffset = 0.0f
     }
 
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                previousX = event.x
-                previousY = event.y
-                actionDownTime = systemTimeInSeconds()
-                return true
-            }
-            MotionEvent.ACTION_MOVE -> {
-
-                val dx: Float = event.x - previousX
-                val dy: Float = event.y - previousY
-
-                pan(Vec2(dx, dy))
-
-                previousX = event.x
-                previousY = event.y
-                return true
-            }
-            MotionEvent.ACTION_UP -> {
-                if((systemTimeInSeconds() - actionDownTime) <= actionDownWindow) {
-                    action()
-                }
-                return true
-            }
-            else -> {
-                return super.onTouchEvent(event)
-            }
-        }
-    }
+    override fun onTouchEvent(event: MotionEvent): Boolean = if (gestureDetector.onTouchEvent(event)) true else super.onTouchEvent(event)
 }
