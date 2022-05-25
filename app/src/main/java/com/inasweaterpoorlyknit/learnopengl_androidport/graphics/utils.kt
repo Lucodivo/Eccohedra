@@ -5,9 +5,11 @@ import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.view.Surface
 import android.view.WindowManager
 import androidx.annotation.RawRes
-
-const val RadiansPerDegree = 0.0174533f
-const val DegreesPerRadian = 114.59156f
+import glm_.mat2x2.Mat2
+import glm_.vec2.Vec2
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 
 enum class Orientation {
   Portrait,
@@ -51,3 +53,28 @@ val Context.orientation: Orientation
       Orientation.PortraitReverse
     }
   }
+
+fun rotationMat2D(radians: Float): Mat2 { // CCW
+  val cosRad = cos(radians)
+  val sinRad = sin(radians)
+  return Mat2(
+    cosRad, -sinRad,
+    sinRad, cosRad
+  )
+}
+
+// Found on stack overflow. Determine the angle between two lines.
+// Question: Android Two finger rotation by paulot
+// Answer Author: leszek.hanusz
+// src: https://stackoverflow.com/questions/10682019/android-two-finger-rotation
+fun angleBetweenLines(
+  pointA1: Vec2, pointA2: Vec2, // line 1
+  pointB1: Vec2, pointB2: Vec2  // line 2
+): Float {
+  val angle1 = atan2((pointA2.y - pointA1.y).toDouble(), (pointA2.x - pointA1.x).toDouble())
+  val angle2 = atan2((pointB2.y - pointB1.y).toDouble(), (pointB2.x - pointB1.x).toDouble())
+  var angle = (angle1 - angle2) % (TWO_PI)
+  if (angle < -PI) angle += TWO_PI
+  if (angle > PI) angle -= TWO_PI
+  return angle.toFloat()
+}
