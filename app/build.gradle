@@ -19,11 +19,12 @@ android {
         versionCode 12
         versionName "1.1.0"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
-    }
-    buildFeatures {
-        // Enables Jetpack Compose for this module
-        compose true
-        viewBinding true
+
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++17"
+            }
+        }
     }
 
     buildTypes {
@@ -40,10 +41,25 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.18.1'
+        }
+    }
+
+    buildFeatures {
+        // Enables Jetpack Compose for this module
+        compose true
+        viewBinding true
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     buildFeatures {
         // Enables Jetpack Compose for this module
         compose true
@@ -52,7 +68,6 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion '1.1.1'
     }
-
 
     packagingOptions {
         resources {
@@ -69,6 +84,7 @@ android {
             ]
         }
     }
+
     namespace 'com.inasweaterpoorlyknit.learnopengl_androidport'
 }
 

@@ -41,4 +41,6 @@
 
     <!-- Errors -->
     <string name="no_rotation_sensor">No rotation sensor found on device</string>
+
+    <string name="debug_string_id">This is debug text. If you\'re reading this, the developer made a mistake.</string>
 </resources>

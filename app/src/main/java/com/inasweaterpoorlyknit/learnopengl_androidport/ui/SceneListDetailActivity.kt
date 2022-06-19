@@ -72,7 +72,7 @@ class SceneListDetailActivity : AppCompatActivity() {
         }
 
         viewModel.startActivityRequest.observe(this) {
-            val startActivityIntent = Intent(this, InfoActivity::class.java)
+            val startActivityIntent = Intent(this, it)
             startActivity(startActivityIntent)
         }
 

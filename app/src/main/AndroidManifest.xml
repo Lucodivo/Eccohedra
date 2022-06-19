@@ -29,6 +29,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".graphics.RedSceneNativeActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+            <!-- Tell NativeActivity the name of our .so -->
+            <meta-data android:name="android.app.lib_name"
+                android:value="native-activity-red" />
+        </activity>
+        <activity android:name=".graphics.BlueSceneNativeActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+            <!-- Tell NativeActivity the name of our .so -->
+            <meta-data android:name="android.app.lib_name"
+                android:value="native-activity-blue" />
+        </activity>
     </application>
 
     <uses-feature

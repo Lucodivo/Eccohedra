@@ -5,6 +5,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.BlueSceneNativeActivity
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.RedSceneNativeActivity
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Scene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.InfiniteCapsulesScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.InfiniteCubeScene
@@ -49,31 +51,45 @@ class SceneListDetailViewModel : ViewModel() {
     }
 
     companion object {
-        private class ProgramListItemData(val listItemData: ListItemData,
-                                          val sceneCreator: (context: Context) -> Scene)
+        private class KotlinProgramListItemData(val listItemData: ListItemData,
+                                                val sceneCreator: (context: Context) -> Scene)
             : ListItemDataI by listItemData
 
-        private val programListItemsData = listOf(
-            ProgramListItemData(ListItemData(
+        private class NativeProgramListItemData(val listItemData: ListItemData,
+                                                val nativeActivity: Class<*>)
+            : ListItemDataI by listItemData
+
+        private val programListItemsData = listOf<ListItemDataI>(
+            KotlinProgramListItemData(ListItemData(
                 imageResId = R.drawable.infinite_cube_2720_1440,
                 displayTextResId = R.string.infinite_cube_scene_title,
                 descTextResId = R.string.infinite_cube_thumbnail_description),
                 sceneCreator = ::InfiniteCubeScene),
-            ProgramListItemData(ListItemData(
+            KotlinProgramListItemData(ListItemData(
                 imageResId = R.drawable.infinite_capsules_2720_1440,
                 displayTextResId = R.string.infinite_capsules_scene_title,
                 descTextResId = R.string.infinite_capsules_thumbnail_description),
                 sceneCreator = ::InfiniteCapsulesScene),
-            ProgramListItemData(ListItemData(
+            KotlinProgramListItemData(ListItemData(
                 imageResId = R.drawable.mandelbrot_2720_1440,
                 displayTextResId = R.string.mandelbrot_scene_title,
                 descTextResId = R.string.mandelbrot_thumbnail_description),
                 sceneCreator = ::MandelbrotScene),
-            ProgramListItemData(ListItemData(
+            KotlinProgramListItemData(ListItemData(
                 imageResId = R.drawable.menger_prison_2720_1440,
                 displayTextResId = R.string.menger_prison_scene_title,
                 descTextResId = R.string.menger_prison_thumbnail_description),
-                sceneCreator = ::MengerPrisonScene)
+                sceneCreator = ::MengerPrisonScene),
+            NativeProgramListItemData(ListItemData(
+                imageResId = R.drawable.red_debug,
+                displayTextResId = R.string.debug_string_id,
+                descTextResId = R.string.debug_string_id),
+                nativeActivity = RedSceneNativeActivity::class.java),
+            NativeProgramListItemData(ListItemData(
+                imageResId = R.drawable.blue_debug,
+                displayTextResId = R.string.debug_string_id,
+                descTextResId = R.string.debug_string_id),
+                nativeActivity = BlueSceneNativeActivity::class.java)
         )
 
         val listItemDataForComposePreview: List<ListItemDataI>
@@ -82,8 +98,15 @@ class SceneListDetailViewModel : ViewModel() {
 
     fun itemSelected(item: ListItemDataI) {
         // NOTE: Scene creator is a regular value, make sure to set it before any sort of LiveData to avoid any type of race conditions
-        _sceneCreator = (item as ProgramListItemData).sceneCreator
-        _presentationMode.value = ListDetailPresentationMode.DETAIL
+        when(item) {
+            is KotlinProgramListItemData -> {
+                _sceneCreator = item.sceneCreator
+                _presentationMode.value = ListDetailPresentationMode.DETAIL
+            }
+            is NativeProgramListItemData -> {
+                _startActivityRequest.value = item.nativeActivity
+            }
+        }
     }
 
     fun onBackPress() {

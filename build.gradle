@@ -8,11 +8,8 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.2.0'
-
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-
         classpath 'com.google.gms:google-services:4.3.10'
-
 
         // Crashlytics plugin
         // NOTE: Do not place your application dependencies here; they belong
@@ -34,4 +31,6 @@ allprojects { // used for dependencies in module gradles
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+    delete 'app/.cxx/'
+    delete 'app/release/'
 }

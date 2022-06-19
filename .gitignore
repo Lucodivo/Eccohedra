@@ -86,3 +86,5 @@ lint/tmp/
 .idea/
 
 kotlin-graphics-glm-1.0.1/
+
+app/.cxx
