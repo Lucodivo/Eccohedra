@@ -6,7 +6,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.BlueSceneNativeActivity
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.RedSceneNativeActivity
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Scene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.InfiniteCapsulesScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.InfiniteCubeScene
@@ -80,11 +79,6 @@ class SceneListDetailViewModel : ViewModel() {
                 displayTextResId = R.string.menger_prison_scene_title,
                 descTextResId = R.string.menger_prison_thumbnail_description),
                 sceneCreator = ::MengerPrisonScene),
-            NativeProgramListItemData(ListItemData(
-                imageResId = R.drawable.red_debug,
-                displayTextResId = R.string.debug_string_id,
-                descTextResId = R.string.debug_string_id),
-                nativeActivity = RedSceneNativeActivity::class.java),
             NativeProgramListItemData(ListItemData(
                 imageResId = R.drawable.blue_debug,
                 displayTextResId = R.string.debug_string_id,
