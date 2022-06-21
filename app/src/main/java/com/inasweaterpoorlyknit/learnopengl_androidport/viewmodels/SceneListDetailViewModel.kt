@@ -41,12 +41,18 @@ class SceneListDetailViewModel : ViewModel() {
         _presentationMode.value = ListDetailPresentationMode.LIST
 
         //debugScene(::MandelbrotScene)
+        debugNativeScene(BlueSceneNativeActivity::class.java)
     }
 
     // NOTE: Call this in init() to jump right into a scene for debugging
     fun debugScene(sceneConstructor: (Context) -> Scene) {
         _sceneCreator = sceneConstructor
         _presentationMode.value = ListDetailPresentationMode.DETAIL
+    }
+
+    // NOTE: Call this in init() to jump right into a scene for debugging
+    fun debugNativeScene(nativeScene: Class<*>) {
+        _startActivityRequest.value = nativeScene
     }
 
     companion object {

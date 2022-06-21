@@ -6,8 +6,8 @@ struct GLDisplay {
     EGLDisplay handle;
     EGLSurface surface;
     EGLContext context;
-    int32_t width;
-    int32_t height;
+    s32 width;
+    s32 height;
 };
 
 const GLDisplay NULL_GLDISPLAY = {
@@ -90,6 +90,8 @@ GLDisplay glInitDisplay(ANativeWindow *window) {
 
     eglQuerySurface(display, surface, EGL_WIDTH, &w);
     eglQuerySurface(display, surface, EGL_HEIGHT, &h);
+
+    eglSwapInterval(display, 1);
 
     GLDisplay result{};
     result.handle = display;
