@@ -18,7 +18,8 @@ const GLDisplay NULL_GLDISPLAY = {
 GLDisplay glInitDisplay(ANativeWindow *window);
 void glDeinitDisplay(GLDisplay* display);
 void logDeviceGLEnvironment();
-
+JNIEnv* attachToMainThread(android_app* app);
+void detachFromMainThread(android_app* app);
 ASensorManager* acquireASensorManagerInstance(android_app* app);
 
 /**

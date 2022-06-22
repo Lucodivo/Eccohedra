@@ -2,7 +2,6 @@ package com.inasweaterpoorlyknit.learnopengl_androidport
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.content.res.AssetManager
 import android.content.res.Configuration
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -17,19 +16,8 @@ class OpenGLScenesApplication : Application() {
 
     private lateinit var sharedPreferences: SharedPreferences
 
-    external fun cacheAssetManager(assetManager: AssetManager)
-
-    companion object {
-        init {
-            System.loadLibrary("native-activity-blue")
-        }
-    }
-
     override fun onCreate() {
         super.onCreate()
-
-        // IMPORTANT: In the event of potential bugs with the AssetManager, ensure that code minification has affected this function
-        cacheAssetManager(resources.assets)
 
         sharedPreferences = getSharedPreferences()
 
