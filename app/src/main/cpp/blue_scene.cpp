@@ -34,7 +34,6 @@ typedef struct android_app android_app;
 typedef struct android_poll_source android_poll_source;
 
 global_variable jobject assetManagerJNIGlobalRef;
-global_variable AAssetManager* assetManager;
 
 /**
  * Our saved state data.
@@ -63,23 +62,20 @@ typedef struct Engine {
 static void drawFrame(const Engine &engine);
 static s32 handleInput(android_app* app, AInputEvent* event);
 static void handleAndroidCmd(android_app* app, s32 cmd);
-void loadAssets();
+void loadAssets(const Engine& engine);
 void setupGLStartingState();
 
+// The VM calls JNI_OnLoad when the native library is loaded (ex: System.loadLibrary)
+// JNI_OnLoad must return the JNI version needed by the native library.
 //JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 //    jvm = vm;
 //    return JNI_VERSION_1_6;
 //}
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_inasweaterpoorlyknit_learnopengl_1androidport_OpenGLScenesApplication_cacheAssetManager(
-        JNIEnv *env, jobject thiz, jobject asset_manager) {
-    // NOTE: If there becomes a problem with the asset manager, code minification may be the perpetrator
-    // NOTE: In this event, also ensure the asset manager has not somehow been garbage collected
-    JavaVM* jvm;
-    env->GetJavaVM(&jvm);
+Java_com_inasweaterpoorlyknit_learnopengl_1androidport_OpenGLScenesApplication_cacheAssetManager(JNIEnv *env, jobject thiz, jobject asset_manager) {
+    // IMPORTANT: Create a global reference to ensure the asset manager does not get GC'd on the Java side
     assetManagerJNIGlobalRef = env->NewGlobalRef(asset_manager);
-    assetManager = AAssetManager_fromJava(env, assetManagerJNIGlobalRef);
 }
 
 /**
@@ -95,9 +91,18 @@ void android_main(android_app* app) {
     app->onInputEvent = handleInput;
     engine.app = app;
 
+    // TODO: Acquiring resources seems to attach/detach from main thread multiple times,
+    //  can we merge all and only attach once?
     engine.sensorManager = acquireASensorManagerInstance(app);
     engine.accelerometerSensor = ASensorManager_getDefaultSensor(engine.sensorManager, ASENSOR_TYPE_ACCELEROMETER);
     engine.sensorEventQueue = ASensorManager_createEventQueue(engine.sensorManager, app->looper, LOOPER_ID_USER, nullptr, nullptr);
+    { // get asset manager
+        // IMPORTANT: AAssetManager_fromJava() relies on JNIEnv->GetClass() and JNIEnv->GetFieldId(),
+        // IMPORTANT: both of which REQUIRE being called on the main thread.
+        JNIEnv* mainJNIEnv = attachToMainThread(app);
+        engine.assetManager = AAssetManager_fromJava(mainJNIEnv, assetManagerJNIGlobalRef);
+        detachFromMainThread(app);
+    }
 
     if (app->savedState != nullptr) {
         // grab saved state if available
@@ -105,7 +110,7 @@ void android_main(android_app* app) {
     }
 
     setupGLStartingState();
-    loadAssets();
+    loadAssets(engine);
 
     while (true) {
 
@@ -182,7 +187,8 @@ void setupGLStartingState() {
     glDisable(GL_DEPTH_TEST);
 }
 
-void loadAssets() {
+void loadAssets(const Engine& engine) {
+    AAssetManager* const assetManager = engine.assetManager;
     AAssetDir* modelsDir = AAssetManager_openDir(assetManager, "models");
     const char* filename;
     while((filename = AAssetDir_getNextFileName(modelsDir)) != NULL) {

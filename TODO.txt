@@ -1,0 +1,8 @@
+Improve iteration speed:
+- Introduce glslang to build system (either cmake or gradle) to validate glsl shaders at compile time, instead of waiting until runtime
+
+Optimization ideas:
+- Baking assets ahead of time into custom formats can reduce the amount of runtime massaging of data
+necessary for models, textures, or skyboxes (texture arrays)
+- Shaders could be stored as a constant string to avoid asset/resource file decompression/reads? But
+would this conflict with compile time glsl validation?

@@ -39,9 +39,15 @@ This project is an extension of another project called [OpenGLScenes](https://gi
 - [Scene List & Scene Potential Architecture](SceneListAndScenePotentialArchitecture.md)
 - [Hilt](app/src/main/java/com/inasweaterpoorlyknit/learnopengl_androidport/di/Hilt.md)
   - Note: Hilt is documented for future use. If looking for examples, not much can be found here ATM.
+- [Native Code / JNI / NDK](app/src/main/cpp/AndroidNativeCode.md)
+- [C++ Guidelines & Reminders](app/src/main/cpp/CppGuidelinesAndReminders.md)
 
 ## Shaders
-GLSL shaders are loaded as raw resources and are currently located [here](app/src/main/res/raw). The positives of loading as a raw resource is that we get autocomplete functionality and compile-time checking for shaders. The drawbacks is that organization is hard, as sub-folders are not allowed in *res/raw* and naming convention of files is fairly restricted. On top of that, filetypes are obscured as the file extensions do not show in a raw resource's ID (ex: *R.raw.uv_coord_vertex_shader*). These issues make moving shaders to the asset folder quite appealing. But, for now, this project enjoys compile-time checkin and autocomplete.
+GLSL shaders are loaded as raw resources and are currently located [here](app/src/main/res/raw). 
+The positives of loading as a raw resource is that we get autocomplete functionality and compile-time checking for shaders. 
+The drawbacks is that organization is hard, as sub-folders are not allowed in *res/raw* and naming convention of files is fairly restricted. 
+On top of that, filetypes are obscured as the file extensions do not show in a raw resource's ID (ex: *R.raw.uv_coord_vertex_shader*). 
+These issues make moving shaders to the asset folder quite appealing. But, for now, this project enjoys compile-time checkin and autocomplete.
 
 ## Math
 Any 3D math in this project should be assumed to be using a left-handed coordinate system with +Z pointing forward and +Y pointing up, unless stated otherwise.

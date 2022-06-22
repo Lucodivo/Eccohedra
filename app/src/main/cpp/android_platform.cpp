@@ -128,7 +128,15 @@ void logDeviceGLEnvironment() {
     }
 }
 
+JNIEnv* attachToMainThread(android_app* app) {
+    JNIEnv* env = nullptr;
+    app->activity->vm->AttachCurrentThread(&env, nullptr);
+    return env;
+}
 
+void detachFromMainThread(android_app* app) {
+    app->activity->vm->DetachCurrentThread();
+}
 
 /*
  * AcquireASensorManagerInstance(void)
@@ -145,20 +153,16 @@ ASensorManager* acquireASensorManagerInstance(android_app* app) {
     auto getInstanceForPackageFunc = (PF_GETINSTANCEFORPACKAGE)
             dlsym(androidHandle, "ASensorManager_getInstanceForPackage");
     if (getInstanceForPackageFunc) {
-        JNIEnv* env = nullptr;
-        app->activity->vm->AttachCurrentThread(&env, nullptr);
+        JNIEnv* env = attachToMainThread(app);
 
         jclass android_content_Context = env->GetObjectClass(app->activity->clazz);
-        jmethodID midGetPackageName = env->GetMethodID(android_content_Context,
-                                                       "getPackageName",
-                                                       "()Ljava/lang/String;");
-        auto packageName= (jstring)env->CallObjectMethod(app->activity->clazz,
-                                                         midGetPackageName);
+        jmethodID midGetPackageName = env->GetMethodID(android_content_Context, "getPackageName", "()Ljava/lang/String;");
+        auto packageName = (jstring)env->CallObjectMethod(app->activity->clazz, midGetPackageName);
 
         const char *nativePackageName = env->GetStringUTFChars(packageName, nullptr);
         ASensorManager* mgr = getInstanceForPackageFunc(nativePackageName);
         env->ReleaseStringUTFChars(packageName, nativePackageName);
-        app->activity->vm->DetachCurrentThread();
+        detachFromMainThread(app);
         if (mgr) {
             dlclose(androidHandle);
             return mgr;

@@ -17,11 +17,6 @@ class OpenGLScenesApplication : Application() {
 
     private lateinit var sharedPreferences: SharedPreferences
 
-    // IMPORTANT: This asset manager is for native code
-    // IMPORTANT: It is kept as a member variable of the application so it does not get garbage collected
-    // IMPORTANT: In the event of potential bugs with the AssetManager, ensure that code minification has not removed this member variable
-    private lateinit var assetManager: AssetManager
-
     external fun cacheAssetManager(assetManager: AssetManager)
 
     companion object {
@@ -33,8 +28,8 @@ class OpenGLScenesApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        assetManager = resources.assets
-        cacheAssetManager(assetManager)
+        // IMPORTANT: In the event of potential bugs with the AssetManager, ensure that code minification has affected this function
+        cacheAssetManager(resources.assets)
 
         sharedPreferences = getSharedPreferences()
 
