@@ -9,7 +9,7 @@
 #include <chrono>
 
 #include <EGL/egl.h> // interface between OpenGL ES and underlying native platform window system
-#include <GLES/gl.h> // OpenGL ES (Embedded Systems)
+#include <GLES3/gl3.h> // OpenGL ES 3.0
 
 #include <android/sensor.h> // Used for acquiring accelerometer sensor and corresponding event queue
 #include <android/log.h> // Android logging
@@ -19,16 +19,24 @@
 
 #include <dlfcn.h> // Android dynamic library utility functions
 
+#define TINYGLTF_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <tinygltf/tiny_gltf.h>
+
 const char* NATIVE_ACTIVITY_NAME = "native-activity-blue";
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, NATIVE_ACTIVITY_NAME, __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, NATIVE_ACTIVITY_NAME, __VA_ARGS__))
 #define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR, NATIVE_ACTIVITY_NAME, __VA_ARGS__))
 
 #include "noop_types.h"
+#include "noop_math.h"
 #include "android_platform.cpp"
 #include "util.h"
-
-#include <stb_image.h>
+#include "shader_types_and_constants.h"
+#include "vertex_attributes.h"
+#include "vertex_attributes.cpp"
+#include "model.h"
 
 typedef struct android_app android_app;
 typedef struct android_poll_source android_poll_source;
@@ -181,9 +189,7 @@ static s32 handleInput(android_app* app, AInputEvent* event) {
 }
 
 void setupGLStartingState() {
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
     glEnable(GL_CULL_FACE);
-    glShadeModel(GL_SMOOTH);
     glDisable(GL_DEPTH_TEST);
 }
 
@@ -191,6 +197,16 @@ void loadAssets(const Engine& engine) {
     AAssetManager* const assetManager = engine.assetManager;
     AAssetDir* modelsDir = AAssetManager_openDir(assetManager, "models");
     const char* filename;
+
+    AAsset* pyramidAsset = AAssetManager_open(assetManager, "models/pyramid.glb", AASSET_MODE_BUFFER);
+
+    const off_t pyramidLength = AAsset_getLength(pyramidAsset);
+    const void* pyramidBuffer = AAsset_getBuffer(pyramidAsset);
+    Model pyramidModelGltf;
+    loadModel(pyramidBuffer, pyramidLength, &pyramidModelGltf);
+
+    AAsset_close(pyramidAsset);
+
     while((filename = AAssetDir_getNextFileName(modelsDir)) != NULL) {
         // TODO:
         LOGI("model found: %s", filename);
