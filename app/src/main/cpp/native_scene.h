@@ -8,6 +8,11 @@
 #include <jni.h> // Jave Native Interface: Defines communication between Java and Cpp
 #include <cassert> // asserts
 #include <chrono>
+#include <math.h>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 
 #include <EGL/egl.h> // interface between OpenGL ES and underlying native platform window system
 #include <GLES3/gl3.h> // OpenGL ES 3.0
@@ -33,9 +38,17 @@ const char* NATIVE_ACTIVITY_NAME = "native-activity-blue";
 #include "noop_types.h"
 
 #include "noop_math.h"
+#include "noop_types.h"
 #include "android_platform.cpp"
-#include "util.h"
 #include "shader_types_and_constants.h"
 #include "vertex_attributes.h"
-#include "vertex_attributes.cpp"
+#include "file_locations.h"
+#include "save_file.h"
+#include "util.h"
+#include "textures.h"
+#include "shader_program.h"
 #include "model.h"
+#include "camera.h"
+
+#include "vertex_attributes.cpp"
+#include "portal_scene.cpp"

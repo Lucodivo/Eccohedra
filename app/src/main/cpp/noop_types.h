@@ -44,3 +44,14 @@ typedef s32 b32;
 #endif
 
 #define InvalidCodePath Assert(!"InvalidCodePath");
+
+struct vec2_u32
+{
+    u32 width;
+    u32 height;
+};
+
+struct vec2_f64 {
+    f64 x;
+    f64 y;
+};

@@ -15,12 +15,57 @@ const GLDisplay NULL_GLDISPLAY = {
         -1, -1,
 };
 
+global_variable AAssetManager* assetManager_GLOBAL = nullptr;
+void initAssetManager(android_app* app);
+void logAllAssets();
+void openAsset(const char* assetFilePath, void* assetBuffer, u32* assetSizeInBytes);
 GLDisplay glInitDisplay(ANativeWindow *window);
 void glDeinitDisplay(GLDisplay* display);
 void logDeviceGLEnvironment();
 JNIEnv* attachToMainThread(android_app* app);
 void detachFromMainThread(android_app* app);
 ASensorManager* acquireASensorManagerInstance(android_app* app);
+
+// This MUST be called before attempting to load any assets
+void initAssetManager(android_app* app) {
+    assetManager_GLOBAL = app->activity->assetManager;
+}
+
+struct Asset {
+    const char* filePath;
+    AAsset* androidAsset;
+    const void* buffer;
+    u32 bufferLengthInBytes;
+
+    Asset(const char* filePath) {
+        this->filePath = filePath;
+        androidAsset = AAssetManager_open(assetManager_GLOBAL, filePath, AASSET_MODE_BUFFER);
+        buffer = AAsset_getBuffer(androidAsset);
+        bufferLengthInBytes = AAsset_getLength(androidAsset);
+    }
+
+    ~Asset() { AAsset_close(androidAsset); }
+};
+
+void logAllAssets() {
+    AAssetDir* dir = AAssetManager_openDir(assetManager_GLOBAL, "models");
+    const char* filename = nullptr;
+    while((filename = AAssetDir_getNextFileName(dir)) != nullptr) {
+        LOGI("model found: %s", filename);
+    }
+    dir = AAssetManager_openDir(assetManager_GLOBAL, "shaders");
+    while((filename = AAssetDir_getNextFileName(dir)) != nullptr) {
+        LOGI("shader found: %s", filename);
+    }
+    dir = AAssetManager_openDir(assetManager_GLOBAL, "skyboxes");
+    while((filename = AAssetDir_getNextFileName(dir)) != nullptr) {
+        LOGI("skybox found: %s", filename);
+    }
+    dir = AAssetManager_openDir(assetManager_GLOBAL, "textures");
+    while((filename = AAssetDir_getNextFileName(dir)) != nullptr) {
+        LOGI("texture found: %s", filename);
+    }
+}
 
 /**
  * Initialize an EGL context for the current display.

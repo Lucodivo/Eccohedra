@@ -256,13 +256,14 @@ void initializeModelVertexData(tinygltf::Model* gltfModel, Model* model)
   }
 }
 
-void loadModel(const void* fileBuffer, const u32 sizeInBytes, Model* returnModel) {
+void loadModel(const char* filePath, Model* returnModel) {
   tinygltf::TinyGLTF loader;
   std::string err;
   std::string warn;
   tinygltf::Model tinyGLTFModel;
 
-  bool ret = loader.LoadBinaryFromMemory(&tinyGLTFModel, &err, &warn, (const unsigned char*)fileBuffer, sizeInBytes);
+  Asset modelAsset = Asset(filePath);
+  bool ret = loader.LoadBinaryFromMemory(&tinyGLTFModel, &err, &warn, (const unsigned char*)modelAsset.buffer, modelAsset.bufferLengthInBytes);
 
   if (!warn.empty()) {
     printf("Warning: %s\n", warn.c_str());
@@ -279,8 +280,7 @@ void loadModel(const void* fileBuffer, const u32 sizeInBytes, Model* returnModel
     return;
   }
 
-  // TODO: This MUST be fixed
-//  returnModel->fileName = cStrAllocateAndCopy(filePath);
+  returnModel->fileName = cStrAllocateAndCopy(filePath);
   initializeModelVertexData(&tinyGLTFModel, returnModel);
 }
 

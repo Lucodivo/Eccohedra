@@ -49,6 +49,8 @@ void setupGLStartingState();
  * It runs in its own thread, with its own event loop for receiving input events and doing other things.
  */
 void android_main(android_app* app) {
+    initAssetManager(app);
+
     Engine engine{};
 
     memset(&engine, 0, sizeof(engine));
@@ -145,22 +147,10 @@ void setupGLStartingState() {
 }
 
 void loadAssets(const Engine& engine) {
-    AAssetDir* modelsDir = AAssetManager_openDir(engine.app->activity->assetManager, "models");
-    const char* filename;
+    logAllAssets();
 
-    AAsset* pyramidAsset = AAssetManager_open(engine.app->activity->assetManager, "models/pyramid.glb", AASSET_MODE_BUFFER);
-
-    const off_t pyramidLength = AAsset_getLength(pyramidAsset);
-    const void* pyramidBuffer = AAsset_getBuffer(pyramidAsset);
     Model pyramidModelGltf;
-    loadModel(pyramidBuffer, pyramidLength, &pyramidModelGltf);
-
-    AAsset_close(pyramidAsset);
-
-    while((filename = AAssetDir_getNextFileName(modelsDir)) != NULL) {
-        // TODO:
-        LOGI("model found: %s", filename);
-    }
+    loadModel("models/pyramid.glb", &pyramidModelGltf);
 }
 
 /**

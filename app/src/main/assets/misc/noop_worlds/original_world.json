@@ -41,11 +41,11 @@
                 1.0,
                 1.0
             ],
-            "fileName": "src/data/models/mrsaturn.glb",
+            "fileName": "models/mrsaturn.glb",
             "index": 4
         },
         {
-            "fileName": "src/data/models/Portal-Backing-Plus-Gate-Insignia.glb",
+            "fileName": "models/portal_back.glb",
             "index": 5
         }
     ],
@@ -165,7 +165,7 @@
                     ]
                 }
             ],
-            "skyboxDir": "src/data/skybox/cave/",
+            "skyboxDir": "skybox/cave/",
             "skyboxExt": "png",
             "title": "Gate"
         },
@@ -225,7 +225,7 @@
                     ]
                 }
             ],
-            "skyboxDir": "src/data/skybox/yellow_cloud/",
+            "skyboxDir": "skybox/yellow_cloud/",
             "skyboxExt": "jpg",
             "title": "Tetrahedron"
         },
@@ -285,7 +285,7 @@
                     ]
                 }
             ],
-            "skyboxDir": "src/data/skybox/interstellar/",
+            "skyboxDir": "skybox/interstellar/",
             "skyboxExt": "png",
             "title": "Octahedron"
         },
@@ -345,7 +345,7 @@
                     ]
                 }
             ],
-            "skyboxDir": "src/data/skybox/calm_sea/",
+            "skyboxDir": "skybox/calm_sea/",
             "skyboxExt": "jpg",
             "title": "Paper"
         },
@@ -405,27 +405,27 @@
                     ]
                 }
             ],
-            "skyboxDir": "src/data/skybox/polluted_earth/",
+            "skyboxDir": "skybox/polluted_earth/",
             "skyboxExt": "jpg",
             "title": "Icosahedron"
         }
     ],
     "shaders": [
         {
-            "fragmentName": "src/shaders/Gate.frag",
+            "fragmentName": "shaders/Gate.frag",
             "index": 0,
-            "noiseTextureName": "src/data/textures/tiled_musgrave_texture_1_blur.png",
-            "vertexName": "src/shaders/Gate.vert"
+            "noiseTextureName": "textures/tiled_musgrave_texture_1_blur.png",
+            "vertexName": "shaders/Gate.vert"
         },
         {
-            "fragmentName": "src/shaders/SingleColor.frag",
+            "fragmentName": "shaders/SingleColor.frag",
             "index": 1,
-            "vertexName": "src/shaders/Pos.vert"
+            "vertexName": "shaders/Pos.vert"
         },
         {
-            "fragmentName": "src/shaders/ReflectSkyboxYIsUp.frag",
+            "fragmentName": "shaders/ReflectSkyboxYIsUp.frag",
             "index": 2,
-            "vertexName": "src/shaders/PosNorm.vert"
+            "vertexName": "shaders/PosNorm.vert"
         }
     ],
     "startingSceneIndex": 0
