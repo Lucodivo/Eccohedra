@@ -227,11 +227,9 @@ void drawTrianglesWireframe(const VertexAtt* vertexAtt) {
   glUseProgram(globalShaders.singleColor.id);
   setUniform(globalShaders.singleColor.id, "baseColor", vec3{0.0f, 0.0f, 0.0f});
   glDisable(GL_DEPTH_TEST);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glDisable(GL_CULL_FACE);
-  drawTriangles(vertexAtt);
+  drawLines(vertexAtt); // TODO: This probably does not work and should be monitored
   glEnable(GL_CULL_FACE);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glEnable(GL_DEPTH_TEST);
 }
 
@@ -295,7 +293,7 @@ void drawPortals(World* world, const u32 sceneIndex){
   for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
     Portal portal = scene->portals[portalIndex];
     // don't draw scene if portal isn't visible
-    // TODO: better visibility tests besides facing camera?
+    // TODO: We need to develop and test an algorithm thar more accurately tells us whether a particular portal is in sight of the camera
     if(!flagIsSet(portal.stateFlags, PortalState_FacingCamera)) { continue; }
 
     vec3 portalNormal_viewSpace = (world->UBOs.projectionViewModelUbo.view * Vec4(-portal.normal, 0.0f)).xyz;
@@ -307,9 +305,7 @@ void drawPortals(World* world, const u32 sceneIndex){
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // Conditional render only if the any samples passed while drawing the portal
-    glBeginConditionalRender(portalQueryObjects[portalIndex], GL_QUERY_BY_REGION_WAIT);
     drawScene(world, portal.sceneDestination, portal.stencilMask);
-    glEndConditionalRender();
   }
 }
 
@@ -421,7 +417,7 @@ void updateEntities(World* world) {
     for(u32 entityIndex = 0; entityIndex < scene->entityCount; ++entityIndex) {
       Entity* entity = scene->entities + entityIndex;
       if(entity->typeFlags & EntityType_Rotating) {
-        entity->yaw += 30.0f * RadiansPerDegree * world->stopWatch.delta;
+        entity->yaw += 30.0f * RadiansPerDegree * world->stopWatch.deltaSeconds;
         if(entity->yaw > Tau32) {
           entity->yaw -= Tau32;
         }
@@ -620,11 +616,6 @@ void cleanupWorld(World* world) {
   world = {};
 }
 
-void cleanupEditorState(EditorState* editorState) {
-  deleteCStringRingBuffer(&editorState->debugCStringRingBuffer);
-  editorState = {};
-}
-
 void initPlayer(Player* player) {
   player->boundingBox.diagonal = defaultPlayerDimensionInMeters;
   player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f), -12.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
@@ -636,10 +627,9 @@ void initCamera(Camera* camera, const Player& player) {
   lookAt_FirstPerson(firstPersonCameraInitPosition, firstPersonCameraInitFocus, camera);
 }
 
-void loadWorld(World* world, EditorState* editorState, const char* saveJsonFile) {
+void loadWorld(World* world, const char* saveJsonFile) {
 
-  strcpy(editorState->currentlyLoadedWorld, saveJsonFile);
-  addCStringF(&editorState->debugCStringRingBuffer, "Currently leading world: %s", editorState->currentlyLoadedWorld);
+  LOGI("Currently leading world: %s", saveJsonFile);
 
   SaveFormat saveFormat = loadSave(saveJsonFile);
 
@@ -750,7 +740,8 @@ void loadWorld(World* world, EditorState* editorState, const char* saveJsonFile)
   initCamera(&globalWorld.camera, globalWorld.player);
   // TODO: Set FOV based on save file
   world->fov = fieldOfView(13.5f, 25.0f);
-  vec2_u32 windowExtent = getWindowExtent();
+  // TODO: access the window extent from Android
+  vec2_u32 windowExtent = {0, 0};
   world->aspect = f32(windowExtent.width) / windowExtent.height;
   // NOTE: projection and view in UBO gets updated at the beginning of every frame, no need to manually update UBO here
   world->UBOs.projectionViewModelUbo.projection = perspective(world->fov, world->aspect, near, far);
@@ -760,54 +751,9 @@ void loadWorld(World* world, EditorState* editorState, const char* saveJsonFile)
   return;
 }
 
-void initGuiState(EditorState* guiState) {
-  guiState->cursorEnabled = true;
-  guiState->showDebugTextWindow = true;
-  guiState->showDemoWindow = false;
-  guiState->debugCStringRingBuffer = createCStringRingBuffer(128, 50);
-}
-
-void saveEditorState(EditorState* editorState) {
-  nlohmann::json saveJson{};
-
-  if(!empty(editorState->currentlyLoadedWorld)) {
-    saveJson["worldFile"] = editorState->currentlyLoadedWorld;
-  }
-
-  saveJson["editorActive"] = editorState->cursorEnabled;
-  saveJson["demoWindowActive"] = editorState->showDemoWindow;
-  saveJson["debugTextWindowActive"] = editorState->showDebugTextWindow;
-
-  // write prettified JSON to another file
-  std::ofstream o(editorSaveFileName);
-  o << std::setw(4) << saveJson << std::endl;
-}
-
-void loadPrevEditorState(World* world, EditorState* editorState) {
-  nlohmann::json saveJson;
-  { // parse file
-    std::ifstream sceneJsonFileInput(editorSaveFileName);
-    sceneJsonFileInput >> saveJson;
-  }
-
-  if(!saveJson["worldFile"].is_null()) {
-    std::string previousWorldFileName;
-    saveJson["worldFile"].get_to(previousWorldFileName);
-    if(fileReadable(previousWorldFileName.c_str())) {
-      loadWorld(world, editorState, previousWorldFileName.c_str());
-    } else {
-      std::string debugString = "Could not load scene file: " + previousWorldFileName;
-      addCString(&editorState->debugCStringRingBuffer, debugString.c_str(), (u32)debugString.length());
-    }
-  }
-
-  editorState->cursorEnabled = saveJson["editorActive"];
-  editorState->showDemoWindow = saveJson["demoWindowActive"];
-  editorState->showDebugTextWindow = saveJson["debugTextWindowActive"];
-}
-
-void portalScene(GLFWwindow* window) {
-  vec2_u32 windowExtent = getWindowExtent();
+void portalScene() {
+  // TODO: access the window extent from Android
+  vec2_u32 windowExtent = {0, 0};
   const vec2_u32 initWindowExtent = windowExtent;
   globalWorld.aspect = f32(windowExtent.width) / windowExtent.height;
   glGenQueries(ArrayCount(portalQueryObjects), portalQueryObjects);
@@ -852,223 +798,57 @@ void portalScene(GLFWwindow* window) {
   }
 
   globalWorld.stopWatch = createStopWatch();
-  initGuiState(&globalEditorState);
 
-  loadPrevEditorState(&globalWorld, &globalEditorState);
-  enableCursor(window, globalEditorState.cursorEnabled);
-
-  while(glfwWindowShouldClose(window) == GL_FALSE)
+  while(true) // TODO: This is the render loop, it WILL need to exit
   {
-    loadInputStateForFrame(window);
+    // NOTE: input should be handled through handleInput(android_app* app, AInputEvent* event)
     updateStopWatch(&globalWorld.stopWatch);
     globalWorld.UBOs.fragUbo.time = globalWorld.stopWatch.totalElapsed;
 
     vec3 playerCenter;
     vec3 playerViewPosition = calcPlayerViewingPosition(&globalWorld.player);
 
-    if (isActive(KeyboardInput_Esc))
-    {
-      glfwSetWindowShouldClose(window, true);
-      break;
-    }
-
-    // toggle fullscreen/window mode if alt + enter
-    if(isActive(KeyboardInput_Alt_Right) && hotPress(KeyboardInput_Enter)) {
-      windowExtent = toggleWindowSize(window, initWindowExtent.width, initWindowExtent.height);
-      globalWorld.aspect = f32(windowExtent.width) / windowExtent.height;
-      glViewport(0, 0, windowExtent.width, windowExtent.height);
-
-      adjustAspectPerspProj(&globalWorld.UBOs.projectionViewModelUbo.projection, globalWorld.fov, globalWorld.aspect);
-    }
-
-    // toggle cursor
-    if(hotPress(KeyboardInput_Space)) {
-      globalEditorState.cursorEnabled = !globalEditorState.cursorEnabled;
-      enableCursor(window, globalEditorState.cursorEnabled);
-    }
-
     // gather input
-    b32 leftShiftIsActive = isActive(KeyboardInput_Shift_Left);
-    b32 leftIsActive = isActive(KeyboardInput_A) || isActive(KeyboardInput_Left);
-    b32 rightIsActive = isActive(KeyboardInput_D) || isActive(KeyboardInput_Right);
-    b32 upIsActive = isActive(KeyboardInput_W) || isActive(KeyboardInput_Up);
-    b32 downIsActive = isActive(KeyboardInput_S) || isActive(KeyboardInput_Down);
-    b32 tabHotPress = hotPress(KeyboardInput_Tab);
-    vec2_f64 mouseDelta = getMouseDelta();
+    // TODO: get input for frame to determine boolean values
+    b32 sprintIsActive = false;
+    b32 leftIsActive = false;
+    b32 rightIsActive = false;
+    b32 forwardIsActive = false;
+    b32 backwardIsActive = false;
+    vec2_f64 viewAngleDelta = {0.0, 0.0}; // TODO: Do we ever want to be able to change views?
 
     // gather input for movement and camera changes
-    const bool cameraMovementEnabled = !globalEditorState.cursorEnabled;
-    if(cameraMovementEnabled) {
-      b32 lateralMovement = leftIsActive != rightIsActive;
-      b32 forwardMovement = upIsActive != downIsActive;
-      vec3 playerDelta{};
-      if (lateralMovement || forwardMovement)
-      {
-        f32 playerMovementSpeed = leftShiftIsActive ? 8.0f : 4.0f;
-
-        // Camera movement direction
-        vec3 playerMovementDirection{};
-        if (lateralMovement)
-        {
-          playerMovementDirection += rightIsActive ? globalWorld.camera.right : -globalWorld.camera.right;
-        }
-
-        if (forwardMovement)
-        {
-          playerMovementDirection += upIsActive ? globalWorld.camera.forward : -globalWorld.camera.forward;
-        }
-
-        playerMovementDirection = normalize(playerMovementDirection.x, playerMovementDirection.y, 0.0);
-        playerDelta = playerMovementDirection * playerMovementSpeed * globalWorld.stopWatch.delta;
-      }
-
-      // TODO: Do not apply immediately, check for collisions
-      globalWorld.player.boundingBox.min += playerDelta;
-      playerCenter = calcBoundingBoxCenterPosition(globalWorld.player.boundingBox);
-
-      if(tabHotPress) { // switch between third and first person
-        vec3 xyForward = normalize(globalWorld.camera.forward.x, globalWorld.camera.forward.y, 0.0f);
-
-        if(!globalWorld.camera.thirdPerson) {
-          lookAt_ThirdPerson(playerCenter, xyForward, &globalWorld.camera);
-        } else { // camera is first person now
-          vec3 focus = playerViewPosition + xyForward;
-          lookAt_FirstPerson(playerViewPosition, focus, &globalWorld.camera);
-        }
-      }
-
-      const f32 mouseDeltaMultConst = 0.0005f;
-      if(globalWorld.camera.thirdPerson) {
-        updateCamera_ThirdPerson(&globalWorld.camera, playerCenter, f32(-mouseDelta.y * mouseDeltaMultConst),f32(-mouseDelta.x * mouseDeltaMultConst));
-      } else {
-        updateCamera_FirstPerson(&globalWorld.camera, playerDelta, f32(-mouseDelta.y * mouseDeltaMultConst), f32(-mouseDelta.x * mouseDeltaMultConst));
-      }
-    }
-    globalWorld.UBOs.projectionViewModelUbo.view = getViewMat(globalWorld.camera);
-
-    // Start the Dear ImGui frame
+    b32 lateralMovement = leftIsActive != rightIsActive;
+    b32 forwardMovement = forwardIsActive != backwardIsActive;
+    vec3 playerDelta{};
+    if (lateralMovement || forwardMovement)
     {
-      ImGui_ImplOpenGL3_NewFrame();
-      ImGui_ImplGlfw_NewFrame();
-      ImGui::NewFrame();
+      f32 playerMovementSpeed = sprintIsActive ? 8.0f : 4.0f;
 
-      ImGuiFileDialog::Instance()->SetExtentionInfos(".json", ImVec4(0.1f,0.7f,0.1f, 0.9f));
-
-      if (ImGui::BeginMainMenuBar())
+      // Camera movement direction
+      vec3 playerMovementDirection{};
+      if (lateralMovement)
       {
-        if (ImGui::BeginMenu("File"))
-        {
-          if (ImGui::MenuItem("Load..", NULL)) {
-            // load worlds
-            ImGuiFileDialog::Instance()->OpenDialog("LoadSceneFileDialogKey", "Load Scene", ".json", "");
-          }
-
-          if(ImGui::MenuItem("Save", NULL)) {
-            // save current worlds
-            // TODO: Save based on current scene loaded or open "Save As..." if no scene has been loaded
-            saveWorld(&globalWorld, originalSceneLoc);
-          }
-
-          if (ImGui::MenuItem("Save As..", NULL)) {
-            // save worlds as...
-            ImGuiFileDialog::Instance()->OpenDialog("SaveSceneFileDialogKey", "Save Scene", ".json", "");
-          }
-
-          ImGui::EndMenu();
-        }
-
-        if (ImGui::BeginMenu("View"))
-        {
-          if (ImGui::MenuItem("Debug Output", NULL)) {
-            globalEditorState.showDebugTextWindow = !globalEditorState.showDebugTextWindow;
-          }
-
-          if (ImGui::MenuItem("ImGUI demo window", NULL)) {
-            globalEditorState.showDemoWindow = !globalEditorState.showDemoWindow;
-          }
-
-          ImGui::EndMenu();
-        }
-        ImGui::EndMainMenuBar();
+        playerMovementDirection += rightIsActive ? globalWorld.camera.right : -globalWorld.camera.right;
       }
 
-      // load scene dialog
-      if (ImGuiFileDialog::Instance()->Display("LoadSceneFileDialogKey"))
+      if (forwardMovement)
       {
-        // action if OK
-        if (ImGuiFileDialog::Instance()->IsOk())
-        {
-          std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-
-          if(fileReadable(filePathName.c_str())) {
-            cleanupWorld(&globalWorld);
-            loadWorld(&globalWorld, &globalEditorState, filePathName.c_str());
-            globalEditorState.cursorEnabled = !globalEditorState.cursorEnabled;
-            enableCursor(window, globalEditorState.cursorEnabled);
-          } else {
-            std::string debugString = "Could not load scene file: " + ImGuiFileDialog::Instance()->GetFilePathName();
-            addCString(&globalEditorState.debugCStringRingBuffer, debugString.c_str(), (u32)debugString.length());
-          }
-        }
-
-        // close
-        ImGuiFileDialog::Instance()->Close();
+        playerMovementDirection += forwardIsActive ? globalWorld.camera.forward : -globalWorld.camera.forward;
       }
 
-      // save scene dialog
-      if (ImGuiFileDialog::Instance()->Display("SaveSceneFileDialogKey"))
-      {
-        // action if OK
-        if (ImGuiFileDialog::Instance()->IsOk())
-        {
-          std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-          u32 fileNameSize = (u32)filePathName.length();
-          if(fileNameSize > (ArrayCount(globalEditorState.currentlyLoadedWorld) - 1)) {
-            addCString(&globalEditorState.debugCStringRingBuffer, "Error: Max file name is 255 characters!");
-          } else {
-            saveWorld(&globalWorld, filePathName.c_str());
-          }
-        }
-
-        // close
-        ImGuiFileDialog::Instance()->Close();
-      }
-
-      // debug text window
-      if(globalEditorState.showDebugTextWindow) {
-        ImGui::Begin("Debug text output", &globalEditorState.showDebugTextWindow, ImGuiWindowFlags_None);
-        {
-          ImGui::BeginChild("Scrolling");
-          {
-            // TODO: Can I extract this logic while without increasing number of modulos?
-            const s32 lastIndex = (globalEditorState.debugCStringRingBuffer.first + globalEditorState.debugCStringRingBuffer.count - 1) % globalEditorState.debugCStringRingBuffer.cStringMaxCount;
-            s32 traversalIndex = lastIndex;
-            while(traversalIndex >= 0) {
-              ImGui::Text(globalEditorState.debugCStringRingBuffer.buffer + (traversalIndex * globalEditorState.debugCStringRingBuffer.cStringSize));
-              traversalIndex--;
-            }
-
-            if(globalEditorState.debugCStringRingBuffer.first != 0) {
-              traversalIndex = globalEditorState.debugCStringRingBuffer.cStringMaxCount - 1;
-              while(traversalIndex >= (s32)globalEditorState.debugCStringRingBuffer.first) {
-                ImGui::Text(globalEditorState.debugCStringRingBuffer.buffer + (traversalIndex * globalEditorState.debugCStringRingBuffer.cStringSize));
-                traversalIndex--;
-              }
-            }
-          }
-          ImGui::EndChild();
-        }
-        ImGui::End();
-      }
-
-      if(globalEditorState.showDemoWindow)
-      {
-        ImGui::ShowDemoWindow(&globalEditorState.showDemoWindow);
-      }
-
-      // Rendering
-      ImGui::Render();
+      playerMovementDirection = normalize(playerMovementDirection.x, playerMovementDirection.y, 0.0);
+      playerDelta = playerMovementDirection * playerMovementSpeed * globalWorld.stopWatch.deltaSeconds;
     }
+
+    // TODO: Do not apply immediately, check for collisions
+    globalWorld.player.boundingBox.min += playerDelta;
+    playerCenter = calcBoundingBoxCenterPosition(globalWorld.player.boundingBox);
+
+    const f32 mouseDeltaMultConst = 0.0005f;
+    updateCamera_FirstPerson(&globalWorld.camera, playerDelta, f32(-viewAngleDelta.y * mouseDeltaMultConst), f32(-viewAngleDelta.x * mouseDeltaMultConst));
+
+    globalWorld.UBOs.projectionViewModelUbo.view = getViewMat(globalWorld.camera);
 
     // draw
     glStencilMask(0xFF);
@@ -1084,62 +864,12 @@ void portalScene(GLFWwindow* window) {
     glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.fragUboId);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(FragUBO), &globalWorld.UBOs.fragUbo);
 
-    if(globalWorld.camera.thirdPerson) { // draw player if third person
-      vec3 playerViewCenter = calcPlayerViewingPosition(&globalWorld.player);
-      vec3 playerBoundingBoxColor_Red{1.0f, 0.0f, 0.0f};
-      vec3 playerViewBoxColor_White{1.0f, 1.0f, 1.0f};
-      vec3 playerMinCoordBoxColor_Green{0.0f, 1.0f, 0.0f};
-      vec3 playerMinCoordBoxColor_Black{0.0f, 0.0f, 0.0f};
-
-      mat4 thirdPersonPlayerBoxesModelMatrix;
-
-      glUseProgram(globalShaders.singleColor.id);
-      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-      glDisable(GL_CULL_FACE);
-
-      // debug player bounding box
-      glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.projectionViewModelUboId);
-      thirdPersonPlayerBoxesModelMatrix = scaleTrans_mat4(globalWorld.player.boundingBox.diagonal, playerCenter);
-      glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &thirdPersonPlayerBoxesModelMatrix);
-      setUniform(globalShaders.singleColor.id, baseColorUniformName, playerBoundingBoxColor_Red);
-      drawTriangles(&cubePosVertexAtt);
-
-      // debug player center
-      glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.projectionViewModelUboId);
-      thirdPersonPlayerBoxesModelMatrix = scaleTrans_mat4(0.05f, playerCenter);
-      glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &thirdPersonPlayerBoxesModelMatrix);
-      setUniform(globalShaders.singleColor.id, baseColorUniformName, playerMinCoordBoxColor_Black);
-      drawTriangles(&cubePosVertexAtt);
-
-      // debug player min coordinate box
-      glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.projectionViewModelUboId);
-      thirdPersonPlayerBoxesModelMatrix = scaleTrans_mat4(0.1f, globalWorld.player.boundingBox.min);
-      glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &thirdPersonPlayerBoxesModelMatrix);
-      setUniform(globalShaders.singleColor.id, baseColorUniformName, playerMinCoordBoxColor_Green);
-      drawTriangles(&cubePosVertexAtt);
-
-      // debug player view
-      glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.projectionViewModelUboId);
-      thirdPersonPlayerBoxesModelMatrix = scaleTrans_mat4(0.1f, playerViewCenter);
-      glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &thirdPersonPlayerBoxesModelMatrix);
-      glBindBuffer(GL_UNIFORM_BUFFER, 0);
-      setUniform(globalShaders.singleColor.id, baseColorUniformName, playerViewBoxColor_White);
-      drawTriangles(&cubePosVertexAtt);
-
-      glEnable(GL_CULL_FACE);
-      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-
     updateEntities(&globalWorld);
 
     drawSceneWithPortals(&globalWorld);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-    glfwSwapBuffers(window); // swaps double buffers (call after all render commands are completed)
-    glfwPollEvents(); // checks for events (ex: keyboard/mouse input)
+    // TODO: End of render loop, make sure to swap buffers and make sure we get input for next frame
   }
 
-  saveEditorState(&globalEditorState);
-  cleanupEditorState(&globalEditorState);
   cleanupWorld(&globalWorld);
 }

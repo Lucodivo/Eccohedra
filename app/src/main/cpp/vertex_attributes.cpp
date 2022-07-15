@@ -396,6 +396,14 @@ void drawTriangles(const VertexAtt* vertexAtt)
   drawTriangles(vertexAtt, vertexAtt->indexCount, 0);
 }
 
+void drawLines(const VertexAtt* vertexAtt) {
+  // TODO: This is a total guess, if wireframes are messed up, this is why!
+  glDrawElements(GL_LINE_LOOP,
+                 vertexAtt->indexCount,
+                 convertSizeInBytesToOpenGLUIntType(vertexAtt->indexTypeSizeInBytes),
+                 (void*)0);
+}
+
 void deleteVertexAtt(VertexAtt* vertexAtt)
 {
   // TODO: prevent from deleting global vertex atts

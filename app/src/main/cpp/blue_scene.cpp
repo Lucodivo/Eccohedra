@@ -70,6 +70,8 @@ void android_main(android_app* app) {
         engine.state = *(SceneState*)app->savedState;
     }
 
+    // TODO: I need to call into portalScene(window) or something
+
     setupGLStartingState();
     loadAssets(engine);
 
@@ -127,13 +129,31 @@ static void drawFrame(const Engine &engine) {
 
 static s32 handleInput(android_app* app, AInputEvent* event) {
     auto* engine = (Engine*)app->userData;
-    switch(AInputEvent_getType(event)) {
-        case AINPUT_EVENT_TYPE_MOTION: {
-            engine->paused = false;
-            engine->state.inputX = AMotionEvent_getX(event, 0);
-            engine->state.inputY = AMotionEvent_getY(event, 0);
-            return 1;
-        }
+    auto eventType = AInputEvent_getType(event);
+    auto eventSource = AInputEvent_getSource(event);
+    switch(eventType) {
+        case AINPUT_EVENT_TYPE_MOTION:
+            switch(eventSource){
+                case AINPUT_SOURCE_TOUCHSCREEN: {
+                    int action = AKeyEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK;
+                    switch(action){
+                        case AMOTION_EVENT_ACTION_DOWN:
+                            engine->paused = false;
+                            break;
+                        case AMOTION_EVENT_ACTION_UP:
+                            engine->paused = false;
+                            break;
+                        case AMOTION_EVENT_ACTION_MOVE:
+                            engine->paused = false;
+                            break;
+                        default: { break; }
+                    }
+                    engine->state.inputX = AMotionEvent_getX(event, 0);
+                    engine->state.inputY = AMotionEvent_getY(event, 0);
+                    return 1;
+                }
+                default: { break; }
+            }
         case AINPUT_EVENT_TYPE_KEY: { break; }
         case AINPUT_EVENT_TYPE_FOCUS: { break; }
         default: { break; }
