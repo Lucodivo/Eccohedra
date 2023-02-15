@@ -1,2 +1,2 @@
 rootProject.name = "OpenGLScenes"
-include ':app'
+include(":app")
