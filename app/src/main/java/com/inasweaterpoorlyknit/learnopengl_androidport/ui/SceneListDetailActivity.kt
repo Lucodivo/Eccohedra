@@ -68,7 +68,7 @@ class SceneListDetailActivity : AppCompatActivity() {
         }
 
         viewModel.finishTrigger.observe(this) {
-            super.onBackPressed()
+            super.getOnBackPressedDispatcher().onBackPressed()
         }
 
         viewModel.startActivityRequest.observe(this) {
@@ -77,7 +77,7 @@ class SceneListDetailActivity : AppCompatActivity() {
         }
 
         window.apply {
-            statusBarColor = resources.getColor(R.color.Grayscale0) // set
+            statusBarColor = getColor(R.color.Grayscale0) // set
         }
     }
 

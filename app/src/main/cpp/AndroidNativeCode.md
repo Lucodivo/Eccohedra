@@ -1,30 +1,76 @@
 #### When does our native code come into play?
 - In the AndroidManifest we connect a given NativeActivity with it's native implementation via a specified C++ library.
-- The entry point for our NativeActivity is the function in our specified C++ library with the signature `void android_main(android_app* app)`. 
-- `android_main()` is defined and entered from `android_native_app_glue.c`.
-- `android_main()` is called sometime after the OS spins up our NativeActivity
+  - A Native Android Activity should look like the following in the `AndroidManifest.xml`
+    ```
+    <activity android:name=".graphics.ExampleNativeActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+      <!-- Tell NativeActivity the name of our .so -->
+      <meta-data android:name="android.app.lib_name"
+                android:value="example-native-activity" />
+    </activity>
+    ```
+    - In this project, `lib_name` is determined by the project name specified in our CMakeLists.txt 
+    file.
+      - After building, the actually .so file can be found inside the project at a location that 
+      looks similar to `app/build/intermediates/cxx/Debug/{some_hash}/obj/x86/libexample-native-activity.so`
+- The entry point for our NativeActivity is the function in our specified C++ library with the 
+signature `void android_main(android_app* app)`. 
+- The `android_main()`signature is defined in `android_native_app_glue.h` and called from 
+`android_native_app_glue.c`.
+- `android_app_entry()`, in `android_native_app_glue.c`, is where the native code begins. It is 
+called sometime after the OS spins up the NativeActivity and it is the function that calls `android_main()`, 
+handing over control to our custom native code.
 
-#### Acquiring AAssetManager
-The single parameter of the `android_main()` entry point of the native activity is `android_app* app`. To access
+### Android Classes
+- Android classes are opaque pointers that give access to the device or running application in some way.
+The Native API defines functions which require these opaque pointers as a parameter.
+
+#### AAssetManager
+- Provides access to the applications raw asset files in the assets folder (`app/src/main/assets`).
+  - Examples:
+    ```
+    // Get a buffer to a file using a relative path from the root of the assets folder
+    const char* filePath = models/pyramid.glb;
+    AAsset* androidAsset = AAssetManager_open(assetManagerPtr, filePath, AASSET_MODE_BUFFER);
+    const void* buffer = AAsset_getBuffer(androidAsset);
+    u32 bufferLengthInBytes = AAsset_getLength(androidAsset);
+    ```
+    ```
+    // Iterate through all files in a folder using a relative path from the root of the assets folder
+    const char* folderPath = "models"
+    AAssetDir* dir = AAssetManager_openDir(assetManagerPtr, folderPath);
+    while((filename = AAssetDir_getNextFileName(dir)) != nullptr) {
+        LOGI("\t\t model found: %s", filename);
+    }
+    ```
+- The single parameter of the `android_main()` entry point of the native activity is `android_app* app`. To access
 the native AAssetManager pointer, simply use the following:
-- `app->activity->assetManager`
+  - `app->activity->assetManager`
+- [AAssetManager's available API is defined here.](https://developer.android.com/ndk/reference/group/asset) \
+- AAssetManager may be shared across multiple threads.
 
-[AAssetManager's available API is defined here.](https://developer.android.com/ndk/reference/group/asset) And
-an AAssetManager may be shared across multiple threads.
+#### AConfiguration
+- Gives access to the device configurations like language, country, physical orientation, display density 
+(mdpi, hdpi, xhdpi, etc.), screen size (small, normal, large, etc.), screen height/width in dp, Android SDK/API
+version, or UI/night mode.
+- AConfiguration is accessibly through the parameter of `android_main(android_app* app)` using the following:
+  - `app->config`
+- [AConfiguration's API is defined here.](https://developer.android.com/ndk/reference/group/configuration)
 
-#### General tips
+### General tips
 - When acquiring classes, fields, or methods from Java, ensure you are on the application's main thread.
     - JNI functions are called from the main thread
-    - 'android_main' is on a separate thread and NOT on the main thread. However, the `android_app` parameter can be used to attach to the main thread and might look something like this:
-		- `androidApp->activity->vm->AttachCurrentThread(&env, nullptr)`
-		- [More information about attaching threads to the JVM can be found here.](https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/invocation.html)
+    - 'android_main' is on a separate thread and NOT on the main thread. However, the `android_app` 
+  parameter can be used to attach to the main thread and might look something like this:
+        - `androidApp->activity->vm->AttachCurrentThread(&env, nullptr)`
+        - [More information about attaching threads to the JVM can be found here.](https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/invocation.html)
     - [More information on things to look out for when finding Java classes/fields/methods from C++](https://developer.android.com/training/articles/perf-jni.html#faq:-why-didnt-findclass-find-my-class)
 
-#### References
+### References
 - [Native concepts overview](https://developer.android.com/ndk/guides/concepts)
 - [JNI tips](https://developer.android.com/training/articles/perf-jni)
 
-## Erratum
+### Errata
 
 #### Acquiring AAssetManager (OUTDATED AND UNNECESSARILY COMPLICATED)
 ~~AAssetManager is a struct that provides access to an Android application's raw assets and is a wrapper to the

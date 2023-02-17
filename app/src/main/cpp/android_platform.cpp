@@ -48,22 +48,31 @@ struct Asset {
 };
 
 void logAllAssets() {
+    const char* filename;
+
+    LOGI("+++++ ASSETS FOUND +++++");
+    LOGI("\t+++++ MODELS FOUND +++++");
     AAssetDir* dir = AAssetManager_openDir(assetManager_GLOBAL, "models");
-    const char* filename = nullptr;
     while((filename = AAssetDir_getNextFileName(dir)) != nullptr) {
-        LOGI("model found: %s", filename);
+        LOGI("\t\t model found: %s", filename);
     }
+
     dir = AAssetManager_openDir(assetManager_GLOBAL, "shaders");
+    LOGI("\t+++++ SHADERS FOUND +++++");
     while((filename = AAssetDir_getNextFileName(dir)) != nullptr) {
-        LOGI("shader found: %s", filename);
+        LOGI("\t\tshader found: %s", filename);
     }
+
     dir = AAssetManager_openDir(assetManager_GLOBAL, "skyboxes");
+    LOGI("\t+++++ SKYBOXES FOUND +++++");
     while((filename = AAssetDir_getNextFileName(dir)) != nullptr) {
-        LOGI("skybox found: %s", filename);
+        LOGI("\t\tskybox found: %s", filename);
     }
+
     dir = AAssetManager_openDir(assetManager_GLOBAL, "textures");
+    LOGI("\t+++++ TEXTURES FOUND +++++");
     while((filename = AAssetDir_getNextFileName(dir)) != nullptr) {
-        LOGI("texture found: %s", filename);
+        LOGI("\t\ttexture found: %s", filename);
     }
 }
 

@@ -1,6 +1,11 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
-    extra.set("kotlin_version", "1.6.10")
+
+    // Kotln and compose compiler must be compatible
+    // check the following link for more details
+    // https://developer.android.com/jetpack/androidx/releases/compose-kotlin
+    extra.set("kotlinCompilerVersion", "1.7.20")
+    extra.set("composeCompilerVersion", "1.3.2")
 
     repositories { // used for project dependencies below
         google()
@@ -8,16 +13,13 @@ buildscript {
     }
 
     dependencies {
-        val kotlin_version: String by rootProject.extra
+        val kotlinCompilerVersion: String by rootProject.extra
 
-        classpath("com.android.tools.build:gradle:7.2.0")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlin_version}")
-        classpath("com.google.gms:google-services:4.3.10")
+        classpath("com.android.tools.build:gradle:7.3.1")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinCompilerVersion}")
 
-        // Crashlytics plugin
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-        classpath("com.google.firebase:firebase-crashlytics-gradle:2.8.1")
+        classpath("com.google.gms:google-services:4.3.15")
+        classpath("com.google.firebase:firebase-crashlytics-gradle:2.9.4")
 
         // TODO: Hilt
         //classpath("com.google.dagger:hilt-android-gradle-plugin:2.40.1")

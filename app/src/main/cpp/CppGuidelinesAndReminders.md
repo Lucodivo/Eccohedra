@@ -7,7 +7,7 @@ These are no exception.
 a function may do at the calling site. Pass-by-reference looks just like pass-by-value at the calling site. 
 Preferably the calling site screams "This function may mutate your argument!" So..
     - Does the function mutate the argument?
-        - "Yes", "Maybe", or "Not now but it will": The parameter should be a pointer.
+        - "Yes", "Maybe", or "Not now but I want to keep the possibilities open": The parameter should be a pointer.
         - "No": The parameter should be a reference to a constant value
 
 ### Wait... How does this work again?

@@ -1,9 +1,9 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    id("kotlin-android-extensions")
-    id("com.google.firebase.crashlytics")
+
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 
     // TODO: Hilt
 //    id("kotlin-kapt")
@@ -11,11 +11,12 @@ plugins {
 }
 
 android {
-    compileSdkVersion(31)
+    compileSdk = 33
+
     defaultConfig {
         applicationId = "com.inasweaterpoorlyknit.learnopengl_androidport"
-        minSdkVersion(24)
-        targetSdkVersion(31)
+        minSdk = 24
+        targetSdk = 33
         versionCode = 12
         versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -38,7 +39,8 @@ android {
         }
 
         composeOptions {
-            kotlinCompilerExtensionVersion = "1.1.1"
+            val composeCompilerVersion: String by rootProject.extra
+            kotlinCompilerExtensionVersion = composeCompilerVersion
         }
 
         packagingOptions {
@@ -58,10 +60,11 @@ android {
         }
 
         namespace = "com.inasweaterpoorlyknit.learnopengl_androidport"
+        signingConfig = signingConfigs.getByName("debug")
     }
 
     buildTypes {
-        named("release") {
+        getByName("release") {
             // Enables code shrinking, obfuscation, and optimization
             isMinifyEnabled = true
             // Enables resource shrinking
@@ -69,9 +72,10 @@ android {
             // Includes the default ProGuard rules files that are packaged with the Android Gradle plugin
             setProguardFiles(listOf(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"))
         }
-        named("debug") {
+        getByName("debug") {
             isMinifyEnabled = false
             setProguardFiles(listOf(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"))
+            isDebuggable = true
         }
     }
 
@@ -84,43 +88,44 @@ android {
 }
 
 dependencies {
-    val kotlin_version: String by rootProject.extra
+    val kotlinCompilerVersion: String by rootProject.extra
 
     // all binary .jar dependencies in libs folder listOf(NONE CURRENTLY)
 //    implementation fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar")))
 
     // Kotlin
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlinCompilerVersion}")
 
     // Google
-    implementation("androidx.appcompat:appcompat:1.4.1")
-    implementation("com.google.android.material:material:1.6.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.8.0")
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.3")
-    implementation("androidx.preference:preference-ktx:1.1.1")
-    implementation("androidx.fragment:fragment-ktx:1.4.1")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.preference:preference-ktx:1.2.0")
+    implementation("androidx.fragment:fragment-ktx:1.5.5")
 
 
     // Compose
-    implementation("androidx.activity:activity-compose:1.4.0") // Integration with activities
-    implementation("androidx.compose.material:material:1.1.1") // Compose Material Design
-    implementation("androidx.compose.material:material-icons-extended:1.1.1")
-    implementation("androidx.compose.animation:animation:1.1.1") // Animations
-    implementation("androidx.compose.ui:ui-tooling:1.1.1") // Tooling support (Previews, etc.)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.1") // Integration with ViewModels
+    implementation("androidx.activity:activity-compose:1.6.1") // Integration with activities
+    implementation("androidx.compose.material:material:1.3.1") // Compose Material Design
+    implementation("androidx.compose.material:material-icons-extended:1.3.1")
+    implementation("androidx.compose.animation:animation:1.3.3") // Animations
+    implementation("androidx.compose.ui:ui-tooling:1.3.3") // Tooling support (Previews, etc.)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1") // Integration with ViewModels
     //androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.1.1") // UI Tests
 
     // GLM (OpenGL Mathematics)
     implementation("com.github.kotlin-graphics:glm:1.0.1")
 
     // analytics
-    implementation("com.google.firebase:firebase-analytics:21.0.0")
-    implementation("com.google.firebase:firebase-crashlytics:18.2.10")
+    implementation(platform("com.google.firebase:firebase-bom:31.2.2"))
+    implementation("com.google.firebase:firebase-crashlytics-ktx")
+    implementation("com.google.firebase:firebase-analytics-ktx")
 
     // testing
     testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.3")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
     // Hilt (Dependency Injection)
     // TODO: Hilt

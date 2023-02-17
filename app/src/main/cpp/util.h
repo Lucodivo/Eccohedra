@@ -9,27 +9,31 @@ f64 getTime() {
   return f64((s64)now.tv_sec * NANOSECONDS_PER_SECOND + now.tv_nsec) / NANOSECONDS_PER_SECOND;
 }
 
-// stopwatch
+// Stopwatch In Seconds
 struct StopWatch {
-  f64 totalElapsed;
-  f64 lastFrame;
-  f64 deltaSeconds;
+  f64 totalInSeconds;
+  f64 lapInSeconds;
+
+  f64 lastLapSystemTimeInSeconds;
+
+  StopWatch() {
+    totalInSeconds = 0.0;
+    lastLapSystemTimeInSeconds = getTime();
+    lapInSeconds = 0.0;
+  }
+
+  void resetLap() {
+    lapInSeconds = 0;
+    lastLapSystemTimeInSeconds = getTime();
+  }
+
+  void lap() {
+    f64 t = getTime();
+    lapInSeconds = t - lastLapSystemTimeInSeconds;
+    lastLapSystemTimeInSeconds = t;
+    totalInSeconds += lapInSeconds;
+  }
 };
-
-StopWatch createStopWatch() {
-  StopWatch stopWatch;
-  stopWatch.totalElapsed = 0.0;
-  stopWatch.lastFrame = getTime();
-  stopWatch.deltaSeconds = 0.0;
-  return stopWatch;
-}
-
-void updateStopWatch(StopWatch* stopWatch) {
-  f64 t = getTime();
-  stopWatch->deltaSeconds = t - stopWatch->lastFrame;
-  stopWatch->lastFrame = t;
-  stopWatch->totalElapsed += stopWatch->deltaSeconds;
-}
 
 // 32 bit boolean flags
 void clearFlags(b32* flags) {

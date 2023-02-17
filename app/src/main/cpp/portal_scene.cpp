@@ -417,7 +417,7 @@ void updateEntities(World* world) {
     for(u32 entityIndex = 0; entityIndex < scene->entityCount; ++entityIndex) {
       Entity* entity = scene->entities + entityIndex;
       if(entity->typeFlags & EntityType_Rotating) {
-        entity->yaw += 30.0f * RadiansPerDegree * world->stopWatch.deltaSeconds;
+        entity->yaw += 30.0f * RadiansPerDegree * world->stopWatch.lapInSeconds;
         if(entity->yaw > Tau32) {
           entity->yaw -= Tau32;
         }
@@ -746,7 +746,7 @@ void loadWorld(World* world, const char* saveJsonFile) {
   // NOTE: projection and view in UBO gets updated at the beginning of every frame, no need to manually update UBO here
   world->UBOs.projectionViewModelUbo.projection = perspective(world->fov, world->aspect, near, far);
   // NOTE: fragmentUBO gets updated using the stopwatch at the beginning of every frame, no need to manually update UBO here
-  world->stopWatch = createStopWatch();
+  world->stopWatch = StopWatch();
 
   return;
 }
@@ -797,13 +797,13 @@ void portalScene() {
     glBindBufferRange(GL_UNIFORM_BUFFER, fragUBOBindingIndex, globalWorld.UBOs.fragUboId, 0, sizeof(FragUBO));
   }
 
-  globalWorld.stopWatch = createStopWatch();
+  globalWorld.stopWatch = StopWatch();
 
   while(true) // TODO: This is the render loop, it WILL need to exit
   {
     // NOTE: input should be handled through handleInput(android_app* app, AInputEvent* event)
-    updateStopWatch(&globalWorld.stopWatch);
-    globalWorld.UBOs.fragUbo.time = globalWorld.stopWatch.totalElapsed;
+    globalWorld.stopWatch.lap();
+    globalWorld.UBOs.fragUbo.time = globalWorld.stopWatch.totalInSeconds;
 
     vec3 playerCenter;
     vec3 playerViewPosition = calcPlayerViewingPosition(&globalWorld.player);
@@ -838,7 +838,7 @@ void portalScene() {
       }
 
       playerMovementDirection = normalize(playerMovementDirection.x, playerMovementDirection.y, 0.0);
-      playerDelta = playerMovementDirection * playerMovementSpeed * globalWorld.stopWatch.deltaSeconds;
+      playerDelta = playerMovementDirection * playerMovementSpeed * globalWorld.stopWatch.lapInSeconds;
     }
 
     // TODO: Do not apply immediately, check for collisions
