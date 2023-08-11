@@ -41,23 +41,23 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         )
         const val defaultColorIndex = 0
 
-        private const val baseZoom = 0.25f
         private const val minZoom = 0.15f
         private const val maxZoom = 130000.0f // TODO: Expand max if zoom is every expanded beyond current capabilities
+        private const val baseZoom = maxZoom
     }
 
     private lateinit var mandelbrotProgram: Program
     private var quadVAO: Int = -1
 
     private var zoom = baseZoom
-    private var centerOffset = Vec2(0.0f, 0.0f)
+    private var centerOffset = Vec2(-1050.6305f, -363.1951f)
     private var lastFrameRotationMatrix = Mat2(1.0f)
 
     // Motion event variables
     private var postPinchZoom_panFlushRequired = false;
-    private var prevScaleGestureFocus: Vec2 = Vec2(0.0f, 0.0f)
-    private var previousX: Float = 0.0f
-    private var previousY: Float = 0.0f
+    private var prevScaleGestureFocus: Vec2 = Vec2(901.9336f, 1669.8779f)
+    private var previousX: Float = 901.9336f
+    private var previousY: Float = 1692.8809f
 
     private var colorSubIndex: Int
     private var prevColorSubIndex: Int

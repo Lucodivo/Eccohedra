@@ -9,8 +9,8 @@
                 android:value="example-native-activity" />
     </activity>
     ```
-    - In this project, `lib_name` is determined by the project name specified in our CMakeLists.txt 
-    file.
+    - In this project, `lib_name` is determined by the library name specified in a `add_library()` call
+    in our CMakeLists.txt file.
       - After building, the actually .so file can be found inside the project at a location that 
       looks similar to `app/build/intermediates/cxx/Debug/{some_hash}/obj/x86/libexample-native-activity.so`
 - The entry point for our NativeActivity is the function in our specified C++ library with the 

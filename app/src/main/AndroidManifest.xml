@@ -24,7 +24,6 @@
             android:theme="@style/Theme.LearnOpenGLScenes.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -34,11 +33,13 @@
             <meta-data android:name="android.app.lib_name"
                 android:value="native-activity-blue" />
         </activity>
+        <meta-data android:name="firebase_analytics_collection_deactivated"
+            android:value="@bool/FIREBASE_ANALYTICS_DEACTIVATED"/>
     </application>
 
-    <!-- Tell the system this app requires OpenGL ES 3.0 -->
+    <!-- Tell the system this app requires OpenGL ES 3.2 -->
     <uses-feature
-        android:glEsVersion="0x00030000"
+        android:glEsVersion="0x00030002"
         android:required="true" />
 
 </manifest>

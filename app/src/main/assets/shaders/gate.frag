@@ -1,4 +1,6 @@
-#version 420
+#version 320 es
+
+precision highp float;
 
 layout (location = 0) in vec3 inNormal;
 layout (location = 1) in vec2 inTexCoord;
@@ -33,8 +35,10 @@ vec3 getNormal(vec2 texCoord);
 
 void main() {
   vec2 time = vec2(fragUbo.time * 10.0);
-  vec2 albedoTexSize = textureSize(albedoTex, 0);
-  vec2 noiseTexSize = textureSize(noiseTex, 0);
+  ivec2 albedoTexSize_i = textureSize(albedoTex, 0);
+  ivec2 noiseTexSize_i = textureSize(noiseTex, 0);
+  vec2 albedoTexSize = vec2(float(albedoTexSize_i.x), float(albedoTexSize_i.y));
+  vec2 noiseTexSize = vec2(float(noiseTexSize_i.x), float(noiseTexSize_i.y));
 
   vec2 noiseTexCoord = ((inTexCoord * albedoTexSize) / noiseTexSize) + (vec2(-time.x, time.y) / noiseTexSize);
   float noise = texture(noiseTex, noiseTexCoord * 0.4).r;
@@ -50,7 +54,7 @@ void main() {
   vec3 lightContribution = lightInfoUbo.ambientLightColor.rgb * lightInfoUbo.ambientLightColor.a;
 
   float directLightContribution = 0.0;
-  for(uint i = 0; i < lightInfoUbo.dirLightCount; i++) {
+  for(uint i = 0u; i < lightInfoUbo.dirLightCount; i++) {
     vec3 surfaceToSource = lightInfoUbo.dirPosLightStack[i].pos.xyz;
     float cosTerm = max(dot(surfaceNormal, surfaceToSource), 0.0);
     lightContribution += lightInfoUbo.dirPosLightStack[i].color.rgb * lightInfoUbo.dirPosLightStack[i].color.a * cosTerm;

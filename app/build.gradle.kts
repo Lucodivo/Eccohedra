@@ -12,6 +12,7 @@ plugins {
 
 android {
     compileSdk = 33
+    ndkVersion = "25.2.9519653"
 
     defaultConfig {
         applicationId = "com.inasweaterpoorlyknit.learnopengl_androidport"
@@ -71,11 +72,13 @@ android {
             isShrinkResources = true
             // Includes the default ProGuard rules files that are packaged with the Android Gradle plugin
             setProguardFiles(listOf(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"))
+            resValue("bool", "FIREBASE_ANALYTICS_DEACTIVATED", "false")
         }
         getByName("debug") {
             isMinifyEnabled = false
             setProguardFiles(listOf(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"))
             isDebuggable = true
+            resValue("bool", "FIREBASE_ANALYTICS_DEACTIVATED", "true")
         }
     }
 

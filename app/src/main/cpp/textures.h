@@ -42,7 +42,12 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
   // load image data
   s32 w, h, numChannels;
   stbi_set_flip_vertically_on_load(flipImageVert);
-  u8* data = stbi_load(imgLocation, &w, &h, &numChannels, 0 /*desired channels*/);
+  Asset imageAsset = Asset(imgLocation);
+  if(!imageAsset.success()) {
+    LOGI("Failed to find texture asset: %s", imgLocation);
+    return;
+  }
+  u8* data = stbi_load_from_memory((stbi_uc const *)imageAsset.buffer, imageAsset.bufferLengthInBytes, &w, &h, &numChannels, 0 /*desired channels*/);
   if (data && numChannels <= 4)
   {
     u32 dataColorSpace;
@@ -79,9 +84,8 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
 
     if (width != NULL) *width = w;
     if (height != NULL) *height = h;
-  } else
-  {
-    LOGE("Failed to load texture");
+  } else {
+    LOGE("Texture asset found but failed to load image - %s", imgLocation);
   }
   glBindTexture(GL_TEXTURE_2D, 0);
   stbi_image_free(data); // free texture image memory
@@ -110,16 +114,19 @@ void loadCubeMapTexture(const char* directory, const char* extension, GLuint* te
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-  s32 width, height, nrChannels;
+  s32 width, height, numChannels;
   stbi_set_flip_vertically_on_load(flipImageVert);
 
-  auto loadCubeMapFace = [&width, &height, &nrChannels](GLenum faceTarget, const char* faceImageLoc){
-    unsigned char* data = stbi_load(faceImageLoc, &width, &height, &nrChannels, 0);
-    if (data)
-    {
+  auto loadCubeMapFace = [&width, &height, &numChannels](GLenum faceTarget, const char* faceImageLoc){
+    Asset imageAsset = Asset(faceImageLoc);
+    if(!imageAsset.success()) {
+      LOGI("Failed to find cubemap texture asset: %s", faceImageLoc);
+      return;
+    }
+    unsigned char* data = stbi_load_from_memory((stbi_uc const *)imageAsset.buffer, imageAsset.bufferLengthInBytes, &width, &height, &numChannels, 0 /*desired channels*/);
+    if (data) {
       glTexImage2D(faceTarget, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    } else
-    {
+    } else {
       LOGE("Cubemap texture failed to load at path: %s", faceImageLoc);
     }
     stbi_image_free(data);

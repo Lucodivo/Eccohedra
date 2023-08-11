@@ -15,7 +15,7 @@
 #include <iomanip>
 
 #include <EGL/egl.h> // interface between OpenGL ES and underlying native platform window system
-#include <GLES3/gl3.h> // OpenGL ES 3.0
+#include <GLES3/gl32.h> // OpenGL ES 3.2
 
 #include <android/sensor.h> // Used for acquiring accelerometer sensor and corresponding event queue
 #include <android/log.h> // Android logging

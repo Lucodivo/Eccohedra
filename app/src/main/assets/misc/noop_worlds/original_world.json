@@ -165,7 +165,7 @@
                     ]
                 }
             ],
-            "skyboxDir": "skybox/cave/",
+            "skyboxDir": "skyboxes/cave/",
             "skyboxExt": "png",
             "title": "Gate"
         },
@@ -225,7 +225,7 @@
                     ]
                 }
             ],
-            "skyboxDir": "skybox/yellow_cloud/",
+            "skyboxDir": "skyboxes/yellow_cloud/",
             "skyboxExt": "jpg",
             "title": "Tetrahedron"
         },
@@ -285,7 +285,7 @@
                     ]
                 }
             ],
-            "skyboxDir": "skybox/interstellar/",
+            "skyboxDir": "skyboxes/interstellar/",
             "skyboxExt": "png",
             "title": "Octahedron"
         },
@@ -345,7 +345,7 @@
                     ]
                 }
             ],
-            "skyboxDir": "skybox/calm_sea/",
+            "skyboxDir": "skyboxes/calm_sea/",
             "skyboxExt": "jpg",
             "title": "Paper"
         },
@@ -405,27 +405,27 @@
                     ]
                 }
             ],
-            "skyboxDir": "skybox/polluted_earth/",
+            "skyboxDir": "skyboxes/polluted_earth/",
             "skyboxExt": "jpg",
             "title": "Icosahedron"
         }
     ],
     "shaders": [
         {
-            "fragmentName": "shaders/Gate.frag",
+            "fragmentName": "shaders/gate.frag",
             "index": 0,
             "noiseTextureName": "textures/tiled_musgrave_texture_1_blur.png",
-            "vertexName": "shaders/Gate.vert"
+            "vertexName": "shaders/gate.vert"
         },
         {
-            "fragmentName": "shaders/SingleColor.frag",
+            "fragmentName": "shaders/single_color.frag",
             "index": 1,
-            "vertexName": "shaders/Pos.vert"
+            "vertexName": "shaders/pos.vert"
         },
         {
-            "fragmentName": "shaders/ReflectSkyboxYIsUp.frag",
+            "fragmentName": "shaders/skybox_rhzup_to_lhyup.frag",
             "index": 2,
-            "vertexName": "shaders/PosNorm.vert"
+            "vertexName": "shaders/pos_norm.vert"
         }
     ],
     "startingSceneIndex": 0

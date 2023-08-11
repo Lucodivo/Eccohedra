@@ -35,22 +35,69 @@ struct Asset {
     const char* filePath;
     AAsset* androidAsset;
     const void* buffer;
-    u32 bufferLengthInBytes;
+    std::size_t bufferLengthInBytes;
 
     Asset(const char* filePath) {
         this->filePath = filePath;
         androidAsset = AAssetManager_open(assetManager_GLOBAL, filePath, AASSET_MODE_BUFFER);
-        buffer = AAsset_getBuffer(androidAsset);
-        bufferLengthInBytes = AAsset_getLength(androidAsset);
+        if(androidAsset) {
+            buffer = AAsset_getBuffer(androidAsset);
+            bufferLengthInBytes = AAsset_getLength(androidAsset);
+        } else {
+            LOGI("Failed to read asset - %s", filePath);
+            buffer = nullptr;
+            bufferLengthInBytes = 0;
+        }
     }
 
-    ~Asset() { AAsset_close(androidAsset); }
+    bool success() { return androidAsset != NULL; }
+
+    ~Asset() {if(androidAsset){ AAsset_close(androidAsset); }}
 };
 
-void logAllAssets() {
+std::vector<std::string> assetsGetChildrenFilesAndDirs(android_app* app, const char* dir) {
+    /*
+     * This function is necessary as there is no standard way to get asset folders from the AAssetManager.
+     * Solution posted in issue #603 of Android NDK samples github repository
+     * https://github.com/android/ndk-samples/issues/603#issuecomment-629219366
+     */
+
+    std::vector<std::string> children;
+
+    JNIEnv * env = nullptr;
+    app->activity->vm->AttachCurrentThread(&env, nullptr);
+
+    auto context_object = app->activity->clazz;
+    auto getAssets_method = env->GetMethodID(env->GetObjectClass(context_object), "getAssets", "()Landroid/content/res/AssetManager;");
+    auto assetManager_object = env->CallObjectMethod(context_object, getAssets_method);
+    auto list_method = env->GetMethodID(env->GetObjectClass(assetManager_object), "list", "(Ljava/lang/String;)[Ljava/lang/String;");
+
+    jstring path_object = env->NewStringUTF(dir);
+    auto files_object = (jobjectArray)env->CallObjectMethod(assetManager_object, list_method, path_object);
+    env->DeleteLocalRef(path_object);
+
+    auto length = env->GetArrayLength(files_object);
+    for (int i = 0; i < length; i++)
+    {
+        jstring jstr = (jstring)env->GetObjectArrayElement(files_object, i);
+        const char * filename = env->GetStringUTFChars(jstr, nullptr);
+        if (filename != nullptr)
+        {
+            children.push_back(filename);
+            env->ReleaseStringUTFChars(jstr, filename);
+        }
+        env->DeleteLocalRef(jstr);
+    }
+
+    app->activity->vm->DetachCurrentThread();
+
+    return children;
+}
+
+void logAllAssets(android_app* app) {
     const char* filename;
 
-    LOGI("+++++ ASSETS FOUND +++++");
+    LOGI("+++ ASSETS FOUND +++");
     LOGI("\t+++++ MODELS FOUND +++++");
     AAssetDir* dir = AAssetManager_openDir(assetManager_GLOBAL, "models");
     while((filename = AAssetDir_getNextFileName(dir)) != nullptr) {
@@ -65,8 +112,9 @@ void logAllAssets() {
 
     dir = AAssetManager_openDir(assetManager_GLOBAL, "skyboxes");
     LOGI("\t+++++ SKYBOXES FOUND +++++");
-    while((filename = AAssetDir_getNextFileName(dir)) != nullptr) {
-        LOGI("\t\tskybox found: %s", filename);
+    std::vector<std::string> skyBoxDirectories = assetsGetChildrenFilesAndDirs(app, "skyboxes");
+    for(std::string& skybox: skyBoxDirectories) {
+        LOGI("\t\tskybox found: %s", skybox.c_str());
     }
 
     dir = AAssetManager_openDir(assetManager_GLOBAL, "textures");
@@ -74,6 +122,8 @@ void logAllAssets() {
     while((filename = AAssetDir_getNextFileName(dir)) != nullptr) {
         LOGI("\t\ttexture found: %s", filename);
     }
+
+    AAssetDir_close(dir);
 }
 
 /**
@@ -84,6 +134,7 @@ GLDisplay glInitDisplay(ANativeWindow *window) {
     // initialize OpenGL ES and EGL
     const EGLint attribs[] = {
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
             EGL_BLUE_SIZE, 8,
             EGL_GREEN_SIZE, 8,
             EGL_RED_SIZE, 8,
@@ -107,6 +158,7 @@ GLDisplay glInitDisplay(ANativeWindow *window) {
     assert(supportedConfigs);
     eglChooseConfig(display, attribs, supportedConfigs.get(), numConfigs, &numConfigs);
     assert(numConfigs);
+
     auto i = 0;
     for (; i < numConfigs; i++) {
         auto& cfg = supportedConfigs[i];
@@ -136,7 +188,13 @@ GLDisplay glInitDisplay(ANativeWindow *window) {
      * ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID. */
     eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
     surface = eglCreateWindowSurface(display, config, window, nullptr);
-    context = eglCreateContext(display, config, nullptr, nullptr);
+    const EGLint contextAttrList[] = {
+            // request a context using Open GL ES 3.2
+            EGL_CONTEXT_MAJOR_VERSION, 3,
+            EGL_CONTEXT_MINOR_VERSION, 2,
+            EGL_NONE
+    };
+    context = eglCreateContext(display, config, nullptr, contextAttrList);
 
     if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) {
         LOGW("Unable to eglMakeCurrent");

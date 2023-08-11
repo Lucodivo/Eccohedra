@@ -1,4 +1,7 @@
-#version 420
+#version 320 es
+
+precision highp float;
+
 layout (location = 0) in vec3 inTexCoord;
 
 uniform samplerCube skyboxTex;

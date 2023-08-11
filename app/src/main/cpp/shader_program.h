@@ -139,35 +139,15 @@ inline void bindBlockIndex(GLuint shaderId, const std::string& name, u32 index)
   u32 blockIndex = glGetUniformBlockIndex(shaderId, name.c_str());
   glUniformBlockBinding(shaderId, blockIndex, index);
 }
-  
-  
-void readShaderCodeAsString(const char* shaderPath, std::string* shaderCode)
-{
-  try
-  {
-    std::ifstream file;
-    // ensure ifstream objects can throw exceptions:
-    file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    // open file
-    file.open(shaderPath);
-    std::stringstream shaderStream;
-    // read file's buffer contents into streams
-    shaderStream << file.rdbuf();
-    // close file handler
-    file.close();
-    // convert stream into string
-    *shaderCode = shaderStream.str();
-  } catch (std::ifstream::failure e)
-  {
-    LOGE("ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ");
-  }
-}
 
 /*
  * parameters:
- * shaderType can be GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, or GL_GEOMETRY_SHADER
+ *  - shaderType can be GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, or GL_GEOMETRY_SHADER
+ * returns:
+ *  - Shader id
+ *    - 0 is returned on error to load shader
  */
-internal_func u32 loadShader(const char* shaderPath, GLenum shaderType) {
+internal_func GLuint loadShader(const char* shaderPath, GLenum shaderType) {
   std::string shaderTypeStr;
   if(shaderType == GL_VERTEX_SHADER) {
     shaderTypeStr = "VERTEX";
@@ -175,21 +155,26 @@ internal_func u32 loadShader(const char* shaderPath, GLenum shaderType) {
     shaderTypeStr = "FRAGMENT";
   }
 
-  std::string shaderCode;
-  readShaderCodeAsString(shaderPath, &shaderCode);
-  const char* shaderCodeCStr = shaderCode.c_str();
+  Asset shaderAsset = Asset(shaderPath);
+  if(!shaderAsset.success()) {
+    LOGE("ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ - %s", shaderPath);
+    return 0;
+  }
 
-  u32 shader = glCreateShader(shaderType);
-  glShaderSource(shader, 1, &shaderCodeCStr, NULL);
+  GLuint shader = glCreateShader(shaderType);
+  const GLint shaderLengths[] = { (GLint)shaderAsset.bufferLengthInBytes };
+  const GLchar* shaderCode = (const GLchar *)shaderAsset.buffer;
+  glShaderSource(shader, 1, &shaderCode, shaderLengths);
   glCompileShader(shader);
 
   s32 shaderSuccess;
   glGetShaderiv(shader, GL_COMPILE_STATUS, &shaderSuccess);
   if (shaderSuccess != GL_TRUE)
   {
-    char infoLog[512];
-    glGetShaderInfoLog(shader, 512, NULL, infoLog);
-    LOGE("ERROR::SHADER::%s::COMPILATION_FAILED\n%s", shaderTypeStr.c_str(), infoLog);
+    char infoLog[1024];
+    glGetShaderInfoLog(shader, ArrayCount(infoLog), NULL, infoLog);
+    LOGE("ERROR::SHADER::%s::COMPILATION_FAILED - %s\n%s", shaderTypeStr.c_str(), shaderPath, infoLog);
+    return 0;
   }
 
   return shader;

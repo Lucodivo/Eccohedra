@@ -1,4 +1,6 @@
-#version 420
+#version 320 es
+
+precision highp float;
 
 uniform vec3 baseColor;
 

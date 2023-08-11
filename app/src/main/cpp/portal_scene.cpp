@@ -483,102 +483,6 @@ void initGlobalVertexAtts() {
   globalVertexAtts.skyboxBox = cubePosVertexAttBuffers(true);
 }
 
-void saveWorld(World* world, const char* title) {
-  SaveFormat saveFormat{};
-
-  saveFormat.startingSceneIndex = world->currentSceneIndex;
-
-  saveFormat.scenes.reserve(world->sceneCount);
-  saveFormat.shaders.reserve(world->shaderCount);
-  saveFormat.models.reserve(world->modelCount);
-
-  for(u32 modelIndex = 0; modelIndex < world->modelCount; modelIndex++) {
-    Model* model = world->models + modelIndex;
-    Assert(model->meshCount > 0);
-    ModelSaveFormat modelSaveFormat{};
-    modelSaveFormat.index = modelIndex;
-    modelSaveFormat.baseColor = model->meshes[0].textureData.baseColor;
-    modelSaveFormat.fileName = model->fileName;
-    saveFormat.models.push_back(modelSaveFormat);
-  }
-
-  for(u32 shaderIndex = 0; shaderIndex < world->shaderCount; shaderIndex++) {
-    ShaderProgram* shader = world->shaders + shaderIndex;
-    ShaderSaveFormat shaderSaveFormat{};
-    shaderSaveFormat.index = shaderIndex;
-    shaderSaveFormat.vertexName = shader->vertexFileName;
-    shaderSaveFormat.fragmentName = shader->fragmentFileName;
-    if(shader->noiseTextureFileName != nullptr) {
-      shaderSaveFormat.noiseTextureName = shader->noiseTextureFileName;
-    } else {
-      shaderSaveFormat.noiseTextureName.clear();
-    }
-    saveFormat.shaders.push_back(shaderSaveFormat);
-  }
-
-  for(u32 sceneIndex = 0; sceneIndex < world->sceneCount; sceneIndex++) {
-    Scene* scene = world->scenes + sceneIndex;
-    SceneSaveFormat sceneSaveFormat{};
-    sceneSaveFormat.index = sceneIndex;
-    sceneSaveFormat.title = scene->title;
-    if(scene->skyboxTexture != TEXTURE_ID_NO_TEXTURE) {
-      sceneSaveFormat.skyboxDir = scene->skyboxDir;
-      sceneSaveFormat.skyboxExt = scene->skyboxExt;
-    } else {
-      sceneSaveFormat.skyboxDir.clear();
-      sceneSaveFormat.skyboxExt.clear();
-    }
-
-    for(u32 entityIndex = 0; entityIndex < scene->entityCount; entityIndex++) {
-      Entity* entity = scene->entities + entityIndex;
-      EntitySaveFormat entitySaveFormat{};
-      entitySaveFormat.shaderIndex = entity->shaderIndex;
-      entitySaveFormat.modelIndex = entity->modelIndex;
-      entitySaveFormat.scaleXYZ = entity->scale;
-      entitySaveFormat.posXYZ = entity->position;
-      entitySaveFormat.yaw = entity->yaw;
-      entitySaveFormat.flags = entity->typeFlags;
-      sceneSaveFormat.entities.push_back(entitySaveFormat);
-    }
-
-    for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
-      Portal* portal = scene->portals + portalIndex;
-      PortalSaveFormat portalSaveFormat{};
-      portalSaveFormat.destination = portal->sceneDestination;
-      portalSaveFormat.centerXYZ = portal->centerPosition;
-      portalSaveFormat.normalXYZ = portal->normal;
-      portalSaveFormat.dimensXY = portal->dimens;
-      sceneSaveFormat.portals.push_back(portalSaveFormat);
-    }
-
-    const u32 maxLights = ArrayCount(scene->dirPosLightStack);
-    for(u32 dirLightIndex = 0; dirLightIndex < scene->dirLightCount; dirLightIndex++) {
-      Light dirLight = scene->dirPosLightStack[dirLightIndex];
-      DirectionalLightSaveFormat directionalLightSaveFormat{};
-      directionalLightSaveFormat.color = dirLight.color.rgb;
-      directionalLightSaveFormat.power = dirLight.color.a;
-      directionalLightSaveFormat.dirToSource = dirLight.pos;
-      sceneSaveFormat.directionalLights.push_back(directionalLightSaveFormat);
-    }
-
-    for(u32 posLightIndex = 0; posLightIndex < scene->posLightCount; posLightIndex++) {
-      Light posLight = scene->dirPosLightStack[maxLights - 1 - posLightIndex];
-      PositionalLightSaveFormat positionalLightSaveFormat{};
-      positionalLightSaveFormat.color = posLight.color.rgb;
-      positionalLightSaveFormat.power = posLight.color.a;
-      positionalLightSaveFormat.pos = posLight.pos;
-      sceneSaveFormat.positionalLights.push_back(positionalLightSaveFormat);
-    }
-
-    sceneSaveFormat.ambientLightSaveFormat.color = scene->ambientLight.rgb;
-    sceneSaveFormat.ambientLightSaveFormat.power = scene->ambientLight.a;
-
-    saveFormat.scenes.push_back(sceneSaveFormat);
-  }
-
-  save(saveFormat, title);
-}
-
 void cleanupScene(Scene* scene) {
   for(u32 entityIndex = 0; entityIndex < scene->entityCount; entityIndex++) {
     scene->entities[entityIndex] = {}; // zero out struct
@@ -618,7 +522,7 @@ void cleanupWorld(World* world) {
 
 void initPlayer(Player* player) {
   player->boundingBox.diagonal = defaultPlayerDimensionInMeters;
-  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f), -12.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
+  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f), -42.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
 }
 
 void initCamera(Camera* camera, const Player& player) {
@@ -734,27 +638,132 @@ void loadWorld(World* world, const char* saveJsonFile) {
   Assert(saveFormat.startingSceneIndex < sceneCount);
   world->currentSceneIndex = worldSceneIndices[saveFormat.startingSceneIndex];
 
-  // TODO: Set player based on save file
-  initPlayer(&world->player);
-  // TODO: Set camera based on save file
-  initCamera(&globalWorld.camera, globalWorld.player);
-  // TODO: Set FOV based on save file
-  world->fov = fieldOfView(13.5f, 25.0f);
-  // TODO: access the window extent from Android
-  vec2_u32 windowExtent = {0, 0};
-  world->aspect = f32(windowExtent.width) / windowExtent.height;
-  // NOTE: projection and view in UBO gets updated at the beginning of every frame, no need to manually update UBO here
-  world->UBOs.projectionViewModelUbo.projection = perspective(world->fov, world->aspect, near, far);
-  // NOTE: fragmentUBO gets updated using the stopwatch at the beginning of every frame, no need to manually update UBO here
-  world->stopWatch = StopWatch();
-
   return;
+}
+
+void initPortalScene(vec2_u32 windowExtent) {
+  globalWorld.aspect = f32(windowExtent.width) / windowExtent.height;
+  glGenQueries(ArrayCount(portalQueryObjects), portalQueryObjects);
+
+  VertexAtt cubePosVertexAtt = cubePosVertexAttBuffers();
+
+  initGlobalShaders();
+  initGlobalVertexAtts();
+
+  initPlayer(&globalWorld.player);
+  initCamera(&globalWorld.camera, globalWorld.player);
+
+  globalWorld.fov = fieldOfView(3.0f, 12.0f);
+  globalWorld.UBOs.projectionViewModelUbo.projection = perspective(globalWorld.fov, globalWorld.aspect, near, far);
+
+  glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LEQUAL);
+  glLineWidth(3.0f);
+  glEnable(GL_CULL_FACE);
+  glFrontFace(GL_CCW);
+  glCullFace(GL_BACK);
+  glEnable(GL_STENCIL_TEST);
+  glViewport(0, 0, windowExtent.width, windowExtent.height);
+
+  // UBOs
+  {
+    glGenBuffers(1, &globalWorld.UBOs.projectionViewModelUboId);
+    // allocate size for buffer
+    glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.projectionViewModelUboId);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(ProjectionViewModelUBO), NULL, GL_STREAM_DRAW);
+    // attach buffer to ubo binding point
+    glBindBufferRange(GL_UNIFORM_BUFFER, projectionViewModelUBOBindingIndex, globalWorld.UBOs.projectionViewModelUboId, 0, sizeof(ProjectionViewModelUBO));
+
+    glGenBuffers(1, &globalWorld.UBOs.fragUboId);
+    // allocate size for buffer
+    glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.fragUboId);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(FragUBO), NULL, GL_STREAM_DRAW);
+    // attach buffer to ubo binding point
+    glBindBufferRange(GL_UNIFORM_BUFFER, fragUBOBindingIndex, globalWorld.UBOs.fragUboId, 0, sizeof(FragUBO));
+  }
+
+  globalWorld.stopWatch = StopWatch();
+
+  loadWorld(&globalWorld, "misc/noop_worlds/original_world.json");
+}
+
+void drawPortalScene() {
+  // NOTE: input should be handled through handleInput(android_app* app, AInputEvent* event)
+  globalWorld.stopWatch.lap();
+  globalWorld.UBOs.fragUbo.time = globalWorld.stopWatch.totalInSeconds;
+
+  vec3 playerCenter;
+  vec3 playerViewPosition = calcPlayerViewingPosition(&globalWorld.player);
+
+  // gather input
+  // TODO: get input for frame to determine boolean values
+  b32 sprintIsActive = false;
+  b32 leftIsActive = false;
+  b32 rightIsActive = false;
+  b32 forwardIsActive = false;
+  b32 backwardIsActive = false;
+  vec2_f64 viewAngleDelta = {0.0, 0.0}; // TODO: Do we ever want to be able to change views?
+
+  // gather input for movement and camera changes
+  b32 lateralMovement = leftIsActive != rightIsActive;
+  b32 forwardMovement = forwardIsActive != backwardIsActive;
+  vec3 playerDelta{};
+  if (lateralMovement || forwardMovement)
+  {
+    f32 playerMovementSpeed = sprintIsActive ? 8.0f : 4.0f;
+
+    // Camera movement direction
+    vec3 playerMovementDirection{};
+    if (lateralMovement)
+    {
+      playerMovementDirection += rightIsActive ? globalWorld.camera.right : -globalWorld.camera.right;
+    }
+
+    if (forwardMovement)
+    {
+      playerMovementDirection += forwardIsActive ? globalWorld.camera.forward : -globalWorld.camera.forward;
+    }
+
+    playerMovementDirection = normalize(playerMovementDirection.x, playerMovementDirection.y, 0.0);
+    playerDelta = playerMovementDirection * playerMovementSpeed * globalWorld.stopWatch.lapInSeconds;
+  }
+
+  // TODO: Do not apply immediately, check for collisions
+  globalWorld.player.boundingBox.min += playerDelta;
+  playerCenter = calcBoundingBoxCenterPosition(globalWorld.player.boundingBox);
+
+  const f32 mouseDeltaMultConst = 0.0005f;
+  updateCamera_FirstPerson(&globalWorld.camera, playerDelta, f32(-viewAngleDelta.y * mouseDeltaMultConst), f32(-viewAngleDelta.x * mouseDeltaMultConst));
+
+  globalWorld.UBOs.projectionViewModelUbo.view = getViewMat(globalWorld.camera);
+
+  // draw
+  glStencilMask(0xFF);
+  glStencilFunc(GL_ALWAYS, // stencil function always passes
+                0x00, // reference
+                0x00); // mask
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+  // universal matrices in UBO
+  glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.projectionViewModelUboId);
+  glBufferSubData(GL_UNIFORM_BUFFER, 0, offsetof(ProjectionViewModelUBO, model), &globalWorld.UBOs.projectionViewModelUbo);
+
+  glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.fragUboId);
+  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(FragUBO), &globalWorld.UBOs.fragUbo);
+
+  updateEntities(&globalWorld);
+
+  drawSceneWithPortals(&globalWorld);
+}
+
+void deinitPortalScene() {
+  cleanupWorld(&globalWorld);
 }
 
 void portalScene() {
   // TODO: access the window extent from Android
   vec2_u32 windowExtent = {0, 0};
-  const vec2_u32 initWindowExtent = windowExtent;
   globalWorld.aspect = f32(windowExtent.width) / windowExtent.height;
   glGenQueries(ArrayCount(portalQueryObjects), portalQueryObjects);
 

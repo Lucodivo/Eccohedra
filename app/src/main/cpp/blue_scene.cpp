@@ -70,10 +70,9 @@ void android_main(android_app* app) {
     }
 
     setupGLStartingState();
-    loadAssets(engine);
-
-    // TODO: Initialize scene
-    // TODO: I need to call into portalScene(window) or something
+#ifndef NDEBUG
+    logAllAssets(engine.app);
+#endif
 
     while (true) {
 
@@ -104,8 +103,6 @@ void android_main(android_app* app) {
         }
 
         if (!engine.paused) {
-            // TODO: Update scene
-
             drawFrame(engine);
         }
     }
@@ -116,12 +113,9 @@ static void drawFrame(const Engine &engine) {
 //    f32 fps = f32(1.0 / frameStopWatch.lapInSeconds);
 //    LOGI("FPS: %f", fps);
 
-    // Just fill the screen with a color.
-    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    drawPortalScene();
 
     // "eglSwapBuffers performs an implicit flush operation on the context bound to surface before swapping"
-    //
     eglSwapBuffers(engine.display.handle, engine.display.surface);
 }
 
@@ -159,15 +153,6 @@ static s32 handleInput(android_app* app, AInputEvent* event) {
 void setupGLStartingState() {
     glEnable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
-}
-
-void loadAssets(const Engine& engine) {
-#ifndef NDEBUG
-    logAllAssets();
-#endif
-
-    Model pyramidModelGltf;
-    loadModel("models/pyramid.glb", &pyramidModelGltf);
 }
 
 void onResume(Engine* engine) {
@@ -216,7 +201,10 @@ static void handleAndroidCmd(android_app* app, s32 cmd) {
             if (engine->app->window != nullptr) {
                 engine->display = glInitDisplay(app->window);
                 logDeviceGLEnvironment();
-                //drawFrame(*engine);
+                vec2_u32 windowExtent;
+                windowExtent.width = engine->display.width;
+                windowExtent.height = engine->display.height;
+                initPortalScene(windowExtent);
             }
             break;
         }

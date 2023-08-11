@@ -194,13 +194,17 @@ void save(const SaveFormat& saveFormat, const char* saveFileName) {
   o << std::setw(4) << saveJson << std::endl;
 }
 
-SaveFormat loadSave(const char* saveJson) {
+SaveFormat loadSave(const char* saveJsonPath) {
   SaveFormat saveFormat{};
 
   nlohmann::json json;
   { // parse file
-    std::ifstream sceneJsonFileInput(saveJson);
-    sceneJsonFileInput >> json;
+    Asset saveJsonAsset = Asset(saveJsonPath);
+    if(!saveJsonAsset.success()) {
+      LOGI("Failed to read save file asset: %s", saveJsonPath);
+    }
+    const char* saveJsonText = (const char*)saveJsonAsset.buffer;
+    json = nlohmann::json::parse(saveJsonText, saveJsonText + saveJsonAsset.bufferLengthInBytes);
   }
 
   size_t sceneCount = json["scenes"].size();
