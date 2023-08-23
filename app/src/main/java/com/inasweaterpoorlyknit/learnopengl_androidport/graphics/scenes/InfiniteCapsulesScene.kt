@@ -4,11 +4,11 @@ import android.content.Context
 import android.opengl.GLES20.*
 import android.opengl.GLES30.glBindVertexArray
 import android.view.MotionEvent
+import com.inasweaterpoorlyknit.Mat3
+import com.inasweaterpoorlyknit.Vec2
+import com.inasweaterpoorlyknit.Vec3
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
-import glm_.mat3x3.Mat3
-import glm_.vec2.Vec2
-import glm_.vec3.Vec3
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -17,7 +17,7 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
 
     companion object {
         // TODO: Consider linking capsule/container dimen to uniform?
-        const val repeatedContainerDimen = 6.0f // NOTE: This value MUST match two times the boxDimens constant in the shader!!!
+        const val repeatedContainerDimen = 6f // NOTE: This value MUST match two times the boxDimens constant in the shader!!!
 
         private object uniform {
             const val lightColor = "lightColor"
@@ -28,33 +28,33 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
             const val cameraRotationMat = "cameraRotationMat"
         }
 
-        private val defaultCameraForward = Vec3(0.0f, 0.0f, 1.0f)
+        private val defaultCameraForward = Vec3(0f, 0f, 1f)
     }
 
-    private val cameraPos = Vec3(0.0f, 1.0f, 0.0f)
+    private var cameraPos = Vec3(0f, 1f, 0f)
     private var cameraForward = defaultCameraForward
     private val rotationSensorHelper = RotationSensorHelper()
     private lateinit var program: Program
     private var quadVAO: Int = -1
 
-    private var elapsedTime : Double = 0.0
+    private var elapsedTime : Double = .0
     private var lastFrameTime: Double = -1.0
     private var firstFrameTime: Double = -1.0
 
     private var lightAlive = false
-    private var lightPosition = Vec3(0.0f, 0.0f, 100.0f)
-    private val lightColor = Vec3(0.5, 0.5, 0.5)
-    private var lightMoveDir = Vec3(0.0f, 0.0f, 0.0f)
-    private val lightMaxTravelDist = 100.0f
-    private var lightDistanceTraveled = 0.0f
-    private val lightSpeed = 2.0f
+    private var lightPosition = Vec3(0f, 0f, 100f)
+    private val lightColor = Vec3(.5f, .5f, .5f)
+    private var lightMoveDir = Vec3(0f, 0f, 0f)
+    private val lightMaxTravelDist = 100f
+    private var lightDistanceTraveled = 0f
+    private val lightSpeed = 2f
 
-    private val cameraSpeedNormal = 0.5f
-    private val cameraSpeedFast = 2.0f
+    private val cameraSpeedNormal = .5f
+    private val cameraSpeedFast = 2f
     private var cameraSpeed = cameraSpeedNormal
 
-    private var actionDownTime: Double = 0.0
-    private val actionTimeFrame = 0.1f
+    private var actionDownTime: Double = .0
+    private val actionTimeFrame = .1f
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         program = Program(context, R.raw.uv_coord_vertex_shader, R.raw.infinite_capsules_fragment_shader)
@@ -67,7 +67,7 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
         quadVAO = quadVAOBuffer[0]
 
         firstFrameTime = systemTimeInDeciseconds()
-        glClearColor(Vec3(1.0f, 0.0f, 0.0f))
+        glClearColor(Vec3(1f, 0f, 0f))
 
         program.use()
         glBindVertexArray(quadVAO)
@@ -79,24 +79,18 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
         super.onSurfaceChanged(gl, width, height)
 
         program.use()
-        program.setUniform(uniform.viewPortResolution, Vec2(width, height))
+        program.setUniform(uniform.viewPortResolution, Vec2(width.toFloat(), height.toFloat()))
     }
 
     private fun moveCameraForward(rotationMat: Mat3, units: Float) {
         cameraForward = rotationMat * defaultCameraForward
 
-        cameraPos.plusAssign(cameraForward * units)
+        cameraPos += (cameraForward * units)
 
         // prevent floating point values from growing to unreasonable values
-        val originalCameraPos = Vec3(cameraPos)
-        cameraPos.x = cameraPos.x % repeatedContainerDimen
-        cameraPos.y = cameraPos.y % repeatedContainerDimen
-        cameraPos.z = cameraPos.z % repeatedContainerDimen
-        lightPosition.plusAssign(Vec3(
-            cameraPos.x - originalCameraPos.x,
-            cameraPos.y - originalCameraPos.y,
-            cameraPos.z - originalCameraPos.z,
-        ))
+        val originalCameraPos = cameraPos
+        cameraPos %= repeatedContainerDimen
+        lightPosition += cameraPos - originalCameraPos
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -137,7 +131,7 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
 
     private fun action() {
         lightAlive = true
-        lightDistanceTraveled = 0.0f
+        lightDistanceTraveled = 0f
         lightMoveDir = cameraForward
         lightPosition = cameraPos + lightMoveDir
     }

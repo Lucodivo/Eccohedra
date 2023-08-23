@@ -7,11 +7,11 @@ import android.opengl.GLES30.glBindVertexArray
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import androidx.core.math.MathUtils.clamp
+import com.inasweaterpoorlyknit.Mat2
+import com.inasweaterpoorlyknit.Vec2
+import com.inasweaterpoorlyknit.Vec3
 import com.inasweaterpoorlyknit.learnopengl_androidport.*
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
-import glm_.mat2x2.Mat2
-import glm_.vec2.Vec2
-import glm_.vec3.Vec3
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -35,14 +35,14 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         }
 
         val colors = arrayOf(
-            Color("🔴", Vec3(1.0f, 4.0f, 2.0f)), // red
-            Color("🟢", Vec3( 5.0f, 1.0f, 4.0f)), // green
-            Color("🔵", Vec3(6.0f, 3.0f, 1.0f)) // blue
+            Color("🔴", Vec3(1f, 4f, 2f)), // red
+            Color("🟢", Vec3( 5f, 1f, 4f)), // green
+            Color("🔵", Vec3(6f, 3f, 1f)) // blue
         )
         const val defaultColorIndex = 0
 
         private const val minZoom = 0.15f
-        private const val maxZoom = 130000.0f // TODO: Expand max if zoom is every expanded beyond current capabilities
+        private const val maxZoom = 130000f // TODO: Expand max if zoom is every expanded beyond current capabilities
         private const val baseZoom = maxZoom
     }
 
@@ -51,7 +51,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
 
     private var zoom = baseZoom
     private var centerOffset = Vec2(-1050.6305f, -363.1951f)
-    private var lastFrameRotationMatrix = Mat2(1.0f)
+    private var lastFrameRotationMatrix = Mat2(1f)
 
     // Motion event variables
     private var postPinchZoom_panFlushRequired = false;
@@ -87,11 +87,11 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         initializeFrameBufferQuadVertexAttBuffers(quadVAOBuffer, quadVBOBuffer, quadEBOBuffer)
         quadVAO = quadVAOBuffer[0]
 
-        glClearColor(Vec3(1.0f, 0.0f, 0.0f))
+        glClearColor(Vec3(1f, 0f, 0f))
 
         mandelbrotProgram.use()
         glBindVertexArray(quadVAO)
-        mandelbrotProgram.setUniform(uniform.viewPortResolution, Vec2(windowWidth, windowHeight))
+        mandelbrotProgram.setUniform(uniform.viewPortResolution, Vec2(windowWidth.toFloat(), windowHeight.toFloat()))
         mandelbrotProgram.setUniform(uniform.colorSub, colors[colorSubIndex].colorSub)
     }
 
@@ -99,7 +99,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         super.onSurfaceChanged(gl, width, height)
 
         mandelbrotProgram.use()
-        mandelbrotProgram.setUniform(uniform.viewPortResolution, Vec2(width, height))
+        mandelbrotProgram.setUniform(uniform.viewPortResolution, Vec2(width.toFloat(), height.toFloat()))
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -127,7 +127,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         // the value is SUBTRACTED from the center/origin
         // This is because the center represents the center of the mandelbrot set NOT the center of the camera
         // Instead of moving the camera 2 units left, we move the mandelbrot set 2 units right and get the desired result
-        centerOffset.minusAssign(centerDelta)
+        centerOffset -= centerDelta
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -193,8 +193,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         // pan
         val dx: Float = detector.focusX - prevScaleGestureFocus.x
         val dy: Float = detector.focusY - prevScaleGestureFocus.y
-        prevScaleGestureFocus.x = detector.focusX
-        prevScaleGestureFocus.y = detector.focusY
+        prevScaleGestureFocus = Vec2(detector.focusX, detector.focusY)
         pan(dx, dy)
 
         return true

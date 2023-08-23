@@ -7,8 +7,8 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.util.Log
 import android.widget.Toast
+import com.inasweaterpoorlyknit.Mat3
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
-import glm_.mat3x3.Mat3
 
 class RotationSensorHelper: SensorEventListener {
 

@@ -5,7 +5,7 @@ buildscript {
     // check the following link for more details
     // https://developer.android.com/jetpack/androidx/releases/compose-kotlin
     extra.set("kotlinCompilerVersion", "1.7.20")
-    extra.set("composeCompilerVersion", "1.3.2")
+    extra.set("composeCompilerVersion", "1.3.2") // TODO: Update compose and the compiler
 
     repositories { // used for project dependencies below
         google()
@@ -15,7 +15,7 @@ buildscript {
     dependencies {
         val kotlinCompilerVersion: String by rootProject.extra
 
-        classpath("com.android.tools.build:gradle:7.3.1")
+        classpath("com.android.tools.build:gradle:7.4.2")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinCompilerVersion}")
 
         classpath("com.google.gms:google-services:4.3.15")

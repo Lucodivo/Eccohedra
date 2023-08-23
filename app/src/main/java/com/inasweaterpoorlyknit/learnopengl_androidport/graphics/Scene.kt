@@ -16,8 +16,8 @@ interface ExternalInputListener {
 abstract class Scene(protected val context: Context) : GLSurfaceView.Renderer, ExternalInputListener {
     protected var windowHeight: Int = -1
     protected var windowWidth: Int = -1
-    protected val aspectRatio: Float
-        get() = windowWidth.toFloat()/windowHeight
+    protected val aspectRatio: Double
+        get() = windowWidth.toDouble()/windowHeight.toDouble()
 
     protected val sceneOrientation: Orientation = context.orientation
 

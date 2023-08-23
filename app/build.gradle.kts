@@ -93,6 +93,8 @@ android {
 dependencies {
     val kotlinCompilerVersion: String by rootProject.extra
 
+    implementation(project(":matrices"))
+
     // all binary .jar dependencies in libs folder listOf(NONE CURRENTLY)
 //    implementation fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar")))
 
@@ -107,7 +109,6 @@ dependencies {
     implementation("androidx.preference:preference-ktx:1.2.0")
     implementation("androidx.fragment:fragment-ktx:1.5.5")
 
-
     // Compose
     implementation("androidx.activity:activity-compose:1.6.1") // Integration with activities
     implementation("androidx.compose.material:material:1.3.1") // Compose Material Design
@@ -116,9 +117,6 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling:1.3.3") // Tooling support (Previews, etc.)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1") // Integration with ViewModels
     //androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.1.1") // UI Tests
-
-    // GLM (OpenGL Mathematics)
-    implementation("com.github.kotlin-graphics:glm:1.0.1")
 
     // analytics
     implementation(platform("com.google.firebase:firebase-bom:31.2.2"))

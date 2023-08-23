@@ -4,10 +4,9 @@ import android.content.Context
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.util.Log
 import android.view.Surface
-import android.view.WindowManager
 import androidx.annotation.RawRes
-import glm_.mat2x2.Mat2
-import glm_.vec2.Vec2
+import com.inasweaterpoorlyknit.Mat2
+import com.inasweaterpoorlyknit.Vec2
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
