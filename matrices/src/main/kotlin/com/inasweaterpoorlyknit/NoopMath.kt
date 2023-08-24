@@ -8,9 +8,10 @@ import kotlin.math.tan
 
 /*
     TODO:
-        - Rotate(startMat, radians, axis): Mat3
-        - Perspective(radians, aspectRatio, zNear, zFar): Mat4
+        - Investigate if operator overloading `operator fun get(i: Int) = elements[i]` has much of a performance penalty due to function overhead
  */
+
+// NOTE: Matrices are stored column-major
 
 const val radiansPerDegree = PI / 180.0
 
@@ -22,21 +23,22 @@ class Vec2 {
     constructor(fillVal: Float = 0f){ elements = FloatArray(2){fillVal} }
     constructor(x: Float, y: Float) { elements = floatArrayOf(x, y) }
 
-    val x get() = elements[0]
-    val y get() = elements[1]
-    val lenSq get() = (x*x) + (y*y)
-    val len get() = sqrt(lenSq)
-    val normalized get() = this / len
+    val x inline get() = elements[0]
+    val y inline get() = elements[1]
+    val lenSq inline get() = (x*x) + (y*y)
+    val len inline get() = sqrt(lenSq)
+    val normalized inline get() = this / len
     fun dot(v: Vec2) = (x * v.x) + (y * v.y)
 
+    operator fun get(i: Int) = elements[i]
     operator fun unaryMinus() = Vec2(-x, -y)
     operator fun plus(v: Vec2) = Vec2(x+v.x, y+v.y)
     operator fun minus(v: Vec2) = Vec2(x-v.x, y-v.y)
     operator fun times(s: Float) = Vec2(x*s, y*s)
     operator fun div(s: Float) = this * (1f/s)
-    operator fun times(m: Mat2) = Vec2( // Vec2 as row vector
-        this.x * m.elements[0] + this.y * m.elements[2],
-        this.x * m.elements[1] + this.y * m.elements[3]
+    operator fun times(m: Mat2) = Vec2( // Vec2 treated as row vector
+        this.x * m[0] + this.y * m[1],
+        this.x * m[2] + this.y * m[3]
     )
 
     override fun equals(other: Any?) = other is Vec2 && elements.contentEquals(other.elements)
@@ -49,20 +51,21 @@ class Vec3 {
     constructor(fillVal: Float = 0f){ elements = FloatArray(3){fillVal} }
     constructor(x: Float, y: Float, z: Float) { elements = floatArrayOf(x, y, z) }
 
-    val x get() = elements[0]
-    val y get() = elements[1]
-    val z get() = elements[2]
-    val r get() = elements[0]
-    val g get() = elements[1]
-    val b get() = elements[2]
-    val lenSq get() = (x*x) + (y*y) + (z*z)
-    val len get() = sqrt(lenSq)
-    val normalized get() = this / len
+    val x inline get() = elements[0]
+    val y inline get() = elements[1]
+    val z inline get() = elements[2]
+    val r inline get() = elements[0]
+    val g inline get() = elements[1]
+    val b inline get() = elements[2]
+    val lenSq inline get() = (x*x) + (y*y) + (z*z)
+    val len inline get() = sqrt(lenSq)
+    val normalized inline get() = this / len
     fun dot(v: Vec3) = (x * v.x) + (y * v.y) + (z * v.z)
     fun cross(v: Vec3) = Vec3(y * v.z - v.y * z,
-                                z * v.x - v.z * x,
-                                x * v.y - v.x * y)
+        z * v.x - v.z * x,
+        x * v.y - v.x * y)
 
+    operator fun get(i: Int) = elements[i]
     operator fun unaryMinus() = Vec3(-x, -y, -z)
     operator fun plus(v: Vec3) = Vec3(x+v.x, y+v.y, z+v.z)
     operator fun minus(v: Vec3) = Vec3(x-v.x, y-v.y, z-v.z)
@@ -70,10 +73,10 @@ class Vec3 {
     operator fun times(s: Float) = Vec3(x*s, y*s, z*s)
     operator fun div(s: Float) = this * (1f/s)
     operator fun rem(d: Float) = Vec3(x%d, y%d, z%d)
-    operator fun times(m: Mat3) = Vec3( // Vec3 as row vector
-        this.x * m.elements[0] + this.y * m.elements[3] + this.z * m.elements[6],
-        this.x * m.elements[1] + this.y * m.elements[4] + this.z * m.elements[7],
-        this.x * m.elements[2] + this.y * m.elements[5] + this.z * m.elements[8]
+    operator fun times(m: Mat3) = Vec3( // Vec3 treated as row vector
+        this.x * m[0] + this.y * m[1] + this.z * m[2],
+        this.x * m[3] + this.y * m[4] + this.z * m[5],
+        this.x * m[6] + this.y * m[7] + this.z * m[8]
     )
 
     override fun equals(other: Any?) = other is Vec3 && elements.contentEquals(other.elements)
@@ -86,67 +89,71 @@ class Vec4 {
     constructor(fillVal: Float = 0f){ elements = FloatArray(4){fillVal} }
     constructor(x: Float, y: Float, z: Float, w: Float) { elements = floatArrayOf(x, y, z, w) }
 
-    val x get() = elements[0]
-    val y get() = elements[1]
-    val z get() = elements[2]
-    val w get() = elements[3]
-    val r get() = elements[0]
-    val g get() = elements[1]
-    val b get() = elements[2]
-    val a get() = elements[3]
-    val lenSq get() = (x*x) + (y*y) + (z*z) + (w*w)
-    val len get() = sqrt(lenSq)
-    val normalized get() = this / len
+    val x inline get() = elements[0]
+    val y inline get() = elements[1]
+    val z inline get() = elements[2]
+    val w inline get() = elements[3]
+    val r inline get() = elements[0]
+    val g inline get() = elements[1]
+    val b inline get() = elements[2]
+    val a inline get() = elements[3]
+    val lenSq inline get() = (x*x) + (y*y) + (z*z) + (w*w)
+    val len inline get() = sqrt(lenSq)
+    val normalized inline get() = this / len
     fun dot(v: Vec4) = (x * v.x) + (y * v.y) + (z * v.z) + (w * v.w)
 
+    operator fun get(i: Int) = elements[i]
     operator fun unaryMinus() = Vec4(-x, -y, -z, -w)
     operator fun plus(v: Vec4) = Vec4(x+v.x, y+v.y, z+v.z, w+v.w)
     operator fun minus(v: Vec4) = Vec4(x-v.x, y-v.y, z-v.z, w-v.w)
     operator fun Float.times(v: Vec4) = Vec4(v.x*this, v.y*this, v.z*this, v.w*this)
     operator fun times(s: Float) = Vec4(x*s, y*s, z*s, w*s)
     operator fun div(s: Float) = this * (1f/s)
-    operator fun times(m: Mat4) = Vec4( // Vec4 as row vector
-        this.x * m.elements[0] + this.y * m.elements[4] + this.z * m.elements[8] + this.w * m.elements[12],
-        this.x * m.elements[1] + this.y * m.elements[5] + this.z * m.elements[9] + this.w * m.elements[13],
-        this.x * m.elements[2] + this.y * m.elements[6] + this.z * m.elements[10] + this.w * m.elements[14],
-        this.x * m.elements[3] + this.y * m.elements[7] + this.z * m.elements[11] + this.w * m.elements[15]
+    operator fun times(m: Mat4) = Vec4( // Vec4 treated as row vector
+        this.x * m[0] + this.y * m[1] + this.z * m[2] + this.w * m[3],
+        this.x * m[4] + this.y * m[5] + this.z * m[6] + this.w * m[7],
+        this.x * m[8] + this.y * m[9] + this.z * m[10] + this.w * m[11],
+        this.x * m[12] + this.y * m[13] + this.z * m[14] + this.w * m[15]
     )
 
     override fun equals(other: Any?) = other is Vec4 && elements.contentEquals(other.elements)
     override fun hashCode() = elements.contentHashCode()
     override fun toString() = "Vec4(x=$x, y=$y, z=$z, w=$w)"
-
 }
 
 class Mat2 {
     val elements: FloatArray
-    val col0 get() = Vec2(elements[0], elements[2])
-    val col1 get() = Vec2(elements[1], elements[3])
-    val row0 get() = Vec2(elements[0], elements[1])
-    val row1 get() = Vec2(elements[2], elements[3])
+    val col0 inline get() = Vec2(elements[0], elements[1])
+    val col1 inline get() = Vec2(elements[2], elements[3])
+    val row0 inline get() = Vec2(elements[0], elements[2])
+    val row1 inline get() = Vec2(elements[1], elements[3])
 
     constructor() { elements = FloatArray(2*2){0f} }
+
     constructor(diagonal: Float) {
         elements = floatArrayOf(diagonal, 0f,
-                                0f, diagonal)
+            0f, diagonal)
     }
+
+    // NOTE: Column-major ordering
     constructor(e00: Float, e01: Float,
                 e10: Float, e11: Float,) {
         elements = floatArrayOf(e00, e01,
-                                e10, e11,)
+            e10, e11)
     }
 
+    operator fun get(i: Int) = elements[i]
+
     operator fun times(other: Mat2) = Mat2 (
-        (this.elements[0] * other.elements[0]) + (this.elements[1] * other.elements[2]),
-        (this.elements[0] * other.elements[1]) + (this.elements[1] * other.elements[3]),
-        (this.elements[2] * other.elements[0]) + (this.elements[3] * other.elements[2]),
-        (this.elements[2] * other.elements[1]) + (this.elements[3] * other.elements[3])
+        (this[0] * other[0]) + (this[2] * other[1]),
+        (this[1] * other[0]) + (this[3] * other[1]),
+        (this[0] * other[2]) + (this[2] * other[3]),
+        (this[1] * other[2]) + (this[3] * other[3])
     )
 
-    // Vec2 as column vector
-    operator fun times(v: Vec2) = Vec2(
-        v.x * this.elements[0] + v.y * this.elements[1],
-        v.x * this.elements[2] + v.y * this.elements[3]
+    operator fun times(v: Vec2) = Vec2( // Vec2 treated as column vector
+        this[0]*v[0] + this[2]*v[1],
+        this[1]*v[0] + this[3]*v[1]
     )
 
     override fun equals(other: Any?) = other is Mat2 && this.elements.contentEquals(other.elements)
@@ -156,86 +163,88 @@ class Mat2 {
 
 class Mat3 {
     val elements: FloatArray
-    val col0 get() = Vec3(elements[0], elements[3], elements[6])
-    val col1 get() = Vec3(elements[1], elements[4], elements[7])
-    val col2 get() = Vec3(elements[2], elements[5], elements[8])
-    val row0 get() = Vec3(elements[0], elements[1], elements[2])
-    val row1 get() = Vec3(elements[3], elements[4], elements[5])
-    val row2 get() = Vec3(elements[6], elements[7], elements[8])
+    val col0 inline get() = Vec3(elements[0], elements[1], elements[2])
+    val col1 inline get() = Vec3(elements[3], elements[4], elements[5])
+    val col2 inline get() = Vec3(elements[6], elements[7], elements[8])
+    val row0 inline get() = Vec3(elements[0], elements[3], elements[6])
+    val row1 inline get() = Vec3(elements[1], elements[4], elements[7])
+    val row2 inline get() = Vec3(elements[2], elements[5], elements[8])
 
     constructor() { elements = FloatArray(3*3){0f} }
+
     constructor(diagonal: Float) {
         elements = floatArrayOf(diagonal, 0f, 0f,
-                                0f, diagonal, 0f,
-                                0f, 0f, diagonal)
+            0f, diagonal, 0f,
+            0f, 0f, diagonal)
     }
 
+    // NOTE: Column-major ordering
     constructor(e00: Float, e01: Float, e02: Float,
                 e10: Float, e11: Float, e12: Float,
                 e20: Float, e21: Float, e22: Float) {
         elements = floatArrayOf(e00, e01, e02,
-                                e10, e11, e12,
-                                e20, e21, e22)
+            e10, e11, e12,
+            e20, e21, e22)
     }
 
+    operator fun get(i: Int) = elements[i]
+
     operator fun times(other: Mat3) = Mat3 (
-        (this.elements[0] * other.elements[0]) + (this.elements[1] * other.elements[3]) + (this.elements[2] * other.elements[6]),
-        (this.elements[0] * other.elements[1]) + (this.elements[1] * other.elements[4]) + (this.elements[2] * other.elements[7]),
-        (this.elements[0] * other.elements[2]) + (this.elements[1] * other.elements[5]) + (this.elements[2] * other.elements[8]),
-        (this.elements[3] * other.elements[0]) + (this.elements[4] * other.elements[3]) + (this.elements[5] * other.elements[6]),
-        (this.elements[3] * other.elements[1]) + (this.elements[4] * other.elements[4]) + (this.elements[5] * other.elements[7]),
-        (this.elements[3] * other.elements[2]) + (this.elements[4] * other.elements[5]) + (this.elements[5] * other.elements[8]),
-        (this.elements[6] * other.elements[0]) + (this.elements[7] * other.elements[3]) + (this.elements[8] * other.elements[6]),
-        (this.elements[6] * other.elements[1]) + (this.elements[7] * other.elements[4]) + (this.elements[8] * other.elements[7]),
-        (this.elements[6] * other.elements[2]) + (this.elements[7] * other.elements[5]) + (this.elements[8] * other.elements[8])
+        (this[0] * other[0]) + (this[3] * other[1]) + (this[6] * other[2]),
+        (this[1] * other[0]) + (this[4] * other[1]) + (this[7] * other[2]),
+        (this[2] * other[0]) + (this[5] * other[1]) + (this[8] * other[2]),
+        (this[0] * other[3]) + (this[3] * other[4]) + (this[6] * other[5]),
+        (this[1] * other[3]) + (this[4] * other[4]) + (this[7] * other[5]),
+        (this[2] * other[3]) + (this[5] * other[4]) + (this[8] * other[5]),
+        (this[0] * other[6]) + (this[3] * other[7]) + (this[6] * other[8]),
+        (this[1] * other[6]) + (this[4] * other[7]) + (this[7] * other[8]),
+        (this[2] * other[6]) + (this[5] * other[7]) + (this[8] * other[8])
     )
 
     operator fun times(other: Mat4) = Mat4(
-        (this.elements[0] * other.elements[0]) + (this.elements[1] * other.elements[4]) + (this.elements[2] * other.elements[8]),
-        (this.elements[0] * other.elements[1]) + (this.elements[1] * other.elements[5]) + (this.elements[2] * other.elements[9]),
-        (this.elements[0] * other.elements[2]) + (this.elements[1] * other.elements[6]) + (this.elements[2] * other.elements[10]),
-        (this.elements[0] * other.elements[3]) + (this.elements[1] * other.elements[7]) + (this.elements[2] * other.elements[11]),
-        (this.elements[3] * other.elements[0]) + (this.elements[4] * other.elements[4]) + (this.elements[5] * other.elements[8]),
-        (this.elements[3] * other.elements[1]) + (this.elements[4] * other.elements[5]) + (this.elements[5] * other.elements[9]),
-        (this.elements[3] * other.elements[2]) + (this.elements[4] * other.elements[6]) + (this.elements[5] * other.elements[10]),
-        (this.elements[3] * other.elements[3]) + (this.elements[4] * other.elements[7]) + (this.elements[5] * other.elements[11]),
-        (this.elements[6] * other.elements[0]) + (this.elements[7] * other.elements[4]) + (this.elements[8] * other.elements[8]),
-        (this.elements[6] * other.elements[1]) + (this.elements[7] * other.elements[5]) + (this.elements[8] * other.elements[9]),
-        (this.elements[6] * other.elements[2]) + (this.elements[7] * other.elements[6]) + (this.elements[8] * other.elements[10]),
-        (this.elements[6] * other.elements[3]) + (this.elements[7] * other.elements[7]) + (this.elements[8] * other.elements[11]),
-        other.elements[12],
-        other.elements[13],
-        other.elements[14],
-        other.elements[15]
+        (this[0] * other[0]) + (this[3] * other[1]) + (this[6] * other[2]),
+        (this[1] * other[0]) + (this[4] * other[1]) + (this[7] * other[2]),
+        (this[2] * other[0]) + (this[5] * other[1]) + (this[8] * other[2]),
+        other[3],
+        (this[0] * other[4]) + (this[3] * other[5]) + (this[6] * other[6]),
+        (this[1] * other[4]) + (this[4] * other[5]) + (this[7] * other[6]),
+        (this[2] * other[4]) + (this[5] * other[5]) + (this[8] * other[6]),
+        other[7],
+        (this[0] * other[8]) + (this[3] * other[9]) + (this[6] * other[10]),
+        (this[1] * other[8]) + (this[4] * other[9]) + (this[7] * other[10]),
+        (this[2] * other[8]) + (this[5] * other[9]) + (this[8] * other[10]),
+        other[11],
+        (this[0] * other[12]) + (this[3] * other[13]) + (this[6] * other[14]),
+        (this[1] * other[12]) + (this[4] * other[13]) + (this[7] * other[14]),
+        (this[2] * other[12]) + (this[5] * other[13]) + (this[8] * other[14]),
+        other[15]
     )
 
-    // Vec3 as column vector
-    operator fun times(v: Vec3) = Vec3(
-        v.x * this.elements[0] + v.y * this.elements[1] + v.z * this.elements[2],
-        v.x * this.elements[3] + v.y * this.elements[4] + v.z * this.elements[5],
-        v.x * this.elements[6] + v.y * this.elements[7] + v.z * this.elements[8]
+    operator fun times(v: Vec3) = Vec3( // Vec3 treated as column vector
+        this[0]*v[0] + this[3]*v[1] + this[6]*v[2],
+        this[1]*v[0] + this[4]*v[1] + this[7]*v[2],
+        this[2]*v[0] + this[5]*v[1] + this[8]*v[2]
     )
 
     companion object {
-        // TODO: This method may be messed up due to using code from column major matrices
         fun rotate(radians: Double, v: Vec3): Mat3 {
-                val axis = v.normalized
+            val axis = v.normalized
 
-                val cosA = cos(radians).toFloat()
-                val sinA = sin(radians).toFloat()
-                val axisTimesOneMinusCos = axis * (1f - cosA)
+            val cosA = cos(radians).toFloat()
+            val sinA = sin(radians).toFloat()
+            val axisTimesOneMinusCos = axis * (1f - cosA)
 
-                return Mat3(axis.x * axisTimesOneMinusCos.x + cosA,
-                        axis.x * axisTimesOneMinusCos.y + sinA * axis.z,
-                        axis.x * axisTimesOneMinusCos.z - sinA * axis.y,
+            return Mat3(axis.x * axisTimesOneMinusCos.x + cosA,
+                axis.x * axisTimesOneMinusCos.y + sinA * axis.z,
+                axis.x * axisTimesOneMinusCos.z - sinA * axis.y,
 
-                        axis.y * axisTimesOneMinusCos.x - sinA * axis.z,
-                        axis.y * axisTimesOneMinusCos.y + cosA,
-                        axis.y * axisTimesOneMinusCos.z + sinA * axis.x,
+                axis.y * axisTimesOneMinusCos.x - sinA * axis.z,
+                axis.y * axisTimesOneMinusCos.y + cosA,
+                axis.y * axisTimesOneMinusCos.z + sinA * axis.x,
 
-                        axis.z * axisTimesOneMinusCos.x + sinA * axis.y,
-                        axis.z * axisTimesOneMinusCos.y - sinA * axis.x,
-                        axis.z * axisTimesOneMinusCos.z + cosA)
+                axis.z * axisTimesOneMinusCos.x + sinA * axis.y,
+                axis.z * axisTimesOneMinusCos.y - sinA * axis.x,
+                axis.z * axisTimesOneMinusCos.z + cosA)
         }
     }
 
@@ -246,86 +255,91 @@ class Mat3 {
 
 class Mat4 {
     val elements: FloatArray
-    val col0 get() = Vec4(elements[0], elements[4], elements[8], elements[12])
-    val col1 get() = Vec4(elements[1], elements[5], elements[9], elements[13])
-    val col2 get() = Vec4(elements[2], elements[6], elements[10], elements[14])
-    val col3 get() = Vec4(elements[3], elements[7], elements[11], elements[15])
-    val row0 get() = Vec4(elements[0], elements[1], elements[2], elements[3])
-    val row1 get() = Vec4(elements[4], elements[5], elements[6], elements[7])
-    val row2 get() = Vec4(elements[8], elements[9], elements[10], elements[11])
-    val row3 get() = Vec4(elements[12], elements[13], elements[14], elements[15])
+    val col0 inline get() = Vec4(elements[0], elements[1], elements[2], elements[3])
+    val col1 inline get() = Vec4(elements[4], elements[5], elements[6], elements[7])
+    val col2 inline get() = Vec4(elements[8], elements[9], elements[10], elements[11])
+    val col3 inline get() = Vec4(elements[12], elements[13], elements[14], elements[15])
+    val row0 inline get() = Vec4(elements[0], elements[4], elements[8], elements[12])
+    val row1 inline get() = Vec4(elements[1], elements[5], elements[9], elements[13])
+    val row2 inline get() = Vec4(elements[2], elements[6], elements[10], elements[14])
+    val row3 inline get() = Vec4(elements[3], elements[7], elements[11], elements[15])
 
     constructor(){ elements = FloatArray(4*4){0f} }
+
     constructor(diagonal: Float) {
         elements = floatArrayOf(diagonal, 0f, 0f, 0f,
-                                0f, diagonal, 0f, 0f,
-                                0f, 0f, diagonal, 0f,
-                                0f, 0f, 0f, diagonal)
+            0f, diagonal, 0f, 0f,
+            0f, 0f, diagonal, 0f,
+            0f, 0f, 0f, diagonal)
     }
+
+    // NOTE: Column-major ordering
     constructor(e00: Float, e01: Float, e02: Float, e03: Float,
                 e10: Float, e11: Float, e12: Float, e13: Float,
                 e20: Float, e21: Float, e22: Float, e23: Float,
                 e30: Float, e31: Float, e32: Float, e33: Float) {
         elements = floatArrayOf(e00, e01, e02, e03,
-                                e10, e11, e12, e13,
-                                e20, e21, e22, e23,
-                                e30, e31, e32, e33)
-    }
-    constructor(mat3: Mat3) {
-        elements = floatArrayOf(mat3.elements[0], mat3.elements[1], mat3.elements[2], 0f,
-                                mat3.elements[3], mat3.elements[4], mat3.elements[5], 0f,
-                                mat3.elements[6], mat3.elements[7], mat3.elements[8], 0f,
-                                              0f,               0f,               0f, 1f)
+            e10, e11, e12, e13,
+            e20, e21, e22, e23,
+            e30, e31, e32, e33)
     }
 
+    constructor(mat3: Mat3) {
+        elements = floatArrayOf(mat3[0], mat3[1], mat3[2], 0f,
+            mat3[3], mat3[4], mat3[5], 0f,
+            mat3[6], mat3[7], mat3[8], 0f,
+            0f,      0f,      0f, 1f)
+    }
+
+    operator fun get(i: Int) = elements[i]
+
     operator fun times(other: Mat4) = Mat4(
-        (this.elements[0] * other.elements[0]) + (this.elements[1] * other.elements[4]) + (this.elements[2] * other.elements[8]) + (this.elements[3] * other.elements[12]),
-        (this.elements[0] * other.elements[1]) + (this.elements[1] * other.elements[5]) + (this.elements[2] * other.elements[9]) + (this.elements[3] * other.elements[13]),
-        (this.elements[0] * other.elements[2]) + (this.elements[1] * other.elements[6]) + (this.elements[2] * other.elements[10]) + (this.elements[3] * other.elements[14]),
-        (this.elements[0] * other.elements[3]) + (this.elements[1] * other.elements[7]) + (this.elements[2] * other.elements[11]) + (this.elements[3] * other.elements[15]),
-        (this.elements[4] * other.elements[0]) + (this.elements[5] * other.elements[4]) + (this.elements[6] * other.elements[8]) + (this.elements[7] * other.elements[12]),
-        (this.elements[4] * other.elements[1]) + (this.elements[5] * other.elements[5]) + (this.elements[6] * other.elements[9]) + (this.elements[7] * other.elements[13]),
-        (this.elements[4] * other.elements[2]) + (this.elements[5] * other.elements[6]) + (this.elements[6] * other.elements[10]) + (this.elements[7] * other.elements[14]),
-        (this.elements[4] * other.elements[3]) + (this.elements[5] * other.elements[7]) + (this.elements[6] * other.elements[11]) + (this.elements[7] * other.elements[15]),
-        (this.elements[8] * other.elements[0]) + (this.elements[9] * other.elements[4]) + (this.elements[10] * other.elements[8]) + (this.elements[11] * other.elements[12]),
-        (this.elements[8] * other.elements[1]) + (this.elements[9] * other.elements[5]) + (this.elements[10] * other.elements[9]) + (this.elements[11] * other.elements[13]),
-        (this.elements[8] * other.elements[2]) + (this.elements[9] * other.elements[6]) + (this.elements[10] * other.elements[10]) + (this.elements[11] * other.elements[14]),
-        (this.elements[8] * other.elements[3]) + (this.elements[9] * other.elements[7]) + (this.elements[10] * other.elements[11]) + (this.elements[11] * other.elements[15]),
-        (this.elements[12] * other.elements[0]) + (this.elements[13] * other.elements[4]) + (this.elements[14] * other.elements[8]) + (this.elements[15] * other.elements[12]),
-        (this.elements[12] * other.elements[1]) + (this.elements[13] * other.elements[5]) + (this.elements[14] * other.elements[9]) + (this.elements[15] * other.elements[13]),
-        (this.elements[12] * other.elements[2]) + (this.elements[13] * other.elements[6]) + (this.elements[14] * other.elements[10]) + (this.elements[15] * other.elements[14]),
-        (this.elements[12] * other.elements[3]) + (this.elements[13] * other.elements[7]) + (this.elements[14] * other.elements[11]) + (this.elements[15] * other.elements[15])
+        (this[0] * other[0]) + (this[4] * other[1]) + (this[8] * other[2]) + (this[12] * other[3]),
+        (this[1] * other[0]) + (this[5] * other[1]) + (this[9] * other[2]) + (this[13] * other[3]),
+        (this[2] * other[0]) + (this[6] * other[1]) + (this[10] * other[2]) + (this[14] * other[3]),
+        (this[3] * other[0]) + (this[7] * other[1]) + (this[11] * other[2]) + (this[15] * other[3]),
+        (this[0] * other[4]) + (this[4] * other[5]) + (this[8] * other[6]) + (this[12] * other[7]),
+        (this[1] * other[4]) + (this[5] * other[5]) + (this[9] * other[6]) + (this[13] * other[7]),
+        (this[2] * other[4]) + (this[6] * other[5]) + (this[10] * other[6]) + (this[14] * other[7]),
+        (this[3] * other[4]) + (this[7] * other[5]) + (this[11] * other[6]) + (this[15] * other[7]),
+        (this[0] * other[8]) + (this[4] * other[9]) + (this[8] * other[10]) + (this[12] * other[11]),
+        (this[1] * other[8]) + (this[5] * other[9]) + (this[9] * other[10]) + (this[13] * other[11]),
+        (this[2] * other[8]) + (this[6] * other[9]) + (this[10] * other[10]) + (this[14] * other[11]),
+        (this[3] * other[8]) + (this[7] * other[9]) + (this[11] * other[10]) + (this[15] * other[11]),
+        (this[0] * other[12]) + (this[4] * other[13]) + (this[8] * other[14]) + (this[12] * other[15]),
+        (this[1] * other[12]) + (this[5] * other[13]) + (this[9] * other[14]) + (this[13] * other[15]),
+        (this[2] * other[12]) + (this[6] * other[13]) + (this[10] * other[14]) + (this[14] * other[15]),
+        (this[3] * other[12]) + (this[7] * other[13]) + (this[11] * other[14]) + (this[15] * other[15])
     )
 
     operator fun times(other: Mat3) = Mat4(
-        (this.elements[0] * other.elements[0]) + (this.elements[1] * other.elements[3]) + (this.elements[2] * other.elements[6]),
-        (this.elements[0] * other.elements[1]) + (this.elements[1] * other.elements[4]) + (this.elements[2] * other.elements[7]),
-        (this.elements[0] * other.elements[2]) + (this.elements[1] * other.elements[5]) + (this.elements[2] * other.elements[8]),
-        this.elements[3],
-        (this.elements[4] * other.elements[0]) + (this.elements[5] * other.elements[3]) + (this.elements[6] * other.elements[6]),
-        (this.elements[4] * other.elements[1]) + (this.elements[5] * other.elements[4]) + (this.elements[6] * other.elements[7]),
-        (this.elements[4] * other.elements[2]) + (this.elements[5] * other.elements[5]) + (this.elements[6] * other.elements[8]),
-        this.elements[7],
-        (this.elements[8] * other.elements[0]) + (this.elements[9] * other.elements[3]) + (this.elements[10] * other.elements[6]),
-        (this.elements[8] * other.elements[1]) + (this.elements[9] * other.elements[4]) + (this.elements[10] * other.elements[7]),
-        (this.elements[8] * other.elements[2]) + (this.elements[9] * other.elements[5]) + (this.elements[10] * other.elements[8]),
-        this.elements[11],
-        (this.elements[12] * other.elements[0]) + (this.elements[13] * other.elements[3]) + (this.elements[14] * other.elements[6]),
-        (this.elements[12] * other.elements[1]) + (this.elements[13] * other.elements[4]) + (this.elements[14] * other.elements[7]),
-        (this.elements[12] * other.elements[2]) + (this.elements[13] * other.elements[5]) + (this.elements[14] * other.elements[8]),
-        this.elements[15]
+        (this[0] * other[0]) + (this[4] * other[1]) + (this[8] * other[2]),
+        (this[1] * other[0]) + (this[5] * other[1]) + (this[9] * other[2]),
+        (this[2] * other[0]) + (this[6] * other[1]) + (this[10] * other[2]),
+        (this[3] * other[0]) + (this[7] * other[1]) + (this[11] * other[2]),
+        (this[0] * other[3]) + (this[4] * other[4]) + (this[8] * other[5]),
+        (this[1] * other[3]) + (this[5] * other[4]) + (this[9] * other[5]),
+        (this[2] * other[3]) + (this[6] * other[4]) + (this[10] * other[5]),
+        (this[3] * other[3]) + (this[7] * other[4]) + (this[11] * other[5]),
+        (this[0] * other[6]) + (this[4] * other[7]) + (this[8] * other[8]),
+        (this[1] * other[6]) + (this[5] * other[7]) + (this[9] * other[8]),
+        (this[2] * other[6]) + (this[6] * other[7]) + (this[10] * other[8]),
+        (this[3] * other[6]) + (this[7] * other[7]) + (this[11] * other[8]),
+        this[12],
+        this[13],
+        this[14],
+        this[15]
     )
 
     // Vec4 as column vector
-    operator fun times(v: Vec4) = Vec4(
-        v.x * this.elements[0] + v.y * this.elements[1] + v.z * this.elements[2] + v.w * this.elements[3],
-        v.x * this.elements[4] + v.y * this.elements[5] + v.z * this.elements[6] + v.w * this.elements[7],
-        v.x * this.elements[8] + v.y * this.elements[9] + v.z * this.elements[10] + v.w * this.elements[11],
-        v.x * this.elements[12] + v.y * this.elements[13] + v.z * this.elements[14] + v.w * this.elements[15]
+    operator fun times(v: Vec4) = Vec4( // Vec4 treated as column vector
+        this[0]*v[0] + this[4]*v[1] + this[8]*v[2] + this[12]*v[3],
+        this[1]*v[0] + this[5]*v[1] + this[9]*v[2] + this[13]*v[3],
+        this[2]*v[0] + this[6]*v[1] + this[10]*v[2] + this[14]*v[3],
+        this[3]*v[0] + this[7]*v[1] + this[11]*v[2] + this[15]*v[3]
     )
 
     companion object {
-        // TODO: This method may be messed up due to using code from column major matrices
         // real-time rendering 4.7.2
         // aspect ratio is equivalent to width / height
         fun perspective(fovVert: Double, aspect: Double, near: Double, far: Double): Mat4 {

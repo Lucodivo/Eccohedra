@@ -36,28 +36,28 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
 
         val colors = arrayOf(
             Color("🔴", Vec3(1f, 4f, 2f)), // red
-            Color("🟢", Vec3( 5f, 1f, 4f)), // green
+            Color("🟢", Vec3(5f, 1f, 4f)), // green
             Color("🔵", Vec3(6f, 3f, 1f)) // blue
         )
         const val defaultColorIndex = 0
 
-        private const val minZoom = 0.15f
+        private const val baseZoom = .25f
+        private const val minZoom = .15f
         private const val maxZoom = 130000f // TODO: Expand max if zoom is every expanded beyond current capabilities
-        private const val baseZoom = maxZoom
     }
 
     private lateinit var mandelbrotProgram: Program
     private var quadVAO: Int = -1
 
     private var zoom = baseZoom
-    private var centerOffset = Vec2(-1050.6305f, -363.1951f)
+    private var centerOffset = Vec2(0f, 0f)
     private var lastFrameRotationMatrix = Mat2(1f)
 
     // Motion event variables
     private var postPinchZoom_panFlushRequired = false;
-    private var prevScaleGestureFocus: Vec2 = Vec2(901.9336f, 1669.8779f)
-    private var previousX: Float = 901.9336f
-    private var previousY: Float = 1692.8809f
+    private var prevScaleGestureFocus: Vec2 = Vec2(0f, 0f)
+    private var previousX: Float = 0f
+    private var previousY: Float = 0f
 
     private var colorSubIndex: Int
     private var prevColorSubIndex: Int
@@ -91,7 +91,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
 
         mandelbrotProgram.use()
         glBindVertexArray(quadVAO)
-        mandelbrotProgram.setUniform(uniform.viewPortResolution, Vec2(windowWidth.toFloat(), windowHeight.toFloat()))
+        mandelbrotProgram.setUniform(uniform.viewPortResolution, windowWidth.toFloat(), windowHeight.toFloat())
         mandelbrotProgram.setUniform(uniform.colorSub, colors[colorSubIndex].colorSub)
     }
 
@@ -99,7 +99,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         super.onSurfaceChanged(gl, width, height)
 
         mandelbrotProgram.use()
-        mandelbrotProgram.setUniform(uniform.viewPortResolution, Vec2(width.toFloat(), height.toFloat()))
+        mandelbrotProgram.setUniform(uniform.viewPortResolution, width.toFloat(), height.toFloat())
     }
 
     override fun onDrawFrame(gl: GL10?) {

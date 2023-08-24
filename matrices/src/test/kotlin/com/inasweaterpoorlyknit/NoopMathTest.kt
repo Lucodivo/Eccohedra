@@ -3,6 +3,14 @@ package com.inasweaterpoorlyknit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+fun Vec4.equalsEpsilon(other: Vec4, epsilon: Float = 0.0001f): Boolean {
+    val diff = this - other
+    return diff.x < epsilon && diff.x > -epsilon &&
+            diff.y < epsilon && diff.y > -epsilon &&
+            diff.z < epsilon && diff.z > -epsilon &&
+            diff.w < epsilon && diff.w > -epsilon
+}
+
 class MathUnitTests {
     @Test
     fun `Vec2 - lenSq, len, normalize`() {
@@ -143,15 +151,15 @@ class MathUnitTests {
         val xScale = 2f
         val yScale = 4f
         val rotationScaleMat = Mat2(
-            0f, xScale,
-            yScale, 0f
+            0f, yScale,
+            xScale, 0f
         )
 
         val point = Vec2(130f, 1.1f)
         val expectedResult = Vec2(point.y * xScale, point.x * yScale)
         val expectedResultDotCalc = Vec2(
-            point.dot(rotationScaleMat.row0),
-            point.dot(rotationScaleMat.row1)
+            rotationScaleMat.row0.dot(point),
+            rotationScaleMat.row1.dot(point)
         )
 
         val actualResult = rotationScaleMat * point
@@ -165,17 +173,17 @@ class MathUnitTests {
         val xScale = 2f
         val yScale = 4f
         val transformationMat = Mat2(
-            0f, xScale,
-            yScale, 0f
+            0f, yScale,
+            xScale, 0f
         )
 
         val point = Vec2(130f, 1.1f)
         val expectedResult = Vec2(
-            point.dot(transformationMat.col0),
-            point.dot(transformationMat.col1)
+            transformationMat.row0.dot(point),
+            transformationMat.row1.dot(point)
         )
 
-        val actualResult = point * transformationMat
+        val actualResult = transformationMat * point
 
         assertEquals(expectedResult, actualResult)
     }
@@ -213,17 +221,17 @@ class MathUnitTests {
         val yScale = 4f
         val zScale = 6f
         val rotationScaleMat = Mat3(
-            0f, xScale, 0f,
-            0f, 0f, yScale,
-            zScale, 0f, 0f
+            0f, 0f, zScale,
+            xScale, 0f, 0f,
+            0f, yScale, 0f
         )
 
         val point = Vec3(130f, 1.1f, 1731.73f)
         val expectedResult = Vec3(point.y * xScale, point.z * yScale, point.x * zScale)
         val expectedResultDotCalc = Vec3(
-            point.dot(rotationScaleMat.row0),
-            point.dot(rotationScaleMat.row1),
-            point.dot(rotationScaleMat.row2)
+            rotationScaleMat.row0.dot(point),
+            rotationScaleMat.row1.dot(point),
+            rotationScaleMat.row2.dot(point)
         )
 
         val actualResult = rotationScaleMat * point
@@ -243,19 +251,19 @@ class MathUnitTests {
         val yScale = 4f
         val zScale = 6f
         val transformationMat = Mat3(
-            0f, xScale, 0f,
-            0f, 0f, yScale,
-            zScale, 0f, 0f
+            0f, 0f, zScale,
+            xScale, 0f, 0f,
+            0f, yScale, 0f
         )
 
         val point = Vec3(130f, 1.1f, 1731.73f)
         val expectedResult = Vec3(
-            point.dot(transformationMat.col0),
-            point.dot(transformationMat.col1),
-            point.dot(transformationMat.col2)
+            transformationMat.row0.dot(point),
+            transformationMat.row1.dot(point),
+            transformationMat.row2.dot(point)
         )
 
-        val actualResult = point * transformationMat
+        val actualResult = transformationMat * point
 
         assertEquals(expectedResult, actualResult)
     }
@@ -296,19 +304,19 @@ class MathUnitTests {
         val zScale = 6f
         val wScale = 8f
         val rotationScaleMat = Mat4(
-            0f, xScale, 0f, 0f,
-            0f, 0f, yScale, 0f,
-            zScale, 0f, 0f, 0f,
+            0f, 0f, zScale, 0f,
+            xScale, 0f, 0f, 0f,
+            0f, yScale, 0f, 0f,
             0f, 0f, 0f, wScale
         )
 
         val point = Vec4(130f, 1.1f, 1731.73f, 1f)
         val expectedResult = Vec4(point.y * xScale, point.z * yScale, point.x * zScale, point.w * wScale)
         val expectedResultDotCalc = Vec4(
-            point.dot(rotationScaleMat.row0),
-            point.dot(rotationScaleMat.row1),
-            point.dot(rotationScaleMat.row2),
-            point.dot(rotationScaleMat.row3),
+            rotationScaleMat.row0.dot(point),
+            rotationScaleMat.row1.dot(point),
+            rotationScaleMat.row2.dot(point),
+            rotationScaleMat.row3.dot(point),
         )
 
         val actualResult = rotationScaleMat * point
@@ -329,22 +337,36 @@ class MathUnitTests {
         val zScale = 6f
         val wScale = 8f
         val transformationMat = Mat4(
-            0f, xScale, 0f, 0f,
-            0f, 0f, yScale, 0f,
-            zScale, 0f, 0f, 0f,
+            0f, 0f, zScale, 0f,
+            xScale, 0f, 0f, 0f,
+            0f, yScale, 0f, 0f,
             0f, 0f, 0f, wScale
         )
 
         val point = Vec4(130f, 1.1f, 1731.73f, 1f)
         val expectedResult = Vec4(
-            point.dot(transformationMat.col0),
-            point.dot(transformationMat.col1),
-            point.dot(transformationMat.col2),
-            point.dot(transformationMat.col3),
+            transformationMat.row0.dot(point),
+            transformationMat.row1.dot(point),
+            transformationMat.row2.dot(point),
+            transformationMat.row3.dot(point),
         )
 
-        val actualResult = point * transformationMat
+        val actualResult = transformationMat * point
 
         assertEquals(expectedResult, actualResult)
+    }
+
+    @Test
+    fun `Mat3_Mat4 - rotation Mat3 matrix times Mat4 identity`() {
+        val rotationMat3 = Mat3.rotate(60.0.degToRad(), Vec3(1f))
+        val identity = Mat4(1f)
+        val rotationMat4 = rotationMat3 * identity
+
+        val point = Vec4(1f, 2f, 3f, 1f)
+
+        val expected = Vec4(2f, 1f, 3f, 1f)
+        val actual = rotationMat4 * point
+
+        assert(actual.equalsEpsilon(expected, 0.000001f))
     }
 }

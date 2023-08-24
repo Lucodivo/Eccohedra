@@ -102,7 +102,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         offscreenFramebuffer = initializeFrameBuffer(resolution.width, resolution.height)
 
         mengerPrisonProgram.use()
-        mengerPrisonProgram.setUniform(uniform.viewPortResolution, Vec2(resolution.width.toFloat(), resolution.height.toFloat()))
+        mengerPrisonProgram.setUniform(uniform.viewPortResolution, resolution.width.toFloat(), resolution.height.toFloat())
     }
 
     private fun initResolutions(width: Int, height: Int) {
@@ -132,7 +132,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
             offscreenFramebuffer.delete()
             offscreenFramebuffer = initializeFrameBuffer(resolution.width, resolution.height)
             prevFrameResolutionIndex = currentResolutionIndex
-            mengerPrisonProgram.setUniform(uniform.viewPortResolution, Vec2(resolution.width.toFloat(), resolution.height.toFloat()))
+            mengerPrisonProgram.setUniform(uniform.viewPortResolution, resolution.width.toFloat(), resolution.height.toFloat())
         }
 
         // draw to offscreen framebuffer

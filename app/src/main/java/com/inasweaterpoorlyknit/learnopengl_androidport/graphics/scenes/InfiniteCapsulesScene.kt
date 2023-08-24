@@ -79,7 +79,7 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
         super.onSurfaceChanged(gl, width, height)
 
         program.use()
-        program.setUniform(uniform.viewPortResolution, Vec2(width.toFloat(), height.toFloat()))
+        program.setUniform(uniform.viewPortResolution, width.toFloat(), height.toFloat())
     }
 
     private fun moveCameraForward(rotationMat: Mat3, units: Float) {

@@ -42,6 +42,10 @@ class Program(context: Context, @RawRes vertexShaderResId: Int, @RawRes fragment
     fun setUniform(name: String, value: Float) = glUniform1f(glGetUniformLocation(id, name), value)
     fun setUniform(name: String, value: Int) = glUniform1i(glGetUniformLocation(id, name), value)
 
+    fun setUniform(name: String, x: Float, y: Float) = glUniform2f(glGetUniformLocation(id, name), x, y)
+    fun setUniform(name: String, x: Float, y: Float, z: Float) = glUniform3f(glGetUniformLocation(id, name), x, y, z)
+    fun setUniform(name: String, x: Float, y: Float, z: Float, w: Float) = glUniform4f(glGetUniformLocation(id, name), x, y, z, w)
+
     fun setUniform(name: String, value: Vec2) = glUniform2fv(glGetUniformLocation(id, name), 1, value.elements, 0)
     fun setUniform(name: String, value: Vec3) = glUniform3fv(glGetUniformLocation(id, name), 1, value.elements, 0)
     fun setUniform(name: String, value: Vec4) = glUniform4fv(glGetUniformLocation(id, name), 1, value.elements, 0)
