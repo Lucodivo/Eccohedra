@@ -51,6 +51,8 @@ These issues make moving shaders to the asset folder quite appealing. But, for n
 
 ## Math
 Any 3D math in this project should be assumed to be using a left-handed coordinate system with +Z pointing forward and +Y pointing up, unless stated otherwise.
+For Kotlin, [kotlin-graphics/glm](https://github.com/kotlin-graphics/glm) was previously used for matrices/vectors but it contained maven dependencies that were unavailable despite no version change on my end. A custom Kotlin matrix math module was created in its stead.
+All matrices are stored in column-major.
 
 ## Screenshots
 
