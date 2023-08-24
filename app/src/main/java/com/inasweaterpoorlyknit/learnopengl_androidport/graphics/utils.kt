@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.util.Log
 import android.view.Surface
+import android.view.WindowManager
 import androidx.annotation.RawRes
 import com.inasweaterpoorlyknit.Mat2
 import com.inasweaterpoorlyknit.Vec2
@@ -39,8 +40,14 @@ fun Orientation.isLandscape(): Boolean = this == Orientation.Landscape || this =
 
 val Context.orientation: Orientation
   get() {
-    val rotation = display?.rotation
-    return if(rotation == null) {
+    val rotation = if (android.os.Build.VERSION.SDK_INT >= 30) {
+      display?.rotation
+    } else { // TODO: WindowManager.defaultDisplay is deprecated, remove when minSDK is 30+
+      val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager?
+      windowManager?.defaultDisplay?.rotation
+    }
+
+    return if (rotation != null) {
       if (resources.configuration.orientation == ORIENTATION_LANDSCAPE) {
         if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_0) {
           Orientation.Landscape
