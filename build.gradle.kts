@@ -1,11 +1,10 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
-
     // Kotln and compose compiler must be compatible
     // check the following link for more details
     // https://developer.android.com/jetpack/androidx/releases/compose-kotlin
-    extra.set("kotlinCompilerVersion", "1.7.20")
-    extra.set("composeCompilerVersion", "1.3.2") // TODO: Update compose and the compiler
+    extra.set("kotlinCompilerVersion", "1.9.0")
+    extra.set("composeCompilerVersion", "1.5.2")
 
     repositories { // used for project dependencies below
         google()
