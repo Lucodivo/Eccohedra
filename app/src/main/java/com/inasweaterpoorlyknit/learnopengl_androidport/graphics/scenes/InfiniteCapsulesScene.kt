@@ -1,7 +1,7 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes
 
 import android.content.Context
-import android.opengl.GLES20.*
+import android.opengl.GLES32.*
 import android.opengl.GLES30.glBindVertexArray
 import android.view.MotionEvent
 import com.inasweaterpoorlyknit.Mat3

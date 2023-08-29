@@ -10,3 +10,8 @@ would this conflict with compile time glsl validation?
 Modularization ideas:
 - cpp scenes could be separated in their own module
 - NoopMathKotlin could be set up to be pulled from a maven repository instead of manually embedded into the project
+
+Scene improvement:
+- Mandelbrot scene
+    - Increase max zoom
+        - `precision highp` working as intended in fragment shader? fixed point floating numbers? compute shaders?

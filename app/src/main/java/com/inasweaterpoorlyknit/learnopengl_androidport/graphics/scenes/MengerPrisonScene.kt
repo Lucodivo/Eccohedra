@@ -2,9 +2,7 @@ package com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.opengl.GLES20.GL_UNSIGNED_INT
-import android.opengl.GLES20.glClear
-import android.opengl.GLES30.*
+import android.opengl.GLES32.*
 import android.view.MotionEvent
 import com.inasweaterpoorlyknit.Vec2
 import com.inasweaterpoorlyknit.Vec3

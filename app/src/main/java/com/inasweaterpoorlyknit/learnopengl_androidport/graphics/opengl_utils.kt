@@ -2,7 +2,7 @@ package com.inasweaterpoorlyknit.learnopengl_androidport.graphics
 
 import android.content.Context
 import android.graphics.BitmapFactory
-import android.opengl.GLES20.*
+import android.opengl.GLES32.*
 import android.util.Log
 import androidx.annotation.RawRes
 import com.inasweaterpoorlyknit.Vec3

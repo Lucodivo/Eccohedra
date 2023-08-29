@@ -1,7 +1,7 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.graphics
 
 import android.content.Context
-import android.opengl.GLES20
+import android.opengl.GLES32.*
 import android.opengl.GLSurfaceView
 import android.view.MotionEvent
 import javax.microedition.khronos.opengles.GL10
@@ -25,6 +25,6 @@ abstract class Scene(protected val context: Context) : GLSurfaceView.Renderer, E
         windowWidth = width
         windowHeight = height
 
-        GLES20.glViewport(0, 0, windowWidth, windowHeight)
+        glViewport(0, 0, windowWidth, windowHeight)
     }
 }

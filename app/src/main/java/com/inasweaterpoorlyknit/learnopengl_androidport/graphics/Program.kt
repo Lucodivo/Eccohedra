@@ -1,7 +1,7 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.graphics
 
 import android.content.Context
-import android.opengl.GLES20.*
+import android.opengl.GLES32.*
 import android.util.Log
 import androidx.annotation.RawRes
 
@@ -38,7 +38,6 @@ class Program(context: Context, @RawRes vertexShaderResId: Int, @RawRes fragment
 
     fun use() = glUseProgram(id)
 
-    // float, mat4, integer
     fun setUniform(name: String, value: Float) = glUniform1f(glGetUniformLocation(id, name), value)
     fun setUniform(name: String, value: Int) = glUniform1i(glGetUniformLocation(id, name), value)
 
@@ -53,4 +52,6 @@ class Program(context: Context, @RawRes vertexShaderResId: Int, @RawRes fragment
     fun setUniform(name: String, value: Mat2) = glUniformMatrix2fv(glGetUniformLocation(id, name), 1, false, value.elements, 0)
     fun setUniform(name: String, value: Mat3) = glUniformMatrix3fv(glGetUniformLocation(id, name), 1, false, value.elements, 0)
     fun setUniform(name: String, value: Mat4) = glUniformMatrix4fv(glGetUniformLocation(id, name), 1, false, value.elements, 0)
+
+    fun setUniformVec3Array(name: String, value: FloatArray, count: Int = value.size / 3){ glUniform3fv(glGetUniformLocation(id, name), count, value, 0) }
 }

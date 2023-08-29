@@ -18,6 +18,16 @@ const val radiansPerDegree = PI / 180.0
 fun Double.degToRad(): Double = this * radiansPerDegree
 fun Float.degToRad(): Float = this * radiansPerDegree.toFloat()
 
+fun clamp(min: Double, max: Double, value: Double) = if (value < min) { min } else if (value > max) { max } else { value }
+fun lerp(x: Float, y: Float, a: Float) = x * (1.0f - a) + (y * a)
+
+// Just using Khronos' definition for smoothstep in GLSL
+// https://registry.khronos.org/OpenGL-Refpages/gl4/html/smoothstep.xhtml
+fun smoothStep(edge0: Double, edge1: Double, x: Double): Double {
+    val t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+    return t * t * (3.0 - 2.0 * t)
+}
+
 class Vec2 {
     val elements: FloatArray
     constructor(fillVal: Float = 0f){ elements = FloatArray(2){fillVal} }
@@ -46,6 +56,13 @@ class Vec2 {
     override fun toString() = "Vec2(x=$x, y=$y)"
 }
 
+data class dVec2(val x: Double, val y: Double) {
+    constructor(v: Vec2): this(v.x.toDouble(), v.y.toDouble())
+    operator fun minus(v: dVec2) = dVec2(x-v.x, y-v.y)
+    operator fun times(s: Double) = dVec2(x*s, y*s)
+    fun toVec2() = Vec2(x.toFloat(), y.toFloat())
+}
+
 class Vec3 {
     val elements: FloatArray
     constructor(fillVal: Float = 0f){ elements = FloatArray(3){fillVal} }
@@ -62,8 +79,8 @@ class Vec3 {
     val normalized inline get() = this / len
     fun dot(v: Vec3) = (x * v.x) + (y * v.y) + (z * v.z)
     fun cross(v: Vec3) = Vec3(y * v.z - v.y * z,
-        z * v.x - v.z * x,
-        x * v.y - v.x * y)
+                            z * v.x - v.z * x,
+                            x * v.y - v.x * y)
 
     operator fun get(i: Int) = elements[i]
     operator fun unaryMinus() = Vec3(-x, -y, -z)
@@ -83,6 +100,8 @@ class Vec3 {
     override fun hashCode() = elements.contentHashCode()
     override fun toString() = "Vec3(x=$x, y=$y, z=$z)"
 }
+
+fun lerp(v1: Vec3, v2: Vec3, a: Float) = Vec3(lerp(v1.x, v2.x, a), lerp(v1.y, v2.y, a), lerp(v1.z, v2.z, a))
 
 class Vec4 {
     val elements: FloatArray

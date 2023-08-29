@@ -4,36 +4,34 @@ precision highp float;
 
 out vec4 FragColor;
 
-#define MAX_ITERATIONS 100.0
-
-uniform vec2 viewPortResolution;
+uniform vec3 accentColors[16];
 uniform vec2 centerOffset;
-uniform vec3 colorSub;
-uniform float zoom;
-uniform mat2 rotationMat;
+
+uniform int maxIterations;
+in vec2 pos;
+
+vec2 complexSq(vec2 a_bi) {
+    return vec2((a_bi.x * a_bi.x) - (a_bi.y * a_bi.y), 2.0 * (a_bi.x * a_bi.y));
+}
 
 void main() {
-    // Move (0,0) from bottom left to center
-    vec2 uv = gl_FragCoord.xy-0.5*viewPortResolution.xy;
 
-    // Scale shortest dimension value to [-1.0, 1.0], scale other dimension by same factor
-    float shortestDimension = (viewPortResolution.x > viewPortResolution.y) ? viewPortResolution.y : viewPortResolution.x;
-    uv = uv / (shortestDimension * zoom);
-    uv = rotationMat * uv;
-    uv += centerOffset / shortestDimension;
-
-    float iterations = 0.0;
-    vec2 c = uv;
-    while(iterations < MAX_ITERATIONS && length(uv) < 2.0) {
+    int iterations = 0;
+    vec2 z = vec2(0.0);
+    vec2 c = pos + centerOffset;
+    while(iterations < maxIterations && length(z) < 2.0) {
         // complex number squared
-        uv = vec2((uv.x * uv.x) - (uv.y * uv.y), 2.0 * (uv.x * uv.y));
+        z = complexSq(z);
+
         // adding constant
-        uv += c;
-        iterations += 1.0;
+        z += c;
+        iterations++;
     }
 
-    float iterFraction = (iterations / MAX_ITERATIONS);
-    vec3 color = vec3(1.0) - (colorSub * iterFraction);
+    float maxIterCheck = 1.0f - float(iterations / maxIterations);
+    int index1 = (iterations % 32) / 2;
+    int index2 = ((iterations + 1) % 32) / 2;
+    vec3 color = (accentColors[index1] + accentColors[index2]) / 2.0 * maxIterCheck;
 
     FragColor = vec4(color, 0.0);
 }
