@@ -531,11 +531,13 @@ void initCamera(Camera* camera, const Player& player) {
   lookAt_FirstPerson(firstPersonCameraInitPosition, firstPersonCameraInitFocus, camera);
 }
 
+// TODO: We will no longer be loading worlds from json
+// TODO: Cleanup the way the save files are organized.
 void loadWorld(World* world, const char* saveJsonFile) {
 
   LOGI("Currently leading world: %s", saveJsonFile);
 
-  SaveFormat saveFormat = loadSave(saveJsonFile);
+  SaveFormat saveFormat = originalWorld();
 
   size_t sceneCount = saveFormat.scenes.size();
   size_t modelCount = saveFormat.models.size();
