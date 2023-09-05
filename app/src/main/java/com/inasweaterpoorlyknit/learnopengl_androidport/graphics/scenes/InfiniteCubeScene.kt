@@ -212,7 +212,7 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
 
         // rotate cube over time
         val cubeElapsedTimeRotationMat = Mat3.rotate(elapsedTimeDS * cubeRotationAnglePerDS, cubeAutoRotationAxis)
-        val cubeModelMat = cubeElapsedTimeRotationMat * cubePanRotationMat * cubeScaleMatrix
+        val cubeModelMat = cubePanRotationMat * cubeElapsedTimeRotationMat * cubeScaleMatrix
 
         // draw cube outline
         glBindVertexArray(cubeVAO)
