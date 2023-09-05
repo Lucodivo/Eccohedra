@@ -27,11 +27,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".graphics.BlueSceneNativeActivity"
+        <activity android:name=".graphics.GateNativeActivity"
             android:configChanges="orientation|keyboardHidden|screenSize">
             <!-- Tell NativeActivity the name of our .so -->
-            <meta-data android:name="android.app.lib_name"
-                android:value="native-activity-blue" />
+            <meta-data android:name="android.app.lib_name" android:value="native-scene" />
         </activity>
         <meta-data android:name="firebase_analytics_collection_deactivated"
             android:value="@bool/FIREBASE_ANALYTICS_DEACTIVATED"/>

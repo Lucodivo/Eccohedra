@@ -14,4 +14,9 @@ Modularization ideas:
 Scene improvement:
 - Mandelbrot scene
     - Increase max zoom
-        - `precision highp` working as intended in fragment shader? fixed point floating numbers? compute shaders?
+        - Best potential solution seems to be utilizing Perturbation Theory.
+        - Failed attempts were made at trying to emulate higher floating point precision in the fragment shader.
+    - Let user choose two accent colors
+
+Bugs(?):
+- Exiting a scene seems to sometimes show a frame or two of the users home screen wallpaper

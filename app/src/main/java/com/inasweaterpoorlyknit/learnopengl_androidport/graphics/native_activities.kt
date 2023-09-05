@@ -9,4 +9,4 @@ import android.app.NativeActivity
     This project uses native activities as a way of more easily porting code between Windows and Android
     with the hopes of pulling out a little extra performance along the way.
  */
-class BlueSceneNativeActivity: NativeActivity() // blue_scene.cpp
+class GateNativeActivity: NativeActivity()

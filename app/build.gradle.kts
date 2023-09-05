@@ -22,12 +22,6 @@ android {
         versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        externalNativeBuild {
-            cmake {
-                cppFlags("-std=c++17")
-            }
-        }
-
         compileOptions {
             sourceCompatibility(JavaVersion.VERSION_1_8)
             targetCompatibility(JavaVersion.VERSION_1_8)
@@ -85,19 +79,13 @@ android {
             resValue("bool", "FIREBASE_ANALYTICS_DEACTIVATED", "true")
         }
     }
-
-    externalNativeBuild {
-        cmake {
-            path("src/main/cpp/CMakeLists.txt")
-            version = "3.18.1"
-        }
-    }
 }
 
 dependencies {
     val kotlinCompilerVersion: String by rootProject.extra
 
     implementation(project(":matrices"))
+    implementation(project(":native_scenes"))
 
     // all binary .jar dependencies in libs folder listOf(NONE CURRENTLY)
 //    implementation fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar")))
