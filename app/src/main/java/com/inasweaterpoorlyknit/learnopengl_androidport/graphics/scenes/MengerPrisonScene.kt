@@ -174,7 +174,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         }
     }
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
         // NOTE: This could become costly if SharedPreferences are being edited all the time
         if(key == SharedPrefKeys.mengerPrisonResolutionIndex) {
             currentResolutionIndex = resolveResolutionIndex(sharedPreferences)

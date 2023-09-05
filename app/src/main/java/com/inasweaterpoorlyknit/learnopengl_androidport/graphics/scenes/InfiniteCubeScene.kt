@@ -92,7 +92,7 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
             return true
         }
 
-        override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+        override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
             if(firstEventSinceDown) { // first event can contain distances that are jarringly large
                 firstEventSinceDown = false
             } else {
@@ -109,7 +109,7 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
             return true
         }
 
-        override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+        override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
 
             val rotVel = (velocityX / windowWidth)
             rotationVelocity = clamp(rotVel, -cameraForwardVelocityMax, cameraForwardVelocityMax)

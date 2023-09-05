@@ -78,9 +78,9 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
             override fun onDown(e: MotionEvent) = true
             override fun onShowPress(e: MotionEvent){}
             override fun onSingleTapUp(e: MotionEvent) = true
-            override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float) = true
+            override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float) = true
             override fun onLongPress(e: MotionEvent){}
-            override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float) = true
+            override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float) = true
         })
         gestureDetector.setOnDoubleTapListener(object : GestureDetector.OnDoubleTapListener {
             override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
@@ -221,7 +221,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         }
     }
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
         // NOTE: This could become costly if SharedPreferences are being edited all the time
         if(key == SharedPrefKeys.mandelbrotScene) {
             accentColorsIndex = resolveColorIndex(sharedPreferences)

@@ -68,7 +68,7 @@ class SceneListDetailActivity : AppCompatActivity() {
         }
 
         viewModel.finishTrigger.observe(this) {
-            super.getOnBackPressedDispatcher().onBackPressed()
+            super.onBackPressedDispatcher.onBackPressed()
         }
 
         viewModel.startActivityRequest.observe(this) {

@@ -3,8 +3,8 @@ buildscript {
     // Kotln and compose compiler must be compatible
     // check the following link for more details
     // https://developer.android.com/jetpack/androidx/releases/compose-kotlin
-    extra.set("kotlinCompilerVersion", "1.9.0")
-    extra.set("composeCompilerVersion", "1.5.2")
+    extra.set("kotlinCompilerVersion", "1.9.10")
+    extra.set("composeCompilerVersion", "1.5.3")
 
     repositories { // used for project dependencies below
         google()
@@ -18,7 +18,7 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinCompilerVersion}")
 
         classpath("com.google.gms:google-services:4.3.15")
-        classpath("com.google.firebase:firebase-crashlytics-gradle:2.9.4")
+        classpath("com.google.firebase:firebase-crashlytics-gradle:2.9.9")
 
         // TODO: Hilt
         //classpath("com.google.dagger:hilt-android-gradle-plugin:2.40.1")

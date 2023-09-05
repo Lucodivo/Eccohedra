@@ -11,7 +11,7 @@ plugins {
 }
 
 android {
-    compileSdk = 33
+    compileSdk = 34
     ndkVersion = "25.2.9519653"
 
     defaultConfig {
@@ -107,23 +107,23 @@ dependencies {
 
     // Google
     implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.8.0")
+    implementation("com.google.android.material:material:1.9.0")
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.preference:preference-ktx:1.2.0")
-    implementation("androidx.fragment:fragment-ktx:1.5.5")
+    implementation("androidx.preference:preference-ktx:1.2.1")
+    implementation("androidx.fragment:fragment-ktx:1.6.1")
 
     // Compose
-    implementation("androidx.activity:activity-compose:1.6.1") // Integration with activities
-    implementation("androidx.compose.material:material:1.3.1") // Compose Material Design
-    implementation("androidx.compose.material:material-icons-extended:1.3.1")
-    implementation("androidx.compose.animation:animation:1.3.3") // Animations
-    implementation("androidx.compose.ui:ui-tooling:1.3.3") // Tooling support (Previews, etc.)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1") // Integration with ViewModels
+    implementation("androidx.activity:activity-compose:1.7.2") // Integration with activities
+    implementation("androidx.compose.material:material:1.5.0") // Compose Material Design
+    implementation("androidx.compose.material:material-icons-extended:1.5.0")
+    implementation("androidx.compose.animation:animation:1.5.0") // Animations
+    implementation("androidx.compose.ui:ui-tooling:1.5.0") // Tooling support (Previews, etc.)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1") // Integration with ViewModels
     //androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.1.1") // UI Tests
 
     // analytics
-    implementation(platform("com.google.firebase:firebase-bom:31.2.2"))
+    implementation(platform("com.google.firebase:firebase-bom:32.2.3"))
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
 
