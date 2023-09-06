@@ -6,7 +6,7 @@ set(${CMAKE_C_FLAGS}, "${CMAKE_C_FLAGS}")
 add_library(native_app_glue STATIC ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
 
 # now build app's shared lib
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17 -Wall -Wno-unused-variable -Wno-null-dereference -Wno-missing-braces -Wno-sometimes-uninitialized -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17 -Wall -Wno-unused-variable -Wno-unused-function -Wno-format -Wno-null-dereference -Wno-missing-braces -Wno-sometimes-uninitialized -Werror")
 
 # Export ANativeActivity_onCreate(),
 # Refer to: https://github.com/android-ndk/ndk/issues/381.

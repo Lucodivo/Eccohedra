@@ -37,8 +37,9 @@ const char* NATIVE_ACTIVITY_NAME = "native-activity-blue";
 
 #include "noop_types.h"
 
+#include "profiler/simplified_profiler.cpp"
+
 #include "noop_math.h"
-#include "noop_types.h"
 #include "android_platform.cpp"
 #include "shader_types_and_constants.h"
 #include "vertex_attributes.h"

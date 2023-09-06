@@ -54,6 +54,15 @@ Any 3D math in this project should be assumed to be using a left-handed coordina
 For Kotlin, [kotlin-graphics/glm](https://github.com/kotlin-graphics/glm) was previously used for matrices/vectors but it contained maven dependencies that were unavailable despite no version change on my end. A custom Kotlin matrix math module was created in its stead.
 All matrices are stored in column-major.
 
+## Building (⚠IN PROGRESS⚠)
+All the following information is under the assumption the project is being built within Android Studio.  
+
+- Ensure you have the correct CMake installed by going to *Tools > SDK Manager > SDK Tools > CMake*
+  - Ensure in the *SDK Manager > SDK Tools* has the "Show Package Details" option checked to allow downloading specific CMake versions.
+  - The CMake version required for this project is specified in *native_scenes/build.gradle.kts* 
+    - The gradle hierarchy looks like this: *android > externalNativeBuild > cmake > version*
+  - Failing to have the correct CMake installed might generate an error with the message *java.lang.NullPointerException (no error message)*
+
 ## Screenshots
 
 - All screenshots taken on a Samsung Galaxy S10+

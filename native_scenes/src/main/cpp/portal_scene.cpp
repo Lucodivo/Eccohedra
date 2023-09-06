@@ -472,12 +472,14 @@ void updateEntities(World* world) {
 }
 
 void initGlobalShaders() {
+  TimeFunction
   globalShaders.singleColor = createShaderProgram(posVertexShaderFileLoc, singleColorFragmentShaderFileLoc);
   globalShaders.stencil = createShaderProgram(posVertexShaderFileLoc, blackFragmentShaderFileLoc);
   globalShaders.skybox = createShaderProgram(skyboxVertexShaderFileLoc, skyboxFragmentShaderFileLoc);
 }
 
 void initGlobalVertexAtts() {
+  TimeFunction
   globalVertexAtts.portalQuad = quadPosVertexAttBuffers(false);
   globalVertexAtts.portalBox = cubePosVertexAttBuffers(true, true);
   globalVertexAtts.skyboxBox = cubePosVertexAttBuffers(true);
@@ -534,8 +536,9 @@ void initCamera(Camera* camera, const Player& player) {
 // TODO: We will no longer be loading worlds from json
 // TODO: Cleanup the way the save files are organized.
 void loadWorld(World* world, const char* saveJsonFile) {
+  TimeFunction
 
-  LOGI("Currently leading world: %s", saveJsonFile);
+  LOGI("Currently loading world: %s", saveJsonFile);
 
   SaveFormat saveFormat = originalWorld();
 
@@ -545,6 +548,7 @@ void loadWorld(World* world, const char* saveJsonFile) {
 
   u32 worldShaderIndices[ArrayCount(world->shaders)] = {};
   { // shaders
+    TimeBlock("Load world shaders")
     for(u32 shaderIndex = 0; shaderIndex < shaderCount; shaderIndex++) {
       ShaderSaveFormat shaderSaveFormat = saveFormat.shaders[shaderIndex];
       Assert(shaderSaveFormat.index < shaderCount);
@@ -561,6 +565,7 @@ void loadWorld(World* world, const char* saveJsonFile) {
 
   u32 worldModelIndices[ArrayCount(world->models)] = {};
   { // models
+    TimeBlock("Load world models")
     for(u32 modelIndex = 0; modelIndex < modelCount; modelIndex++) {
       ModelSaveFormat modelSaveFormat = saveFormat.models[modelIndex];
       Assert(modelSaveFormat.index < modelCount);
@@ -576,6 +581,7 @@ void loadWorld(World* world, const char* saveJsonFile) {
 
   u32 worldSceneIndices[ArrayCount(world->scenes)] = {};
   { // scenes
+    TimeBlock("Load world scenes")
     for(u32 sceneIndex = 0; sceneIndex < sceneCount; sceneIndex++) {
       SceneSaveFormat sceneSaveFormat = saveFormat.scenes[sceneIndex];
       size_t entityCount = sceneSaveFormat.entities.size();
@@ -625,6 +631,7 @@ void loadWorld(World* world, const char* saveJsonFile) {
     // the other worlds to have been initialized
     for(u32 sceneIndex = 0; sceneIndex < sceneCount; sceneIndex++)
     {
+      TimeBlock("Load world portals")
       SceneSaveFormat sceneSaveFormat = saveFormat.scenes[sceneIndex];
       size_t portalCount = sceneSaveFormat.portals.size();
       Assert(portalCount <= MAX_PORTALS);
@@ -643,20 +650,25 @@ void loadWorld(World* world, const char* saveJsonFile) {
   return;
 }
 
-void initPortalScene(vec2_u32 windowExtent) {
-  globalWorld.aspect = f32(windowExtent.width) / windowExtent.height;
-  glGenQueries(ArrayCount(portalQueryObjects), portalQueryObjects);
+// TODO: Come up with better name
+void updateSceneWindow(u32 width, u32 height) {
+  globalWorld.fov = fieldOfView(3.0f, 12.0f);
+  globalWorld.aspect = f32(width) / height;
+  globalWorld.UBOs.projectionViewModelUbo.projection = perspective(globalWorld.fov, globalWorld.aspect, near, far);
+  glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.projectionViewModelUboId);
+  glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, projection), sizeof(mat4), &globalWorld.UBOs.projectionViewModelUbo.projection);
+}
 
-  VertexAtt cubePosVertexAtt = cubePosVertexAttBuffers();
+void initPortalScene() {
+  TimeFunction
+
+  glGenQueries(ArrayCount(portalQueryObjects), portalQueryObjects);
 
   initGlobalShaders();
   initGlobalVertexAtts();
 
   initPlayer(&globalWorld.player);
   initCamera(&globalWorld.camera, globalWorld.player);
-
-  globalWorld.fov = fieldOfView(3.0f, 12.0f);
-  globalWorld.UBOs.projectionViewModelUbo.projection = perspective(globalWorld.fov, globalWorld.aspect, near, far);
 
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
   glEnable(GL_DEPTH_TEST);
@@ -666,10 +678,10 @@ void initPortalScene(vec2_u32 windowExtent) {
   glFrontFace(GL_CCW);
   glCullFace(GL_BACK);
   glEnable(GL_STENCIL_TEST);
-  glViewport(0, 0, windowExtent.width, windowExtent.height);
 
   // UBOs
   {
+    TimeBlock("UBOs setup")
     glGenBuffers(1, &globalWorld.UBOs.projectionViewModelUboId);
     // allocate size for buffer
     glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.projectionViewModelUboId);
@@ -789,7 +801,6 @@ void portalScene() {
   glFrontFace(GL_CCW);
   glCullFace(GL_BACK);
   glEnable(GL_STENCIL_TEST);
-  glViewport(0, 0, windowExtent.width, windowExtent.height);
 
   // UBOs
   {
