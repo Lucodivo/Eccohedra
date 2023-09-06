@@ -84,6 +84,8 @@ void loadModelTexture(u32* textureId, tinygltf::Image* image, b32 inputSRGB = fa
 
 void initializeModelVertexData(tinygltf::Model* gltfModel, Model* model)
 {
+  TimeFunction
+
   struct gltfAttributeMetadata {
     u32 accessorIndex;
     u32 numComponents;
@@ -257,13 +259,20 @@ void initializeModelVertexData(tinygltf::Model* gltfModel, Model* model)
 }
 
 void loadModel(const char* filePath, Model* returnModel) {
-  tinygltf::TinyGLTF loader;
+  TimeFunction
+
+  // TODO: Put loader & tinyGLTFModel back on the stack after done with profiling
+  tinygltf::TinyGLTF* loader = new tinygltf::TinyGLTF();
   std::string err;
   std::string warn;
-  tinygltf::Model tinyGLTFModel;
+  tinygltf::Model* tinyGLTFModel = new tinygltf::Model();
 
   Asset modelAsset = Asset(filePath);
-  bool ret = loader.LoadBinaryFromMemory(&tinyGLTFModel, &err, &warn, (const unsigned char*)modelAsset.buffer, modelAsset.bufferLengthInBytes);
+  bool ret;
+  {
+    TimeBlock("GLTF Loader")
+    ret = loader->LoadBinaryFromMemory(tinyGLTFModel, &err, &warn, (const unsigned char*)modelAsset.buffer, modelAsset.bufferLengthInBytes);
+  }
 
   if (!warn.empty()) {
     printf("Warning: %s\n", warn.c_str());
@@ -281,7 +290,13 @@ void loadModel(const char* filePath, Model* returnModel) {
   }
 
   returnModel->fileName = cStrAllocateAndCopy(filePath);
-  initializeModelVertexData(&tinyGLTFModel, returnModel);
+  initializeModelVertexData(tinyGLTFModel, returnModel);
+
+  {
+    TimeBlock("tinyGLTF destructors")
+    delete tinyGLTFModel;
+    delete loader;
+  }
 }
 
 void loadModels(const char** filePaths, u32 count, Model** returnModels) {

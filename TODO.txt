@@ -6,22 +6,26 @@ Optimization ideas:
 necessary for models, textures, or skyboxes (texture arrays)
 - Shaders could be stored as a constant string to avoid asset/resource file decompression/reads? But
 would this conflict with compile time glsl validation?
-- The native scene is currently taking multiple seconds to load. Profile code to see where performance
-is bleeding.
+- Profiling native code has proven that massaging texture and model data takes the bulk of the initialization
+time. Highly consider baking assets into custom file formats that get us as close as possible to loading a file
+and sending those bytes directly to the GPU with little steps in between.
 
 Modularization ideas:
 - NoopMathKotlin could be set up to be pulled from a maven repository instead of manually embedded into the project
 
-Scene improvement:
+Scene improvements:
 - Mandelbrot scene
     - Increase max zoom
         - Best potential solution seems to be utilizing Perturbation Theory.
         - Failed attempts were made at trying to emulate higher floating point precision in the fragment shader.
     - Let user choose two accent colors
+- Native scene
+    - Loading animation
 
 Refactoring:
 - Scenes save format was previously used for loading from JSON files. World information is now hardcoded
  to reduce asset reads. Refactor save format code as it contains much superfluous code.
+- Remove cStrAllocateAndCopy and just use strings...
 
 Bugs(?):
 - Exiting a scene seems to sometimes show a frame or two of the users home screen wallpaper

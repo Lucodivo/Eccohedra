@@ -30,6 +30,8 @@ void inline bindActiveTextureCubeMap(s32 activeIndex, GLuint textureId) {
 
 void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert = false, bool inputSRGB = false, u32* width = NULL, u32* height = NULL)
 {
+  TimeFunction
+
   glGenTextures(1, textureId);
   glBindTexture(GL_TEXTURE_2D, *textureId);
 
@@ -92,6 +94,7 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
 }
 
 void loadCubeMapTexture(const char* directory, const char* extension, GLuint* textureId, bool flipImageVert = false) {
+  TimeFunction
 
   const char* skyboxTextureTitles[] = {
           "front.",
@@ -118,6 +121,7 @@ void loadCubeMapTexture(const char* directory, const char* extension, GLuint* te
   stbi_set_flip_vertically_on_load(flipImageVert);
 
   auto loadCubeMapFace = [&width, &height, &numChannels](GLenum faceTarget, const char* faceImageLoc){
+    TimeBlock("Load CubeMap Face")
     Asset imageAsset = Asset(faceImageLoc);
     if(!imageAsset.success()) {
       LOGI("Failed to find cubemap texture asset: %s", faceImageLoc);

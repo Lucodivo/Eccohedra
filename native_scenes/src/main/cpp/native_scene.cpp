@@ -54,8 +54,6 @@ void setupGLStartingState();
 void android_main(android_app *app) {
   BeginProfile();
 
-  initAssetManager(app);
-
   Engine engine{};
   engine.initializing = true;
 
@@ -69,11 +67,15 @@ void android_main(android_app *app) {
     engine.state = *(SceneState *) app->savedState;
   }
 
-  engine.sensorManager = acquireASensorManagerInstance(app);
-  engine.accelerometerSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
-                                                               ASENSOR_TYPE_ACCELEROMETER);
-  engine.sensorEventQueue = ASensorManager_createEventQueue(engine.sensorManager, app->looper,
-                                                            LOOPER_ID_USER, nullptr, nullptr);
+  {
+    TimeBlock("Acquire Android Resource Managers")
+    initAssetManager(app);
+    engine.sensorManager = acquireASensorManagerInstance(app);
+    engine.accelerometerSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
+                                                                 ASENSOR_TYPE_ACCELEROMETER);
+    engine.sensorEventQueue = ASensorManager_createEventQueue(engine.sensorManager, app->looper,
+                                                              LOOPER_ID_USER, nullptr, nullptr);
+  }
 
   initGLEnvironment(&engine.glEnv);
   logDeviceGLEnvironment();
@@ -85,8 +87,8 @@ void android_main(android_app *app) {
     initPortalScene();
 //  });
 
-  bool running = true;
-  while (running) {
+  bool terminated = false;
+  while (true) {
 
     // Read all pending events.
     int pollResult, fileDescriptor, events;
@@ -101,11 +103,6 @@ void android_main(android_app *app) {
         // Which may, in turn, end up calling our function handleAndroidCmd()
         // through app->onAppCmd
         source->process(app, source);
-      }
-
-      if (app->destroyRequested) {
-        glDeinit(&engine.glEnv);
-        return;
       }
 
       switch (pollResult) {
@@ -123,9 +120,10 @@ void android_main(android_app *app) {
 
     if (!engine.paused) {
       drawFrame(engine);
-      if (!engine.initializing) {
+      if (!engine.initializing && !terminated) {
         EndAndPrintProfile();
-        running = false;
+        ANativeActivity_finish(app->activity);
+        terminated = true;
       }
     }
   }

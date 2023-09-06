@@ -3,6 +3,8 @@
 internal_func u32 loadShader(const char* shaderPath, GLenum shaderType);
 
 ShaderProgram createShaderProgram(const char* vertexPath, const char* fragmentPath, const char* noiseTexture = nullptr) {
+  TimeFunction
+
   ShaderProgram shaderProgram{};
   shaderProgram.vertexFileName = cStrAllocateAndCopy(vertexPath);
   shaderProgram.fragmentFileName = cStrAllocateAndCopy(fragmentPath);
@@ -148,6 +150,8 @@ inline void bindBlockIndex(GLuint shaderId, const std::string& name, u32 index)
  *    - 0 is returned on error to load shader
  */
 internal_func GLuint loadShader(const char* shaderPath, GLenum shaderType) {
+  TimeFunction
+
   std::string shaderTypeStr;
   if(shaderType == GL_VERTEX_SHADER) {
     shaderTypeStr = "VERTEX";

@@ -472,14 +472,12 @@ void updateEntities(World* world) {
 }
 
 void initGlobalShaders() {
-  TimeFunction
   globalShaders.singleColor = createShaderProgram(posVertexShaderFileLoc, singleColorFragmentShaderFileLoc);
   globalShaders.stencil = createShaderProgram(posVertexShaderFileLoc, blackFragmentShaderFileLoc);
   globalShaders.skybox = createShaderProgram(skyboxVertexShaderFileLoc, skyboxFragmentShaderFileLoc);
 }
 
 void initGlobalVertexAtts() {
-  TimeFunction
   globalVertexAtts.portalQuad = quadPosVertexAttBuffers(false);
   globalVertexAtts.portalBox = cubePosVertexAttBuffers(true, true);
   globalVertexAtts.skyboxBox = cubePosVertexAttBuffers(true);
@@ -548,24 +546,17 @@ void loadWorld(World* world, const char* saveJsonFile) {
 
   u32 worldShaderIndices[ArrayCount(world->shaders)] = {};
   { // shaders
-    TimeBlock("Load world shaders")
     for(u32 shaderIndex = 0; shaderIndex < shaderCount; shaderIndex++) {
       ShaderSaveFormat shaderSaveFormat = saveFormat.shaders[shaderIndex];
       Assert(shaderSaveFormat.index < shaderCount);
 
-      const char* noiseTexture = nullptr;
-      if(!shaderSaveFormat.noiseTextureName.empty())
-      {
-        noiseTexture = shaderSaveFormat.noiseTextureName.c_str();
-      }
-
+      const char* noiseTexture = shaderSaveFormat.noiseTextureName.empty() ? nullptr : shaderSaveFormat.noiseTextureName.c_str();
       worldShaderIndices[shaderSaveFormat.index] = addNewShader(world, shaderSaveFormat.vertexName.c_str(), shaderSaveFormat.fragmentName.c_str(), noiseTexture);
     }
   }
 
   u32 worldModelIndices[ArrayCount(world->models)] = {};
   { // models
-    TimeBlock("Load world models")
     for(u32 modelIndex = 0; modelIndex < modelCount; modelIndex++) {
       ModelSaveFormat modelSaveFormat = saveFormat.models[modelIndex];
       Assert(modelSaveFormat.index < modelCount);
@@ -581,7 +572,6 @@ void loadWorld(World* world, const char* saveJsonFile) {
 
   u32 worldSceneIndices[ArrayCount(world->scenes)] = {};
   { // scenes
-    TimeBlock("Load world scenes")
     for(u32 sceneIndex = 0; sceneIndex < sceneCount; sceneIndex++) {
       SceneSaveFormat sceneSaveFormat = saveFormat.scenes[sceneIndex];
       size_t entityCount = sceneSaveFormat.entities.size();
@@ -631,7 +621,6 @@ void loadWorld(World* world, const char* saveJsonFile) {
     // the other worlds to have been initialized
     for(u32 sceneIndex = 0; sceneIndex < sceneCount; sceneIndex++)
     {
-      TimeBlock("Load world portals")
       SceneSaveFormat sceneSaveFormat = saveFormat.scenes[sceneIndex];
       size_t portalCount = sceneSaveFormat.portals.size();
       Assert(portalCount <= MAX_PORTALS);
@@ -681,7 +670,6 @@ void initPortalScene() {
 
   // UBOs
   {
-    TimeBlock("UBOs setup")
     glGenBuffers(1, &globalWorld.UBOs.projectionViewModelUboId);
     // allocate size for buffer
     glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.projectionViewModelUboId);

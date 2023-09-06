@@ -43,6 +43,7 @@ struct Asset {
   std::size_t bufferLengthInBytes;
 
   Asset(const char *filePath) {
+    TimeFunction
     this->filePath = filePath;
     androidAsset = AAssetManager_open(assetManager_GLOBAL, filePath, AASSET_MODE_BUFFER);
     if (androidAsset) {
