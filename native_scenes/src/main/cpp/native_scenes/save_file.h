@@ -212,7 +212,7 @@ SaveFormat loadSave(const char *saveJsonPath) {
   size_t shaderCount = json["shaders"].size();
 
   saveFormat.startingSceneIndex = json["startingSceneIndex"];
-  Assert(saveFormat.startingSceneIndex < sceneCount);
+  assert(saveFormat.startingSceneIndex < sceneCount);
 
   saveFormat.scenes.reserve(sceneCount);
   saveFormat.models.reserve(modelCount);
@@ -242,7 +242,7 @@ SaveFormat loadSave(const char *saveJsonPath) {
       modelJson["fileName"].get_to(modelSaveFormat.fileName);
 
       if (!modelJson["baseColor"].is_null()) {
-        Assert(modelJson["baseColor"].size() == 4);
+        assert(modelJson["baseColor"].size() == 4);
         modelSaveFormat.baseColor = {
             modelJson["baseColor"][0],
             modelJson["baseColor"][1],
@@ -262,7 +262,7 @@ SaveFormat loadSave(const char *saveJsonPath) {
       nlohmann::json sceneJson = json["scenes"][jsonSceneIndex];
       SceneSaveFormat sceneSaveFormat{};
       sceneSaveFormat.index = sceneJson["index"];
-      Assert(sceneSaveFormat.index < sceneCount);
+      assert(sceneSaveFormat.index < sceneCount);
 
       if (!sceneJson["title"].is_null()) {
         sceneJson["title"].get_to(sceneSaveFormat.title);
@@ -286,9 +286,9 @@ SaveFormat loadSave(const char *saveJsonPath) {
         EntitySaveFormat entitySaveFormat;
         entitySaveFormat.modelIndex = entityJson["modelIndex"];
         entitySaveFormat.shaderIndex = entityJson["shaderIndex"];
-        Assert(entitySaveFormat.shaderIndex < shaderCount);
-        Assert(entityJson["posXYZ"].size() == 3);
-        Assert(entityJson["scaleXYZ"].size() == 3);
+        assert(entitySaveFormat.shaderIndex < shaderCount);
+        assert(entityJson["posXYZ"].size() == 3);
+        assert(entityJson["scaleXYZ"].size() == 3);
         entitySaveFormat.posXYZ = {
             entityJson["posXYZ"][0],
             entityJson["posXYZ"][1],
@@ -309,9 +309,9 @@ SaveFormat loadSave(const char *saveJsonPath) {
         nlohmann::json portalJson = sceneJson["portals"][jsonPortalIndex];
         PortalSaveFormat portalSaveFormat;
         portalSaveFormat.destination = portalJson["destination"];
-        Assert(portalJson["normalXYZ"].size() == 3);
-        Assert(portalJson["centerXYZ"].size() == 3);
-        Assert(portalJson["dimensXY"].size() == 2);
+        assert(portalJson["normalXYZ"].size() == 3);
+        assert(portalJson["centerXYZ"].size() == 3);
+        assert(portalJson["dimensXY"].size() == 2);
         portalSaveFormat.normalXYZ = {
             portalJson["normalXYZ"][0],
             portalJson["normalXYZ"][1],

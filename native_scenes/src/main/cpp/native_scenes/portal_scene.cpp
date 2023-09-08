@@ -107,10 +107,10 @@ void drawPortals(World* world, const u32 sceneIndex);
 void addPortal(World* world, u32 homeSceneIndex,
                const vec3& centerPosition, const vec3& normal, const vec2& dimens,
                const u32 stencilMask, const u32 destinationSceneIndex) {
-  Assert(stencilMask <= MAX_STENCIL_VALUE && stencilMask > 0);
+  assert(stencilMask <= MAX_STENCIL_VALUE && stencilMask > 0);
 
   Scene* homeScene = world->scenes + homeSceneIndex;
-  Assert(ArrayCount(homeScene->portals) > homeScene->portalCount);
+  assert(ArrayCount(homeScene->portals) > homeScene->portalCount);
 
   Portal portal{};
   portal.stencilMask = stencilMask;
@@ -124,7 +124,7 @@ void addPortal(World* world, u32 homeSceneIndex,
 }
 
 u32 addNewScene(World* world, const char* title) {
-  Assert(ArrayCount(world->scenes) > world->sceneCount);
+  assert(ArrayCount(world->scenes) > world->sceneCount);
   u32 sceneIndex = world->sceneCount++;
   Scene* scene = world->scenes + sceneIndex;
   *scene = {};
@@ -133,7 +133,7 @@ u32 addNewScene(World* world, const char* title) {
 }
 
 u32 addNewShader(World* world, const char* vertexShaderFileLoc, const char* fragmentShaderFileLoc, const char* noiseTexture = nullptr) {
-  Assert(ArrayCount(world->shaders) > world->shaderCount);
+  assert(ArrayCount(world->shaders) > world->shaderCount);
   u32 shaderIndex = world->shaderCount++;
   ShaderProgram* shader = world->shaders + shaderIndex;
   *shader = createShaderProgram(vertexShaderFileLoc, fragmentShaderFileLoc, noiseTexture);
@@ -144,7 +144,7 @@ u32 addNewEntity(World* world, u32 sceneIndex, u32 modelIndex,
                  vec3 pos, vec3 scale, f32 yaw,
                  u32 shaderIndex, b32 entityTypeFlags = 0) {
   Scene* scene = world->scenes + sceneIndex;
-  Assert(ArrayCount(scene->entities) > scene->entityCount);
+  assert(ArrayCount(scene->entities) > scene->entityCount);
   u32 sceneEntityIndex = scene->entityCount++;
   Entity* entity = scene->entities + sceneEntityIndex;
   *entity = {};
@@ -163,7 +163,7 @@ u32 addNewEntity(World* world, u32 sceneIndex, u32 modelIndex,
 
 u32 addNewDirectionalLight(World* world, u32 sceneIndex, vec3 lightColor, f32 lightPower, vec3 lightToSource) {
   Scene* scene = world->scenes + sceneIndex;
-  Assert(scene->posLightCount + scene->dirLightCount < ArrayCount(scene->dirPosLightStack));
+  assert(scene->posLightCount + scene->dirLightCount < ArrayCount(scene->dirPosLightStack));
   u32 newLightIndex = scene->dirLightCount++;
   scene->dirPosLightStack[newLightIndex].color.rgb = lightColor;
   scene->dirPosLightStack[newLightIndex].color.a = lightPower;
@@ -174,7 +174,7 @@ u32 addNewDirectionalLight(World* world, u32 sceneIndex, vec3 lightColor, f32 li
 u32 addNewPositionalLight(World* world, u32 sceneIndex, vec3 lightColor, f32 lightPower, vec3 lightPos) {
   Scene* scene = world->scenes + sceneIndex;
   const u32 maxLights = ArrayCount(scene->dirPosLightStack);
-  Assert(scene->posLightCount + scene->dirLightCount < maxLights);
+  assert(scene->posLightCount + scene->dirLightCount < maxLights);
   u32 newLightIndex = maxLights - 1 - scene->posLightCount++;
   scene->dirPosLightStack[newLightIndex].color.rgb = lightColor;
   scene->dirPosLightStack[newLightIndex].color.a = lightPower;
@@ -331,7 +331,7 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
   // update scene light uniform buffer object
   {
     const u32 maxLights = ArrayCount(world->UBOs.lightUbo.dirPosLightStack);
-    Assert((scene->dirLightCount + scene->posLightCount) <= maxLights);
+    assert((scene->dirLightCount + scene->posLightCount) <= maxLights);
 
 
     // TODO: If LightUniform and Light struct for class were the same we could do a simple memcpy
@@ -548,7 +548,7 @@ void loadWorld(World* world, const char* saveJsonFile) {
   { // shaders
     for(u32 shaderIndex = 0; shaderIndex < shaderCount; shaderIndex++) {
       ShaderSaveFormat shaderSaveFormat = saveFormat.shaders[shaderIndex];
-      Assert(shaderSaveFormat.index < shaderCount);
+      assert(shaderSaveFormat.index < shaderCount);
 
       const char* noiseTexture = shaderSaveFormat.noiseTextureName.empty() ? nullptr : shaderSaveFormat.noiseTextureName.c_str();
       worldShaderIndices[shaderSaveFormat.index] = addNewShader(world, shaderSaveFormat.vertexName.c_str(), shaderSaveFormat.fragmentName.c_str(), noiseTexture);
@@ -559,7 +559,7 @@ void loadWorld(World* world, const char* saveJsonFile) {
   { // models
     for(u32 modelIndex = 0; modelIndex < modelCount; modelIndex++) {
       ModelSaveFormat modelSaveFormat = saveFormat.models[modelIndex];
-      Assert(modelSaveFormat.index < modelCount);
+      assert(modelSaveFormat.index < modelCount);
       worldModelIndices[modelSaveFormat.index] = addNewModel(world, modelSaveFormat.fileName.c_str());
 
       Model* model = world->models + worldModelIndices[modelSaveFormat.index];
@@ -576,7 +576,7 @@ void loadWorld(World* world, const char* saveJsonFile) {
       SceneSaveFormat sceneSaveFormat = saveFormat.scenes[sceneIndex];
       size_t entityCount = sceneSaveFormat.entities.size();
 
-      Assert(sceneSaveFormat.index < sceneCount);
+      assert(sceneSaveFormat.index < sceneCount);
       worldSceneIndices[sceneSaveFormat.index] = addNewScene(world, sceneSaveFormat.title.c_str());
       Scene* scene = world->scenes + worldSceneIndices[sceneSaveFormat.index];
       scene->title = cStrAllocateAndCopy(sceneSaveFormat.title.c_str());
@@ -623,7 +623,7 @@ void loadWorld(World* world, const char* saveJsonFile) {
     {
       SceneSaveFormat sceneSaveFormat = saveFormat.scenes[sceneIndex];
       size_t portalCount = sceneSaveFormat.portals.size();
-      Assert(portalCount <= MAX_PORTALS);
+      assert(portalCount <= MAX_PORTALS);
       for (u32 portalIndex = 0; portalIndex < portalCount; portalIndex++)
       {
         PortalSaveFormat portalSaveFormat = sceneSaveFormat.portals[portalIndex];
@@ -633,7 +633,7 @@ void loadWorld(World* world, const char* saveJsonFile) {
     }
   }
 
-  Assert(saveFormat.startingSceneIndex < sceneCount);
+  assert(saveFormat.startingSceneIndex < sceneCount);
   world->currentSceneIndex = worldSceneIndices[saveFormat.startingSceneIndex];
 
   return;

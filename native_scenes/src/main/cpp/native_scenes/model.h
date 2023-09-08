@@ -100,7 +100,7 @@ void initializeModelVertexData(tinygltf::Model* gltfModel, Model* model)
   const char* texture0IndexKeyString = "TEXCOORD_0";
 
   model->meshCount = (u32)gltfModel->meshes.size();
-  Assert(model->meshCount != 0);
+  assert(model->meshCount != 0);
   model->meshes = new Mesh[model->meshCount];
   std::vector<tinygltf::Accessor>* gltfAccessors = &gltfModel->accessors;
   std::vector<tinygltf::BufferView>* gltfBufferViews = &gltfModel->bufferViews;
@@ -120,13 +120,13 @@ void initializeModelVertexData(tinygltf::Model* gltfModel, Model* model)
     Mesh* mesh = &model->meshes[i];
 
     tinygltf::Mesh gltfMesh = gltfModel->meshes[i];
-    Assert(!gltfMesh.primitives.empty());
+    assert(!gltfMesh.primitives.empty());
     // TODO: handle meshes that have more than one primitive
     tinygltf::Primitive gltfPrimitive = gltfMesh.primitives[0];
-    Assert(gltfPrimitive.indices > -1); // TODO: Should we deal with models that don't have indices?
+    assert(gltfPrimitive.indices > -1); // TODO: Should we deal with models that don't have indices?
 
     // TODO: Allow variability in attributes beyond POSITION, NORMAL, TEXCOORD_0?
-    Assert(gltfPrimitive.attributes.find(positionIndexKeyString) != gltfPrimitive.attributes.end());
+    assert(gltfPrimitive.attributes.find(positionIndexKeyString) != gltfPrimitive.attributes.end());
     gltfAttributeMetadata positionAttribute = populateAttributeMetadata(positionIndexKeyString, gltfPrimitive);
     f64* minValues = gltfModel->accessors[positionAttribute.accessorIndex].minValues.data();
     f64* maxValues = gltfModel->accessors[positionAttribute.accessorIndex].maxValues.data();
@@ -137,19 +137,19 @@ void initializeModelVertexData(tinygltf::Model* gltfModel, Model* model)
     gltfAttributeMetadata normalAttribute{};
     if(normalAttributesAvailable) { // normal attribute data
       normalAttribute = populateAttributeMetadata(normalIndexKeyString, gltfPrimitive);
-      Assert(positionAttribute.bufferIndex == normalAttribute.bufferIndex);
+      assert(positionAttribute.bufferIndex == normalAttribute.bufferIndex);
     }
 
     b32 texture0AttributesAvailable = gltfPrimitive.attributes.find(texture0IndexKeyString) != gltfPrimitive.attributes.end();
     gltfAttributeMetadata texture0Attribute{};
     if(texture0AttributesAvailable) { // texture 0 uv coord attribute data
       texture0Attribute = populateAttributeMetadata(texture0IndexKeyString, gltfPrimitive);
-      Assert(positionAttribute.bufferIndex == texture0Attribute.bufferIndex);
+      assert(positionAttribute.bufferIndex == texture0Attribute.bufferIndex);
     }
 
     // TODO: Handle vertex attributes that don't share the same buffer?
     u32 vertexAttBufferIndex = positionAttribute.bufferIndex;
-    Assert(gltfModel->buffers.size() > vertexAttBufferIndex);
+    assert(gltfModel->buffers.size() > vertexAttBufferIndex);
 
     u32 indicesAccessorIndex = gltfPrimitive.indices;
     tinygltf::BufferView indicesGLTFBufferView = gltfBufferViews->at(gltfAccessors->at(indicesAccessorIndex).bufferView);
@@ -165,7 +165,7 @@ void initializeModelVertexData(tinygltf::Model* gltfModel, Model* model)
     mesh->vertexAtt.indexTypeSizeInBytes = tinygltf::GetComponentSizeInBytes(gltfAccessors->at(indicesAccessorIndex).componentType);
     // TODO: Handle the possibility of the three attributes not being side-by-side in the buffer
     u64 sizeOfAttributeData = positionAttribute.bufferByteLength + normalAttribute.bufferByteLength + texture0Attribute.bufferByteLength;
-    Assert(gltfModel->buffers[vertexAttBufferIndex].data.size() >= sizeOfAttributeData);
+    assert(gltfModel->buffers[vertexAttBufferIndex].data.size() >= sizeOfAttributeData);
     const u32 positionAttributeIndex = 0;
     const u32 normalAttributeIndex = 1;
     const u32 texture0AttributeIndex = 2;
@@ -226,7 +226,7 @@ void initializeModelVertexData(tinygltf::Model* gltfModel, Model* model)
     if(gltfMaterialIndex >= 0) {
       tinygltf::Material gltfMaterial = gltfModel->materials[gltfMaterialIndex];
       // TODO: Handle more then just TEXCOORD_0 vertex attribute?
-      Assert(gltfMaterial.normalTexture.texCoord == 0 && gltfMaterial.pbrMetallicRoughness.baseColorTexture.texCoord == 0);
+      assert(gltfMaterial.normalTexture.texCoord == 0 && gltfMaterial.pbrMetallicRoughness.baseColorTexture.texCoord == 0);
 
       f64* baseColor = gltfMaterial.pbrMetallicRoughness.baseColorFactor.data();
       mesh->textureData.baseColor = {(f32)baseColor[0], (f32)baseColor[1], (f32)baseColor[2], (f32)baseColor[3] };

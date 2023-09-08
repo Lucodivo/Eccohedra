@@ -87,7 +87,6 @@ void android_main(android_app *app) {
     initPortalScene();
 //  });
 
-  bool terminated = false;
   while (true) {
 
     // Read all pending events.
@@ -120,11 +119,6 @@ void android_main(android_app *app) {
 
     if (!engine.paused) {
       drawFrame(engine);
-      if (!engine.initializing && !terminated) {
-        EndAndPrintProfile();
-        ANativeActivity_finish(app->activity);
-        terminated = true;
-      }
     }
   }
 }
@@ -247,6 +241,7 @@ static void handleAndroidCmd(android_app *app, s32 cmd) {
         updateGLSurface(&engine->glEnv, app->window);
         updateSceneWindow(engine->glEnv.surface.width, engine->glEnv.surface.height);
         engine->initializing = false;
+        EndAndPrintProfile();
       }
       break;
     }

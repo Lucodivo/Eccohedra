@@ -8,7 +8,6 @@ android {
 
     defaultConfig {
         minSdk = 24
-
         consumerProguardFiles("consumer-rules.pro")
         externalNativeBuild {
             cmake {
@@ -19,7 +18,7 @@ android {
 
     externalNativeBuild {
         cmake {
-            path("src/main/cpp/CMakeLists.txt")
+            path("CMakeLists.txt")
             version = "3.22.1"
         }
     }

@@ -50,7 +50,7 @@ void lookAt_FirstPerson(vec3 origin, vec3 focus, Camera* camera) {
  * NOTE: Positive yaw offsets follow right hand rule (counter clockwise) with your thumb pointing in direction of Z
  */
 void updateCamera_FirstPerson(Camera* camera, vec3 posOffset, f32 pitchOffset, f32 yawOffset) {
-  Assert(!camera->thirdPerson);
+  assert(!camera->thirdPerson);
   camera->origin += posOffset;
 
   camera->pitch += pitchOffset;
@@ -106,7 +106,7 @@ void lookAt_ThirdPerson(vec3 pivot, vec3 forward, Camera* camera) {
 }
 
 void updateCamera_ThirdPerson(Camera* camera, vec3 pivotPoint, f32 pitchOffset, f32 yawOffset) {
-  Assert(camera->thirdPerson);
+  assert(camera->thirdPerson);
 
   camera->pitch += pitchOffset;
   if(camera->pitch > MAX_PITCH_THIRD_PERSON) {

@@ -22,10 +22,6 @@ typedef s32 b32;
 #define func_persist static
 #define class_persist static
 
-#define Pi32 3.14159265359f
-#define PiOverTwo32 1.57079632679f
-#define Tau32 6.28318530717958647692f
-#define RadiansPerDegree (Pi32 / 180.0f)
 #define U32_MAX ~0u
 
 #define NANOSECONDS_PER_SECOND 1'000'000'000LL
@@ -37,13 +33,8 @@ typedef s32 b32;
 // Out is used to label out function parameters
 #define Out
 
-#ifdef NDEBUG
-#define Assert(Expression)
-#else
-#define Assert(Expression) if(!(Expression)) *(u8*)0=0
-#endif
-
-#define InvalidCodePath Assert(!"InvalidCodePath");
+#include <cassert>
+#define InvalidCodePath assert(!"InvalidCodePath");
 
 typedef struct vec2_u32
 {

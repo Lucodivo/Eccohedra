@@ -164,7 +164,7 @@ u32 convertSizeInBytesToOpenGLUIntType(u8 sizeInBytes) {
       return GL_UNSIGNED_INT;
   }
 
-  Assert(false); // Note: if not 1, 2, or 4 throw error
+  assert(false); // Note: if not 1, 2, or 4 throw error
   return 0;
 }
 
@@ -387,7 +387,7 @@ internal_func void drawIndexedTriangles(const VertexAtt* vertexAtt, u32 indexCou
 
 void drawTriangles(const VertexAtt* vertexAtt, u32 count, u32 offset)
 {
-  Assert(vertexAtt->indexCount >= (offset + count));
+  assert(vertexAtt->indexCount >= (offset + count));
   drawIndexedTriangles(vertexAtt, count, offset);
 }
 
