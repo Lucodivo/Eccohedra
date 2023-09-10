@@ -62,6 +62,8 @@ All the following information is under the assumption the project is being built
   - The CMake version required for this project is specified in *native_scenes/build.gradle.kts* 
     - The gradle hierarchy looks like this: *android > externalNativeBuild > cmake > version*
   - Failing to have the correct CMake installed might generate an error with the message *java.lang.NullPointerException (no error message)*
+- Debug builds of the *native_scenes* library are currently set to only build for the *arm64-v8a* (AArch64) ABI. 
+  - This is specified and can be changed in *native_scenes/build.gradle.kts* under *android > buildTypes > debug > ndk > abiFilters*
 
 ## Screenshots
 
