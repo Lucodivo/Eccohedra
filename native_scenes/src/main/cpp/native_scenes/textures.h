@@ -1,14 +1,5 @@
 #pragma once
 
-#define NO_FRAMEBUFFER_ATTACHMENT 0
-
-struct Framebuffer {
-  u32 id;
-  u32 colorAttachment;
-  u32 depthStencilAttachment;
-  vec2_u32 extent;
-};
-
 enum FramebufferCreationFlags {
   FramebufferCreate_NoValue = 0,
   FramebufferCreate_NoDepthStencil = 1 << 0,
@@ -93,22 +84,9 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
   stbi_image_free(data); // free texture image memory
 }
 
-void loadCubeMapTexture(const char* directory, const char* extension, GLuint* textureId, bool flipImageVert = false) {
+void loadCubeMapTexture(const char* fileName, GLuint* textureId) {
   TimeFunction
 
-  const char* skyboxTextureTitles[] = {
-          "front.",
-          "back.",
-          "top.",
-          "bottom.",
-          "right.",
-          "left.",
-  };
-  const u32 maxTextureFileLength = 128;
-  size_t directoryLength = std::strlen(directory);
-  char skyboxTextureFileNameBuffer[maxTextureFileLength];
-  std::strcpy(skyboxTextureFileNameBuffer, directory);
-
   glGenTextures(1, textureId);
   glBindTexture(GL_TEXTURE_CUBE_MAP, *textureId);
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -117,188 +95,24 @@ void loadCubeMapTexture(const char* directory, const char* extension, GLuint* te
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-  s32 width, height, numChannels;
-  stbi_set_flip_vertically_on_load(flipImageVert);
+  // TODO: This is NOT where exported assets directory should be stored. Move this or related solution to assetlib or potentially a asset_baker header.
+  std::string bakedSkyboxesDir = "assets_export/skyboxes/";
+  std::string assetPath = bakedSkyboxesDir + fileName + ".cbtx";
 
-  auto loadCubeMapFace = [&width, &height, &numChannels](GLenum faceTarget, const char* faceImageLoc){
-    TimeBlock("Load CubeMap Face")
-    Asset imageAsset = Asset(faceImageLoc);
-    if(!imageAsset.success()) {
-      LOGI("Failed to find cubemap texture asset: %s", faceImageLoc);
-      return;
-    }
-    unsigned char* data = stbi_load_from_memory((stbi_uc const *)imageAsset.buffer, imageAsset.bufferLengthInBytes, &width, &height, &numChannels, 0 /*desired channels*/);
-    if (data) {
-      glTexImage2D(faceTarget, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    } else {
-      LOGE("Cubemap texture failed to load at path: %s", faceImageLoc);
-    }
-    stbi_image_free(data);
-  };
+  assets::AssetFile cubeMapAssetFile;
+  assets::loadAssetFile(assetManager_GLOBAL, assetPath.c_str(), &cubeMapAssetFile);
+  assets::CubeMapInfo cubeMapInfo;
+  assets::readCubeMapInfo(cubeMapAssetFile, &cubeMapInfo);
+  char* cubeMapData = (char*)malloc(cubeMapInfo.size());
+  assets::unpackCubeMap(cubeMapInfo, cubeMapAssetFile.binaryBlob.data(), cubeMapAssetFile.binaryBlob.size(), cubeMapData);
 
-  size_t titleLength = std::strlen(skyboxTextureTitles[SKYBOX_TEXTURE_LOCATION_INDEX_BACK]);
-  strcpy(skyboxTextureFileNameBuffer + directoryLength, skyboxTextureTitles[SKYBOX_TEXTURE_LOCATION_INDEX_BACK]);
-  strcpy(skyboxTextureFileNameBuffer + directoryLength + titleLength, extension);
-  loadCubeMapFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, skyboxTextureFileNameBuffer);
+  // TODO: If we ever support other formats besides RGB8 we will need to explicitly translate the CubeMapInfo.format to a GL_{format}
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_BACK));
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_FRONT));
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_BOTTOM));
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_TOP));
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_LEFT));
+  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_RIGHT));
 
-  titleLength = std::strlen(skyboxTextureTitles[SKYBOX_TEXTURE_LOCATION_INDEX_FRONT]);
-  strcpy(skyboxTextureFileNameBuffer + directoryLength, skyboxTextureTitles[SKYBOX_TEXTURE_LOCATION_INDEX_FRONT]);
-  strcpy(skyboxTextureFileNameBuffer + directoryLength + titleLength, extension);
-  loadCubeMapFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X, skyboxTextureFileNameBuffer);
-
-
-  titleLength = std::strlen(skyboxTextureTitles[SKYBOX_TEXTURE_LOCATION_INDEX_BOTTOM]);
-  strcpy(skyboxTextureFileNameBuffer + directoryLength, skyboxTextureTitles[SKYBOX_TEXTURE_LOCATION_INDEX_BOTTOM]);
-  strcpy(skyboxTextureFileNameBuffer + directoryLength + titleLength, extension);
-  loadCubeMapFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, skyboxTextureFileNameBuffer);
-
-
-  titleLength = std::strlen(skyboxTextureTitles[SKYBOX_TEXTURE_LOCATION_INDEX_TOP]);
-  strcpy(skyboxTextureFileNameBuffer + directoryLength, skyboxTextureTitles[SKYBOX_TEXTURE_LOCATION_INDEX_TOP]);
-  strcpy(skyboxTextureFileNameBuffer + directoryLength + titleLength, extension);
-  loadCubeMapFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, skyboxTextureFileNameBuffer);
-
-
-  titleLength = std::strlen(skyboxTextureTitles[SKYBOX_TEXTURE_LOCATION_INDEX_LEFT]);
-  strcpy(skyboxTextureFileNameBuffer + directoryLength, skyboxTextureTitles[SKYBOX_TEXTURE_LOCATION_INDEX_LEFT]);
-  strcpy(skyboxTextureFileNameBuffer + directoryLength + titleLength, extension);
-  loadCubeMapFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, skyboxTextureFileNameBuffer);
-
-
-  titleLength = std::strlen(skyboxTextureTitles[SKYBOX_TEXTURE_LOCATION_INDEX_RIGHT]);
-  strcpy(skyboxTextureFileNameBuffer + directoryLength, skyboxTextureTitles[SKYBOX_TEXTURE_LOCATION_INDEX_RIGHT]);
-  strcpy(skyboxTextureFileNameBuffer + directoryLength + titleLength, extension);
-  loadCubeMapFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, skyboxTextureFileNameBuffer);
-}
-
-void loadCubeMapTexture(const char* const imgLocations[6], GLuint* textureId, bool flipImageVert = false)
-{
-  glGenTextures(1, textureId);
-  glBindTexture(GL_TEXTURE_CUBE_MAP, *textureId);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-  s32 width, height, nrChannels;
-  stbi_set_flip_vertically_on_load(flipImageVert);
-
-  auto loadCubeMapFace = [&width, &height, &nrChannels](GLenum faceTarget, const char* faceImageLoc){
-    unsigned char* data = stbi_load(faceImageLoc, &width, &height, &nrChannels, 0);
-    if (data)
-    {
-      glTexImage2D(faceTarget, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    } else
-    {
-      LOGE("Cubemap texture failed to load at path: %s", faceImageLoc);
-    }
-    stbi_image_free(data);
-  };
-
-  loadCubeMapFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, imgLocations[SKYBOX_TEXTURE_LOCATION_INDEX_BACK]);
-  loadCubeMapFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X, imgLocations[SKYBOX_TEXTURE_LOCATION_INDEX_FRONT]);
-  loadCubeMapFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, imgLocations[SKYBOX_TEXTURE_LOCATION_INDEX_BOTTOM]);
-  loadCubeMapFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, imgLocations[SKYBOX_TEXTURE_LOCATION_INDEX_TOP]);
-  loadCubeMapFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, imgLocations[SKYBOX_TEXTURE_LOCATION_INDEX_LEFT]);
-  loadCubeMapFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, imgLocations[SKYBOX_TEXTURE_LOCATION_INDEX_RIGHT]);
-}
-
-Framebuffer initializeFramebuffer(vec2_u32 framebufferExtent, FramebufferCreationFlags flags = FramebufferCreate_NoValue)
-{
-  Framebuffer resultBuffer;
-  resultBuffer.extent = framebufferExtent;
-
-  GLint originalDrawFramebuffer, originalReadFramebuffer, originalActiveTexture, originalTexture0;
-  glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &originalDrawFramebuffer);
-  glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &originalReadFramebuffer);
-  glGetIntegerv(GL_ACTIVE_TEXTURE, &originalActiveTexture);
-
-  // creating frame buffer
-  glGenFramebuffers(1, &resultBuffer.id);
-  glBindFramebuffer(GL_FRAMEBUFFER, resultBuffer.id);
-
-  // creating frame buffer color texture
-  glGenTextures(1, &resultBuffer.colorAttachment);
-  // NOTE: Binding the texture to the GL_TEXTURE_2D target, means that
-  // NOTE: gl operations on the GL_TEXTURE_2D target will affect our texture
-  // NOTE: while it is remains bound to that target
-  glActiveTexture(GL_TEXTURE0);
-  glGetIntegerv(GL_TEXTURE_BINDING_2D, &originalTexture0);
-  glBindTexture(GL_TEXTURE_2D, resultBuffer.colorAttachment);
-  GLint internalFormat = (flags & FramebufferCreate_color_sRGB) ? GL_SRGB : GL_RGB;
-  glTexImage2D(GL_TEXTURE_2D, 0/*LoD*/, internalFormat, framebufferExtent.width, framebufferExtent.height, 0/*border*/, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  // attach texture w/ color to frame buffer
-  glFramebufferTexture2D(GL_FRAMEBUFFER, // frame buffer we're targeting (draw, read, or both)
-                         GL_COLOR_ATTACHMENT0, // type of attachment and index of attachment
-                         GL_TEXTURE_2D, // type of texture
-                         resultBuffer.colorAttachment, // texture
-                         0); // mipmap level
-
-  if (flags & FramebufferCreate_NoDepthStencil)
-  {
-    resultBuffer.depthStencilAttachment = NO_FRAMEBUFFER_ATTACHMENT;
-  } else {
-    // creating render buffer to be depth/stencil buffer
-    glGenRenderbuffers(1, &resultBuffer.depthStencilAttachment);
-    glBindRenderbuffer(GL_RENDERBUFFER, resultBuffer.depthStencilAttachment);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, framebufferExtent.width, framebufferExtent.height);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0); // unbind
-    // attach render buffer w/ depth & stencil to frame buffer
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, // frame buffer target
-                              GL_DEPTH_STENCIL_ATTACHMENT, // attachment po of frame buffer
-                              GL_RENDERBUFFER, // render buffer target
-                              resultBuffer.depthStencilAttachment);  // render buffer
-  }
-
-  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-  {
-    LOGE("ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
-  }
-  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, originalDrawFramebuffer);
-  glBindFramebuffer(GL_READ_FRAMEBUFFER, originalReadFramebuffer);
-  glBindTexture(GL_TEXTURE_2D, originalTexture0); // re-bind original texture
-  glActiveTexture(originalActiveTexture);
-  return resultBuffer;
-}
-
-void deleteFramebuffer(Framebuffer* framebuffer)
-{
-  glDeleteFramebuffers(1, &framebuffer->id);
-  glDeleteTextures(1, &framebuffer->colorAttachment);
-  if (framebuffer->depthStencilAttachment != NO_FRAMEBUFFER_ATTACHMENT)
-  {
-    glDeleteRenderbuffers(1, &framebuffer->depthStencilAttachment);
-  }
-  *framebuffer = {0, 0, 0, 0, 0};
-}
-
-void deleteFramebuffers(u32 count, Framebuffer** framebuffer)
-{
-  u32* deleteFramebufferObjects = new u32[count * 3];
-  u32* deleteColorAttachments = deleteFramebufferObjects + count;
-  u32* deleteDepthStencilAttachments = deleteColorAttachments + count;
-  u32 depthStencilCount = 0;
-  for (u32 i = 0; i < count; i++)
-  {
-    deleteFramebufferObjects[i] = framebuffer[i]->id;
-    deleteColorAttachments[i] = framebuffer[i]->colorAttachment;
-    if (framebuffer[i]->depthStencilAttachment != NO_FRAMEBUFFER_ATTACHMENT)
-    {
-      deleteDepthStencilAttachments[depthStencilCount++] = framebuffer[i]->depthStencilAttachment;
-      *(framebuffer[i]) = {0, 0, 0, 0, 0};
-    }
-  }
-
-  glDeleteFramebuffers(count, deleteFramebufferObjects);
-  glDeleteTextures(count, deleteColorAttachments);
-  if (depthStencilCount != 0)
-  {
-    glDeleteRenderbuffers(depthStencilCount, deleteDepthStencilAttachments);
-  }
-
-  delete[] deleteFramebufferObjects;
+  free(cubeMapData);
 }

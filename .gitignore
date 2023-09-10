@@ -90,7 +90,7 @@ tmp/
 */.cxx
 *.cmake
 */CMakeFiles
-*/cmake-build-debug
+cmake-build*/
 *.a
 *.lib
 CMakeFiles/

@@ -1,7 +1,3 @@
-//
-// Created by Connor on 6/22/2022.
-//
-
 #pragma once
 
 #include <memory> // memset
@@ -37,12 +33,14 @@ const char* NATIVE_ACTIVITY_NAME = "native-activity-blue";
 
 #include "noop_types.h"
 
-#include "../profiler/simplified_profiler.cpp"
+#include "profiler/simplified_profiler.cpp"
 
 #include "noop_math.h"
 using namespace noop;
 
 #include "asset_loader.h"
+#include "cubemap_asset.h"
+
 #include "android_platform.cpp"
 #include "shader_types_and_constants.h"
 #include "vertex_attributes.h"

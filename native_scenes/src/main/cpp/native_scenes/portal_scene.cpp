@@ -52,8 +52,7 @@ struct Scene {
   vec4 ambientLight;
   GLuint skyboxTexture;
   const char* title;
-  const char* skyboxDir;
-  const char* skyboxExt;
+  const char* skyboxFileName;
 };
 
 struct World
@@ -498,11 +497,9 @@ void cleanupScene(Scene* scene) {
   scene->skyboxTexture = TEXTURE_ID_NO_TEXTURE;
 
   delete[] scene->title;
-  if(scene->skyboxDir != nullptr) { delete[] scene->skyboxDir; }
-  if(scene->skyboxExt != nullptr) { delete[] scene->skyboxExt; }
+  if(scene->skyboxFileName != nullptr) { delete[] scene->skyboxFileName; }
   scene->title = nullptr;
-  scene->skyboxDir = nullptr;
-  scene->skyboxExt = nullptr;
+  scene->skyboxFileName = nullptr;
 }
 
 void cleanupWorld(World* world) {
@@ -581,10 +578,9 @@ void loadWorld(World* world, const char* saveJsonFile) {
       Scene* scene = world->scenes + worldSceneIndices[sceneSaveFormat.index];
       scene->title = cStrAllocateAndCopy(sceneSaveFormat.title.c_str());
 
-      if(!sceneSaveFormat.skyboxDir.empty() && !sceneSaveFormat.skyboxExt.empty()) { // if we have a skybox...
-        scene->skyboxDir = cStrAllocateAndCopy(sceneSaveFormat.skyboxDir.c_str());
-        scene->skyboxExt = cStrAllocateAndCopy(sceneSaveFormat.skyboxExt.c_str());
-        loadCubeMapTexture(scene->skyboxDir, scene->skyboxExt, &scene->skyboxTexture);
+      if(!sceneSaveFormat.skyboxFileName.empty()) { // if we have a skybox...
+        scene->skyboxFileName = cStrAllocateAndCopy(sceneSaveFormat.skyboxFileName.c_str());
+        loadCubeMapTexture(scene->skyboxFileName, &scene->skyboxTexture);
       } else {
         scene->skyboxTexture = TEXTURE_ID_NO_TEXTURE;
       }

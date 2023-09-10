@@ -3,6 +3,10 @@ project ("asset_baker")
 
 set(CMAKE_CXX_STANDARD 17)
 
+if(MSVC)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
 get_filename_component(EXT_DIR "../external" ABSOLUTE)
 get_filename_component(SHARED_CPP "../shared_cpp" ABSOLUTE)
 
@@ -72,6 +76,8 @@ add_library (assetlib STATIC
         ${SHARED_CPP}/assetlib/mesh_asset.cpp
         ${SHARED_CPP}/assetlib/material_asset.cpp
         ${SHARED_CPP}/assetlib/prefab_asset.cpp
+        ../shared_cpp/assetlib/cubemap_asset.h
+        ../shared_cpp/assetlib/cubemap_asset.cpp
 )
 target_include_directories(assetlib PRIVATE
         ${ASSETLIB_INCL}

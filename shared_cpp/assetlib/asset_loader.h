@@ -7,6 +7,10 @@
 #include <vector>
 #include <unordered_map>
 
+#if defined(ANDROID) || defined(__ANDROID___)
+#include <android/asset_manager.h>
+#endif
+
 #include "json.hpp"
 #include "lz4.h"
 
@@ -30,12 +34,10 @@ namespace assets {
 #undef CompressionMode
   };
 
-#ifndef __ANDROID__
-  bool saveAssetFile(const char* path, const AssetFile& file);
-  bool loadAssetFile(const char* path, AssetFile* outputFile);
+#if defined(ANDROID) || defined(__ANDROID___)
+  bool loadAssetFile(AAssetManager* assetManager, const char* path, AssetFile* outputFile);
 #else
-#include <android/asset_manager.h>
-#include <android/asset_manager_jni.h>
+  bool saveAssetFile(const char* path, const AssetFile& file);
   bool loadAssetFile(const char* path, AssetFile* outputFile);
 #endif
 

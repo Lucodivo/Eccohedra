@@ -1,7 +1,3 @@
-//
-// Created by Connor on 6/19/2022.
-//
-
 struct GLEnvironment {
   EGLContext context;
   EGLDisplay display;
@@ -13,22 +9,15 @@ struct GLEnvironment {
   } surface;
 };
 
-global_variable AAssetManager *assetManager_GLOBAL = nullptr;
+global_variable AAssetManager* assetManager_GLOBAL = nullptr;
 
 void initAssetManager(android_app *app);
-
 void logAllAssets();
-
 void openAsset(const char *assetFilePath, void *assetBuffer, u32 *assetSizeInBytes);
-
 void glDeinit(GLEnvironment *glEnv);
-
 void logDeviceGLEnvironment();
-
 JNIEnv *attachToMainThread(android_app *app);
-
 void detachFromMainThread(android_app *app);
-
 ASensorManager *acquireASensorManagerInstance(android_app *app);
 
 // This MUST be called before attempting to load any assets

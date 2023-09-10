@@ -26,3 +26,13 @@ Preferably the calling site screams "This function may mutate your argument!" So
 	- `const int * const **` - pointer to pointer to const pointer to const int
 #### How do I parse this declaration?
 - [The "Clockwise/Spiral Rule" by David Anderson](http://c-faq.com/decl/spiral.anderson.html) 
+
+#### Weird/Dumb user errors
+- Might look like: *ld: error: undefined symbol:*
+  - Linker problem. Can't find a function plainly written in a header file of a static library that 
+  compiles without error.
+  - specific example: *ld: error: undefined symbol: assets::loadAssetFile(AAssetManager*, char const*, assets::AssetFile*)*
+    - cause: I had an *#include <android/asset_manager.h>* within the *assets* namespace. I believe 
+    this changed the type of *AAssetManager* to *assets::AAssetManager*.
+    - lesson: Be intentional with *#include* inside of a namespace. There seems to be potential use cases
+    for such a thing, but it was a morale breaking for me on the day of writing this.

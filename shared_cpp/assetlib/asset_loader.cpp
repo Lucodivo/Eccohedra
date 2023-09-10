@@ -1,7 +1,5 @@
 #include "asset_loader.h"
 
-#include <fstream>
-
 const internal_func char* mapCompressionModeToString[] = {
         "None",
 #define CompressionMode(name) #name,
@@ -9,10 +7,65 @@ const internal_func char* mapCompressionModeToString[] = {
 #undef CompressionMode
 };
 
-#ifndef ANDROID
+#if defined(ANDROID) || defined(__ANDROID___)
+
+// TODO: Move logging to a common android source?
+#include <android/log.h>
+const char* LIBRARY_NAME = "assetlib";
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, LIBRARY_NAME, __VA_ARGS__))
+#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, LIBRARY_NAME, __VA_ARGS__))
+#define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR, LIBRARY_NAME, __VA_ARGS__))
+
+bool assets::loadAssetFile(AAssetManager* assetManager, const char* path, AssetFile* outputFile) {
+  AAsset *androidAsset = AAssetManager_open(assetManager, path, AASSET_MODE_STREAMING);
+
+  if(androidAsset == nullptr) {
+    LOGI("Asset manager could not find asset: ", path);
+    return false;
+  }
+
+  // file type
+  AAsset_read(androidAsset, outputFile->type, FILE_TYPE_SIZE_IN_BYTES);
+
+  // version
+  AAsset_read(androidAsset, &outputFile->version, sizeof(int));
+  if(outputFile->version != ASSET_LIB_VERSION) {
+    LOGI("Attempting to load asset (%s) with version #%d. Asset Loader version is currently #%d.", path, outputFile->version, ASSET_LIB_VERSION);
+    return false;
+  }
+
+  // json length
+  size_t jsonLength;
+  AAsset_read(androidAsset, &jsonLength, sizeof(size_t));
+
+  // blob length
+  size_t blobLength;
+  AAsset_read(androidAsset, &blobLength, sizeof(size_t));
+
+  // json
+  outputFile->json.resize(jsonLength);
+  AAsset_read(androidAsset, outputFile->json.data(), (ptrdiff_t)jsonLength);
+
+  // blob
+  outputFile->binaryBlob.resize(blobLength);
+  AAsset_read(androidAsset, outputFile->binaryBlob.data(), (ptrdiff_t)blobLength);
+
+  AAsset_close(androidAsset);
+
+  return true;
+}
+#else
+
+#include <fstream>
+
 bool assets::saveAssetFile(const char* path, const AssetFile& file) {
   std::ofstream outfile;
   outfile.open(path, std::ios::binary | std::ios::out);
+
+  if(!outfile.is_open()) {
+    printf("Failed to export asset file: %s\n", path);
+    return false;
+  }
 
   // file type
   outfile.write(file.type, FILE_TYPE_SIZE_IN_BYTES);
@@ -44,48 +97,8 @@ bool assets::loadAssetFile(const char* path, AssetFile* outputFile) {
   infile.open(path, std::ios::binary);
 
   if (!infile.is_open()) {
-      printf("Could not open asset file %s", path);
-      return false;
-  }
-
-  //move file cursor to beginning
-  infile.seekg(0);
-
-  // file type
-  infile.read(outputFile->type, FILE_TYPE_SIZE_IN_BYTES);
-
-  // version
-  infile.read((char*)&outputFile->version, sizeof(u32));
-  if(outputFile->version != ASSET_LIB_VERSION) {
-    printf("Attempting to load asset (%s) with version #%d. Asset Loader version is currently #%d.", path, outputFile->version, ASSET_LIB_VERSION);
-  }
-
-  // json length
-  size_t jsonLength;
-  infile.read((char*)&jsonLength, sizeof(size_t));
-
-  // blob length
-  size_t blobLength;
-  infile.read((char*)&blobLength, sizeof(size_t));
-
-  // json
-  outputFile->json.resize(jsonLength);
-  infile.read(outputFile->json.data(), (ptrdiff_t)jsonLength);
-
-  // blob
-  outputFile->binaryBlob.resize(blobLength);
-  infile.read(outputFile->binaryBlob.data(), (ptrdiff_t)blobLength);
-
-  return true;
-}
-#else
-bool assets::loadAssetFile(const char* path, AssetFile* outputFile) {
-  std::ifstream infile;
-  infile.open(path, std::ios::binary);
-
-  if (!infile.is_open()) {
-      printf("Could not open asset file %s", path);
-      return false;
+    printf("Could not open asset file %s", path);
+    return false;
   }
 
   //move file cursor to beginning

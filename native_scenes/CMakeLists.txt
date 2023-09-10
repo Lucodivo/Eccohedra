@@ -3,13 +3,16 @@ project ("native_scenes")
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(${CMAKE_C_FLAGS}, "${CMAKE_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17 -Wall -Wno-unused-variable -Wno-unused-function -Wno-format -Wno-null-dereference -Wno-missing-braces -Wno-sometimes-uninitialized -Werror -Wno-uninitialized")
+
 get_filename_component(ANDROID_ROOT "../" ABSOLUTE)
 get_filename_component(ANDROID_CPP "src/main/cpp/" ABSOLUTE)
 set(EXT_DIR ${ANDROID_ROOT}/external)
 set(SHARED_CPP ${ANDROID_ROOT}/shared_cpp/)
 
-# Android library CMake directories
-add_subdirectory(src/main/cpp/native_scenes)
+find_library(log-lib log)
+find_library(android-lib android)
 
 # stb
 add_library(stb_image INTERFACE)
@@ -22,7 +25,6 @@ target_include_directories(json INTERFACE ${EXT_DIR}/nlohmann )
 # tinygltf
 add_library(tinygltf STATIC)
 target_sources(tinygltf PRIVATE
-        ${EXT_DIR}/tinygltf/tiny_gltf.h
         ${EXT_DIR}/tinygltf/tiny_gltf.cc
 )
 target_include_directories(tinygltf PUBLIC
@@ -34,7 +36,6 @@ target_include_directories(tinygltf PUBLIC
 # tinyobjloader
 add_library(tinyobjloader STATIC)
 target_sources(tinyobjloader PRIVATE
-        ${EXT_DIR}/tinyobjloader/tiny_obj_loader.h
         ${EXT_DIR}/tinyobjloader/tiny_obj_loader.cc
 )
 target_include_directories(tinyobjloader PUBLIC ${EXT_DIR}/tinyobjloader)
@@ -42,7 +43,6 @@ target_include_directories(tinyobjloader PUBLIC ${EXT_DIR}/tinyobjloader)
 # LZ4
 add_library(lz4 STATIC)
 target_sources(lz4 PRIVATE
-        ${EXT_DIR}/lz4/lz4.h
         ${EXT_DIR}/lz4/lz4.c
 )
 target_include_directories(lz4 PUBLIC ${EXT_DIR}/lz4 )
@@ -50,27 +50,25 @@ target_include_directories(lz4 PUBLIC ${EXT_DIR}/lz4 )
 # noop_math
 add_library(noop_math STATIC)
 target_sources(noop_math PRIVATE
-        ${SHARED_CPP}/noop_math/noop_math.h
         ${SHARED_CPP}/noop_math/noop_math.cpp
 )
 target_include_directories(noop_math PRIVATE ${SHARED_CPP})
 
 # assetlib
-add_library (assetlib STATIC
+add_library (assetlib STATIC)
+target_sources(assetlib PRIVATE
         ${SHARED_CPP}/assetlib/asset_loader.cpp
-        ${SHARED_CPP}/assetlib/texture_asset.cpp
-        ${SHARED_CPP}/assetlib/mesh_asset.cpp
-        ${SHARED_CPP}/assetlib/material_asset.cpp
-        ${SHARED_CPP}/assetlib/prefab_asset.cpp
+        ${SHARED_CPP}/assetlib/cubemap_asset.cpp
 )
 target_include_directories(assetlib PRIVATE
-        ${ASSETLIB_INCL}
-        ${EXT_DIR}
         ${EXT_DIR}/lz4
         ${EXT_DIR}/nlohmann
-        ${SHARED_CPP}/noop_math
         ${SHARED_CPP}
 )
+target_link_libraries(assetlib ${log-lib} ${android-lib} lz4 json)
+
+# Android library CMake directories
+add_subdirectory(src/main/cpp/native_scenes)
 
 #[[ Using CMake to validate glsl shader files
 find_package(Vulkan REQUIRED)

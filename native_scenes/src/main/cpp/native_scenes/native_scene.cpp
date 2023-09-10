@@ -33,11 +33,8 @@ typedef struct Engine {
 } Engine;
 
 static void drawFrame(const Engine &engine);
-
 static s32 handleInput(android_app *app, AInputEvent *event);
-
 static void handleAndroidCmd(android_app *app, s32 cmd);
-
 void setupGLStartingState();
 
 // The VM calls JNI_OnLoad when the native library is loaded (ex: System.loadLibrary)

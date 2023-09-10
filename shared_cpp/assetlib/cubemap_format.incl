@@ -1,0 +1,2 @@
+//CubeMapFormat(format, byte count per pixel)
+CubeMapFormat(RGB8, 3)

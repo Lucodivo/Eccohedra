@@ -21,6 +21,7 @@ namespace fs = std::filesystem;
 #include "mesh_asset.h"
 #include "material_asset.h"
 #include "prefab_asset.h"
+#include "cubemap_asset.h"
 using namespace assets;
 
 #include "noop_math.h"
@@ -40,6 +41,7 @@ struct {
   const char* mesh = ".mesh";
   const char* material = ".mat";
   const char* prefab = ".pfb";
+  const char* cubeMap = ".cbtx";
 } bakedExtensions;
 
 struct {
@@ -76,6 +78,7 @@ struct AssetBakeCachedItem {
 };
 
 bool convertImage(const fs::path& inputPath, ConverterState& converterState);
+bool convertCubeMapTexture(const fs::path& inputDir, ConverterState* converterState);
 
 void packVertex(assets::Vertex_PNCV_f32& new_vert, tinyobj::real_t vx, tinyobj::real_t vy, tinyobj::real_t vz, tinyobj::real_t nx, tinyobj::real_t ny, tinyobj::real_t nz, tinyobj::real_t ux, tinyobj::real_t uy);
 void packVertex(assets::Vertex_P32N8C8V16& new_vert, tinyobj::real_t vx, tinyobj::real_t vy, tinyobj::real_t vz, tinyobj::real_t nx, tinyobj::real_t ny, tinyobj::real_t nz, tinyobj::real_t ux, tinyobj::real_t uy);
@@ -99,6 +102,7 @@ void writeOutputData(const std::unordered_map<std::string, AssetBakeCachedItem>&
 void replace(std::string& str, const char oldToken, const char newToken);
 void replaceBackSlashes(std::string& str);
 std::size_t fileCountInDir(fs::path dirPath);
+std::size_t dirCountInDir(fs::path dirPath);
 
 f64 lastModifiedTimeStamp(const fs::path& file) {
   auto lastModifiedTimePoint = fs::last_write_time(file);
@@ -212,11 +216,11 @@ int main(int argc, char* argv[]) {
 
   ConverterState converterState;
   converterState.assetsDir = {argv[1]};
-  converterState.bakedAssetDir = converterState.assetsDir.parent_path() / "assets_export";
+  converterState.bakedAssetDir = converterState.assetsDir / "assets_export";
   converterState.outputFileDir = {argv[2]};
 
   if(!fs::is_directory(converterState.assetsDir)) {
-    std::cout << "Invalid assets directory: " << argv[1];
+    std::cout << "Could not find assets directory: " << argv[1];
     return -1;
   }
 
@@ -227,6 +231,25 @@ int main(int argc, char* argv[]) {
 
   std::cout << "loaded asset directory at " << converterState.assetsDir << std::endl;
 
+  fs::path asset_models_dir = converterState.assetsDir / "models";
+  fs::path asset_skyboxes_dir = converterState.assetsDir / "skyboxes";
+  fs::path asset_textures_dir = converterState.assetsDir / "textures";
+  size_t fileCount = dirCountInDir(asset_skyboxes_dir);
+  printf("skybox directories found: %d\n", (int)fileCount);
+
+  std::filesystem::create_directory(converterState.bakedAssetDir / "models");
+  std::filesystem::create_directory(converterState.bakedAssetDir / "skyboxes");
+  std::filesystem::create_directory(converterState.bakedAssetDir / "textures");
+  for(auto const& skyboxDir: std::filesystem::directory_iterator(asset_skyboxes_dir)) {
+    if(fileUpToDate(oldAssetBakeCache, skyboxDir)) {
+      continue;
+    } else if(fs::is_directory(skyboxDir)) {
+      printf("%s\n", skyboxDir.path().string().c_str());
+      convertCubeMapTexture(skyboxDir, &converterState);
+    }
+  }
+
+  /*
   size_t fileCount = fileCountInDir(converterState.assetsDir);
   converterState.bakedFilePaths.reserve(fileCount * 4);
   for(const fs::directory_entry& p: fs::directory_iterator(converterState.assetsDir)) { //fs::recursive_directory_iterator(directory)) {
@@ -332,8 +355,96 @@ int main(int argc, char* argv[]) {
 
   writeOutputData(oldAssetBakeCache, converterState);
   saveCache(oldAssetBakeCache, newlyCachedItems);
+  */
 
   return 0;
+}
+
+bool convertCubeMapTexture(const fs::path& inputDir, ConverterState* converterState) {
+
+  int frontWidth, frontHeight, frontChannels,
+      backWidth, backHeight, backChannels,
+      topWidth, topHeight, topChannels,
+      bottomWidth, bottomHeight, bottomChannels,
+      leftWidth, leftHeight, leftChannels,
+      rightWidth, rightHeight, rightChannels;
+
+  fs::path ext;
+  for(auto const& skyboxFaceImage: std::filesystem::directory_iterator(inputDir)) {
+    if(fs::is_regular_file(skyboxFaceImage)) {
+      ext = skyboxFaceImage.path().extension(); // pull extension from first file we find
+      printf("%s\n", ext.string().c_str());
+      break;
+    }
+  }
+
+  if(ext.empty()) {
+    printf("Skybox directory (%s) was found empty.", inputDir.string().c_str());
+  }
+
+  fs::path frontPath = (inputDir / "front").replace_extension(ext);
+  fs::path backPath = (inputDir / "back").replace_extension(ext);
+  fs::path topPath = (inputDir / "top").replace_extension(ext);
+  fs::path bottomPath = (inputDir / "bottom").replace_extension(ext);
+  fs::path leftPath = (inputDir / "left").replace_extension(ext);
+  fs::path rightPath = (inputDir / "right").replace_extension(ext);
+
+  auto imageLoadStart = std::chrono::high_resolution_clock::now();
+  stbi_uc* frontPixels = stbi_load(frontPath.u8string().c_str(), &frontWidth, &frontHeight, &frontChannels, STBI_rgb);
+  stbi_uc* backPixels = stbi_load(backPath.u8string().c_str(), &backWidth, &backHeight, &backChannels, STBI_rgb);
+  stbi_uc* topPixels = stbi_load(topPath.u8string().c_str(), &topWidth, &topHeight, &topChannels, STBI_rgb);
+  stbi_uc* bottomPixels = stbi_load(bottomPath.u8string().c_str(), &bottomWidth, &bottomHeight, &bottomChannels, STBI_rgb);
+  stbi_uc* leftPixels = stbi_load(leftPath.u8string().c_str(), &leftWidth, &leftHeight, &leftChannels, STBI_rgb);
+  stbi_uc* rightPixels = stbi_load(rightPath.u8string().c_str(), &rightWidth, &rightHeight, &rightChannels, STBI_rgb);
+  auto imageLoadEnd = std::chrono::high_resolution_clock::now();
+
+  auto diff = imageLoadEnd - imageLoadStart;
+  std::cout << "texture took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0 << "ms to load" << std::endl;
+
+  if(!frontPixels || !backPixels || !topPixels || !bottomPixels || !leftPixels || !rightPixels) {
+    std::cout << "Failed to load CubeMap face file for directory " << inputDir << std::endl;
+    return false;
+  }
+
+  if(frontWidth != backWidth || frontWidth != topWidth || frontWidth != bottomWidth || frontWidth != leftWidth || frontWidth != rightWidth ||
+      frontHeight != backHeight || frontHeight != topHeight || frontHeight != bottomHeight || frontHeight != leftHeight || frontHeight != rightHeight ||
+      frontChannels != backChannels || frontChannels != topChannels || frontChannels != bottomChannels || frontChannels != leftChannels || frontChannels != rightChannels) {
+    std::cout << "One or more CubeMap faces do not match in either width, height, or number of channels for directory " << inputDir << std::endl;
+    return false;
+  }
+
+  assert(topChannels == 3 && "Number of channels for cube map asset does not match desired");
+
+  CubeMapInfo info;
+  info.faceSize = topWidth * topHeight * topChannels;
+  info.format = CubeMapFormat::RGB8;
+  info.faceWidth = topWidth;
+  info.faceHeight = topHeight;
+  info.originalFolder = inputDir.string();\
+  // info.compressionMode is filled in by packCubeMap
+
+  auto compressionStart = std::chrono::high_resolution_clock::now();
+  assets::AssetFile cubeMapAssetFile = assets::packCubeMap(&info, frontPixels, backPixels, topPixels, bottomPixels, leftPixels, rightPixels);
+  auto compressionEnd = std::chrono::high_resolution_clock::now();
+
+  diff = compressionEnd - compressionStart;
+  std::cout << "compression took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0 << "ms" << std::endl;
+
+  stbi_image_free(frontPixels);
+  stbi_image_free(backPixels);
+  stbi_image_free(topPixels);
+  stbi_image_free(bottomPixels);
+  stbi_image_free(leftPixels);
+  stbi_image_free(rightPixels);
+
+  fs::path relative = inputDir.lexically_proximate(converterState->assetsDir);
+  fs::path exportPath = converterState->bakedAssetDir / relative;
+  exportPath.replace_extension(bakedExtensions.cubeMap);
+
+  saveAssetFile(exportPath.string().c_str(), cubeMapAssetFile);
+  converterState->bakedFilePaths.push_back(exportPath);
+
+  return true;
 }
 
 bool convertImage(const fs::path& inputPath, ConverterState& converterState) {
@@ -362,55 +473,6 @@ bool convertImage(const fs::path& inputPath, ConverterState& converterState) {
   texInfo.height = texHeight;
 
   auto compressionStart = std::chrono::high_resolution_clock::now();
-
-  // TODO: Mipmaps
-//  std::vector<char> textureBuffer_AllMipmaps;
-//
-//	struct DumbHandler : nvtt::OutputHandler {
-//		// Output data. Compressed data is output as soon as it's generated to minimize memory allocations.
-//		virtual bool writeData(const void* data, int size) {
-//			for (int i = 0; i < size; i++) {
-//				buffer.push_back(((char*)data)[i]);
-//			}
-//			return true;
-//		}
-//		virtual void beginImage(int size, int width, int height, int depth, int face, int miplevel) { };
-//
-//		// Indicate the end of the compressed image. (New in NVTT 2.1)
-//		virtual void endImage() {};
-//		std::vector<char> buffer;
-//	};
-//
-//	nvtt::Compressor compressor;
-//
-//	nvtt::CompressionOptions options;
-//	nvtt::OutputOptions outputOptions;
-//	nvtt::Surface surface;
-//
-//	DumbHandler handler;
-//	outputOptions.setOutputHandler(&handler);
-//
-//	surface.setImage(nvtt::InputFormat::InputFormat_BGRA_8UB, texWidth, texHeight, 1, pixels);
-//
-//	while (surface.canMakeNextMipmap(1))
-//	{
-//    surface.buildNextMipmap(nvtt::MipmapFilter_Box);
-//
-//    options.setFormat(nvtt::Format::Format_RGBA);
-//    options.setPixelType(nvtt::PixelType_UnsignedNorm);
-//
-//    compressor.compress(surface, 0, 0, options, outputOptions);
-//
-//    texInfo.pages.push_back({});
-//    texInfo.pages.back().width = surface.width();
-//    texInfo.pages.back().height = surface.height();
-//    texInfo.pages.back().originalSize = handler.buffer.size();
-//
-//    textureBuffer_AllMipmaps.insert(textureBuffer_AllMipmaps.end(), handler.buffer.begin(), handler.buffer.end());
-//    handler.buffer.clear();
-//	}
-//
-// texInfo.textureSize = textureBuffer_AllMipmaps.size();
 
   assets::AssetFile newImage = assets::packTexture(&texInfo, pixels);
 
@@ -1295,6 +1357,16 @@ std::size_t fileCountInDir(fs::path dirPath) {
     }
   }
   return fileCount;
+}
+
+std::size_t dirCountInDir(fs::path dirPath) {
+  std::size_t dirCount = 0u;
+  for(auto const& file: std::filesystem::directory_iterator(dirPath)) {
+    if(fs::is_directory(file)) {
+      ++dirCount;
+    }
+  }
+  return dirCount;
 }
 
 void replace(std::string& str, const char* oldTokens, u32 oldTokensCount, char newToken) {
