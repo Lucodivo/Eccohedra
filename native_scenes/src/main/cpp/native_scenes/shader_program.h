@@ -159,7 +159,7 @@ internal_func GLuint loadShader(const char* shaderPath, GLenum shaderType) {
     shaderTypeStr = "FRAGMENT";
   }
 
-  Asset shaderAsset = Asset(shaderPath);
+  Asset shaderAsset = Asset(assetManager_GLOBAL, shaderPath);
   if(!shaderAsset.success()) {
     LOGE("ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ - %s", shaderPath);
     return 0;

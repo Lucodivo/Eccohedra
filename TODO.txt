@@ -21,6 +21,8 @@ and sending those bytes directly to the GPU with little steps in between.
     - research terms: S3CT, DXT1/DXT3/DXT, BPTC, RGTC, ETC1, ETC2, ASTC
     - glCompressedTexImage2D() is used to upload compressed textures through OpenGL and has been available since at least OpenGL ES 2.0
     - Could pair well using a texture compression method as part of the asset baking process.
+    - Target texture compression formats in Android App Bundles: https://developer.android.com/guide/playcore/asset-delivery/texture-compression
+        - ETC2: Supported by all devices that support GLES3.
 
 Modularization ideas:
 - NoopMathKotlin could be set up to be pulled from a maven repository instead of manually embedded into the project

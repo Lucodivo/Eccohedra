@@ -267,7 +267,7 @@ void loadModel(const char* filePath, Model* returnModel) {
   std::string warn;
   tinygltf::Model* tinyGLTFModel = new tinygltf::Model();
 
-  Asset modelAsset = Asset(filePath);
+  Asset modelAsset = Asset(assetManager_GLOBAL, filePath);
   bool ret;
   {
     TimeBlock("GLTF Loader")

@@ -15,7 +15,6 @@ typedef struct android_poll_source android_poll_source;
 typedef struct SceneState {
   f32 inputX;
   f32 inputY;
-  StopWatch stopWatch;
 } SceneState;
 
 /**
@@ -35,7 +34,8 @@ typedef struct Engine {
 static void drawFrame(const Engine &engine);
 static s32 handleInput(android_app *app, AInputEvent *event);
 static void handleAndroidCmd(android_app *app, s32 cmd);
-void setupGLStartingState();
+void glDeinit(GLEnvironment *glEnv);
+void closeActivity(ANativeActivity* activity);
 
 // The VM calls JNI_OnLoad when the native library is loaded (ex: System.loadLibrary)
 // JNI_OnLoad must return the JNI version needed by the native library.
@@ -66,7 +66,7 @@ void android_main(android_app *app) {
 
   {
     TimeBlock("Acquire Android Resource Managers")
-    initAssetManager(app);
+    assetManager_GLOBAL = app->activity->assetManager;
     engine.sensorManager = acquireASensorManagerInstance(app);
     engine.accelerometerSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
                                                                  ASENSOR_TYPE_ACCELEROMETER);
@@ -77,9 +77,8 @@ void android_main(android_app *app) {
   initGLEnvironment(&engine.glEnv);
   logDeviceGLEnvironment();
 //  std::thread setupThread = std::thread([&engine, &app]() {
-    setupGLStartingState();
 #ifndef NDEBUG
-    logAllAssets(app);
+    logAllAssets(assetManager_GLOBAL, app);
 #endif
     initPortalScene();
 //  });
@@ -122,8 +121,6 @@ void android_main(android_app *app) {
 
 static void drawFrame(const Engine &engine) {
   if (engine.glEnv.surface.handle == EGL_NO_SURFACE) { return; }
-//    f32 fps = f32(1.0 / frameStopWatch.lapInSeconds);
-//    LOGI("FPS: %f", fps);
 
   if (engine.initializing) {
     // TODO: Draw loading screen
@@ -175,16 +172,7 @@ static s32 handleInput(android_app *app, AInputEvent *event) {
       break;
     }
   }
-
-  ANativeActivity_finish(app->activity);
-
   return 0;
-}
-
-// TODO: Delete
-void setupGLStartingState() {
-  glEnable(GL_CULL_FACE);
-  glDisable(GL_DEPTH_TEST);
 }
 
 void onResume(Engine *engine) {
@@ -197,7 +185,6 @@ void onResume(Engine *engine) {
                                    microsecondsPerSample);
   }
   engine->paused = false;
-  engine->state.stopWatch.resetLap(); // we don't know how long we were paused, so reset stopwatch lap
 }
 
 void onPause(Engine *engine) {
@@ -207,6 +194,8 @@ void onPause(Engine *engine) {
   }
   engine->paused = true;
 }
+
+void closeActivity(ANativeActivity* activity) { ANativeActivity_finish(activity); }
 
 void onTerminate(Engine *engine) {
   glDeinit(&engine->glEnv);
@@ -239,6 +228,7 @@ static void handleAndroidCmd(android_app *app, s32 cmd) {
         updateSceneWindow(engine->glEnv.surface.width, engine->glEnv.surface.height);
         engine->initializing = false;
         EndAndPrintProfile();
+//        closeActivity(app->activity);
       }
       break;
     }

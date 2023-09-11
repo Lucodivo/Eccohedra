@@ -1,15 +1,8 @@
-# build native_app_glue as a static lib
-add_library(native_app_glue STATIC ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
-
-# Export ANativeActivity_onCreate(),
-# Refer to: https://github.com/android-ndk/ndk/issues/381.
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
-
 add_library(native-scene SHARED)
 target_sources(native-scene PRIVATE
         native_scene.cpp)
 target_include_directories(native-scene PRIVATE
-        ${ANDROID_NDK}/sources/android/native_app_glue
+        ${ANDROID_NATIVE_APP_GLUE_DIR}
         ${ANDROID_CPP}
         ${EXT_DIR}
         ${EXT_DIR}/stb

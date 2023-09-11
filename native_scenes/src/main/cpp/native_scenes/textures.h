@@ -35,7 +35,7 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
   // load image data
   s32 w, h, numChannels;
   stbi_set_flip_vertically_on_load(flipImageVert);
-  Asset imageAsset = Asset(imgLocation);
+  Asset imageAsset = Asset(assetManager_GLOBAL, imgLocation);
   if(!imageAsset.success()) {
     LOGI("Failed to find texture asset: %s", imgLocation);
     return;
@@ -100,19 +100,38 @@ void loadCubeMapTexture(const char* fileName, GLuint* textureId) {
   std::string assetPath = bakedSkyboxesDir + fileName + ".cbtx";
 
   assets::AssetFile cubeMapAssetFile;
-  assets::loadAssetFile(assetManager_GLOBAL, assetPath.c_str(), &cubeMapAssetFile);
+  {
+    TimeBlock("assets::loadAssetFile")
+    assets::loadAssetFile(assetManager_GLOBAL, assetPath.c_str(), &cubeMapAssetFile);
+  }
   assets::CubeMapInfo cubeMapInfo;
-  assets::readCubeMapInfo(cubeMapAssetFile, &cubeMapInfo);
-  char* cubeMapData = (char*)malloc(cubeMapInfo.size());
-  assets::unpackCubeMap(cubeMapInfo, cubeMapAssetFile.binaryBlob.data(), cubeMapAssetFile.binaryBlob.size(), cubeMapData);
+  {
+    TimeBlock("assets::readCubeMapInfo")
+    assets::readCubeMapInfo(cubeMapAssetFile, &cubeMapInfo);
+  }
+  char* cubeMapData;
+  {
+    TimeBlock("loadCubeMapTexture - malloc cubemap texture")
+    cubeMapData = (char*)malloc(cubeMapInfo.size());
+  }
+  {
+    TimeBlock("assets::unpackCubeMap")
+    assets::unpackCubeMap(cubeMapInfo, cubeMapAssetFile.binaryBlob.data(), cubeMapAssetFile.binaryBlob.size(), cubeMapData);
+  }
 
-  // TODO: If we ever support other formats besides RGB8 we will need to explicitly translate the CubeMapInfo.format to a GL_{format}
-  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_BACK));
-  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_FRONT));
-  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_BOTTOM));
-  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_TOP));
-  glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_LEFT));
-  glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_RIGHT));
+  {
+    TimeBlock("loadCubeMapTexture - glTexImage2D")
+    // TODO: If we ever support other formats besides RGB8 we will need to explicitly translate the CubeMapInfo.format to a GL_{format}
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_BACK));
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_FRONT));
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_BOTTOM));
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_TOP));
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_LEFT));
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_RIGHT));
+  }
 
-  free(cubeMapData);
+  {
+    TimeBlock("loadCubeMapTexture - free cubemap texture")
+    free(cubeMapData);
+  }
 }

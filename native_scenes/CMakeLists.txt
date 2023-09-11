@@ -8,11 +8,18 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17 -Wall -Wno-unused-variable 
 
 get_filename_component(ANDROID_ROOT "../" ABSOLUTE)
 get_filename_component(ANDROID_CPP "src/main/cpp/" ABSOLUTE)
+get_filename_component(ANDROID_NATIVE_APP_GLUE_DIR ${ANDROID_NDK}/sources/android/native_app_glue ABSOLUTE)
 set(EXT_DIR ${ANDROID_ROOT}/external)
 set(SHARED_CPP ${ANDROID_ROOT}/shared_cpp/)
 
 find_library(log-lib log)
 find_library(android-lib android)
+
+# build native_app_glue as a static lib
+add_library(native_app_glue STATIC ${ANDROID_NATIVE_APP_GLUE_DIR}/android_native_app_glue.c)
+# Export ANativeActivity_onCreate(),
+# Refer to: https://github.com/android-ndk/ndk/issues/381.
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
 
 # stb
 add_library(stb_image INTERFACE)
@@ -64,6 +71,7 @@ target_include_directories(assetlib PRIVATE
         ${EXT_DIR}/lz4
         ${EXT_DIR}/nlohmann
         ${SHARED_CPP}
+        ${ANDROID_NATIVE_APP_GLUE_DIR}
 )
 target_link_libraries(assetlib ${log-lib} ${android-lib} lz4 json)
 

@@ -31,8 +31,8 @@ struct profiler
     u64 StartTSC;
     u64 EndTSC;
 };
-static profiler GlobalProfiler;
-static u32 GlobalProfilerParent;
+global_variable profiler GlobalProfiler;
+global_variable u32 GlobalProfilerParent;
 
 struct profile_block
 {

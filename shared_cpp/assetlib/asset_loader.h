@@ -7,14 +7,14 @@
 #include <vector>
 #include <unordered_map>
 
-#if defined(ANDROID) || defined(__ANDROID___)
-#include <android/asset_manager.h>
-#endif
-
 #include "json.hpp"
 #include "lz4.h"
 
 #include "noop_types.h"
+
+#if defined(ANDROID) || defined(__ANDROID___)
+#include "android_platform.h"
+#endif
 
 #define FILE_TYPE_SIZE_IN_BYTES 4
 #define ASSET_LIB_VERSION 1

@@ -8,14 +8,6 @@ const internal_func char* mapCompressionModeToString[] = {
 };
 
 #if defined(ANDROID) || defined(__ANDROID___)
-
-// TODO: Move logging to a common android source?
-#include <android/log.h>
-const char* LIBRARY_NAME = "assetlib";
-#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, LIBRARY_NAME, __VA_ARGS__))
-#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, LIBRARY_NAME, __VA_ARGS__))
-#define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR, LIBRARY_NAME, __VA_ARGS__))
-
 bool assets::loadAssetFile(AAssetManager* assetManager, const char* path, AssetFile* outputFile) {
   AAsset *androidAsset = AAssetManager_open(assetManager, path, AASSET_MODE_STREAMING);
 
@@ -137,6 +129,6 @@ const char* assets::compressionModeToString(CompressionMode compressionMode) {
   return mapCompressionModeToString[compressionModeToEnumVal(compressionMode)];
 }
 
-inline u32 assets::compressionModeToEnumVal(CompressionMode compressionMode) {
+u32 assets::compressionModeToEnumVal(CompressionMode compressionMode) {
   return static_cast<u32>(compressionMode);
 }
