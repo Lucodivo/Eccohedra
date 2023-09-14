@@ -519,7 +519,7 @@ void cleanupWorld(World* world) {
 
 void initPlayer(Player* player) {
   player->boundingBox.diagonal = defaultPlayerDimensionInMeters;
-  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f), -42.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
+  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f), -15.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
 }
 
 void initCamera(Camera* camera, const Player& player) {
@@ -637,8 +637,8 @@ void loadWorld(World* world, const char* saveJsonFile) {
 
 // TODO: Come up with better name
 void updateSceneWindow(u32 width, u32 height) {
-  globalWorld.fov = fieldOfView(3.0f, 12.0f);
-  globalWorld.aspect = f32(width) / height;
+  globalWorld.fov = 45.f;
+  globalWorld.aspect = f32(width) / f32(height);
   globalWorld.UBOs.projectionViewModelUbo.projection = perspective(globalWorld.fov, globalWorld.aspect, near, far);
   glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.projectionViewModelUboId);
   glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, projection), sizeof(mat4), &globalWorld.UBOs.projectionViewModelUbo.projection);
@@ -760,9 +760,6 @@ void deinitPortalScene() {
 }
 
 void portalScene() {
-  // TODO: access the window extent from Android
-  vec2_u32 windowExtent = {0, 0};
-  globalWorld.aspect = f32(windowExtent.width) / windowExtent.height;
   glGenQueries(ArrayCount(portalQueryObjects), portalQueryObjects);
 
   VertexAtt cubePosVertexAtt = cubePosVertexAttBuffers();
@@ -773,9 +770,6 @@ void portalScene() {
   initPlayer(&globalWorld.player);
 
   initCamera(&globalWorld.camera, globalWorld.player);
-
-  globalWorld.fov = fieldOfView(13.5f, 25.0f);
-  globalWorld.UBOs.projectionViewModelUbo.projection = perspective(globalWorld.fov, globalWorld.aspect, near, far);
 
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
   glEnable(GL_DEPTH_TEST);

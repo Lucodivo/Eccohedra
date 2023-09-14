@@ -22,8 +22,9 @@ target_include_directories(asset_baker PUBLIC
         ${SHARED_CPP}
         ${SHARED_CPP}/assetlib
         ${SHARED_CPP}/noop_math
+        C:/Compressonator_4.4.19/include
 )
-target_link_libraries(asset_baker tinyobjloader stb_image tinygltf assetlib json lz4 noop_math)
+target_link_libraries(asset_baker tinyobjloader stb_image tinygltf assetlib json lz4 noop_math "C:/Compressonator_4.4.19/lib/VS2019/x64/Compressonator_MDd.lib")
 
 # stb
 add_library(stb_image INTERFACE)
@@ -70,14 +71,10 @@ target_sources(noop_math PRIVATE
 target_include_directories(noop_math PRIVATE ${SHARED_CPP})
 
 # assetlib
+set(ASSETLIB_DIR ${SHARED_CPP}/assetlib)
 add_library (assetlib STATIC
-        ${SHARED_CPP}/assetlib/asset_loader.cpp
-        ${SHARED_CPP}/assetlib/texture_asset.cpp
-        ${SHARED_CPP}/assetlib/mesh_asset.cpp
-        ${SHARED_CPP}/assetlib/material_asset.cpp
-        ${SHARED_CPP}/assetlib/prefab_asset.cpp
-        ../shared_cpp/assetlib/cubemap_asset.h
-        ../shared_cpp/assetlib/cubemap_asset.cpp
+        ${ASSETLIB_DIR}/asset_loader.cpp
+        ${ASSETLIB_DIR}/cubemap_asset.cpp
 )
 target_include_directories(assetlib PRIVATE
         ${ASSETLIB_INCL}

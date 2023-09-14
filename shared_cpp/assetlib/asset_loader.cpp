@@ -1,12 +1,5 @@
 #include "asset_loader.h"
 
-const internal_func char* mapCompressionModeToString[] = {
-        "None",
-#define CompressionMode(name) #name,
-#include "compression_mode.incl"
-#undef CompressionMode
-};
-
 #if defined(ANDROID) || defined(__ANDROID___)
 bool assets::loadAssetFile(AAssetManager* assetManager, const char* path, AssetFile* outputFile) {
   AAsset *androidAsset = AAssetManager_open(assetManager, path, AASSET_MODE_STREAMING);
@@ -124,11 +117,3 @@ bool assets::loadAssetFile(const char* path, AssetFile* outputFile) {
   return true;
 }
 #endif
-
-const char* assets::compressionModeToString(CompressionMode compressionMode) {
-  return mapCompressionModeToString[compressionModeToEnumVal(compressionMode)];
-}
-
-u32 assets::compressionModeToEnumVal(CompressionMode compressionMode) {
-  return static_cast<u32>(compressionMode);
-}

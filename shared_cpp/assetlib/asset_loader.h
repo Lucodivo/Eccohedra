@@ -14,6 +14,10 @@
 
 #if defined(ANDROID) || defined(__ANDROID___)
 #include "android_platform.h"
+#else
+#define LOGI(...) printf(__VA_ARGS__)
+#define LOGW(...) printf(__VA_ARGS__)
+#define LOGE(...) printf(__VA_ARGS__)
 #endif
 
 #define FILE_TYPE_SIZE_IN_BYTES 4
@@ -23,15 +27,9 @@ namespace assets {
   struct AssetFile{
     char type[FILE_TYPE_SIZE_IN_BYTES];
     int version;
+    // TODO: Remove json, just use bytes
     std::string json; // metadata specific to asset type
     std::vector<char> binaryBlob; // the actual asset
-  };
-
-  enum class CompressionMode : u32 {
-    None = 0,
-#define CompressionMode(name) name,
-#include "compression_mode.incl"
-#undef CompressionMode
   };
 
 #if defined(ANDROID) || defined(__ANDROID___)
@@ -40,7 +38,4 @@ namespace assets {
   bool saveAssetFile(const char* path, const AssetFile& file);
   bool loadAssetFile(const char* path, AssetFile* outputFile);
 #endif
-
-  const char* compressionModeToString(CompressionMode compressionMode);
-  u32 compressionModeToEnumVal(CompressionMode compressionMode);
 }

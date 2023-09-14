@@ -1,2 +1,3 @@
 //CubeMapFormat(format, byte count per pixel)
-CubeMapFormat(RGB8, 3)
+CubeMapFormat(RGB8)
+CubeMapFormat(ETC2_RGB)

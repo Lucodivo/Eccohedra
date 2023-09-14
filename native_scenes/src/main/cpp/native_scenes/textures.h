@@ -109,6 +109,8 @@ void loadCubeMapTexture(const char* fileName, GLuint* textureId) {
     TimeBlock("assets::readCubeMapInfo")
     assets::readCubeMapInfo(cubeMapAssetFile, &cubeMapInfo);
   }
+
+  // TODO: Avoid the binary blob business and just have the asset supply the data directly.
   char* cubeMapData;
   {
     TimeBlock("loadCubeMapTexture - malloc cubemap texture")
@@ -122,16 +124,17 @@ void loadCubeMapTexture(const char* fileName, GLuint* textureId) {
   {
     TimeBlock("loadCubeMapTexture - glTexImage2D")
     // TODO: If we ever support other formats besides RGB8 we will need to explicitly translate the CubeMapInfo.format to a GL_{format}
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_BACK));
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_FRONT));
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_BOTTOM));
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_TOP));
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_LEFT));
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGB, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_RIGHT));
+    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_COMPRESSED_RGB8_ETC2, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_FRONT));
+    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_COMPRESSED_RGB8_ETC2, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_BACK));
+    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_COMPRESSED_RGB8_ETC2, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_TOP));
+    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_COMPRESSED_RGB8_ETC2, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_BOTTOM));
+    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_COMPRESSED_RGB8_ETC2, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_RIGHT));
+    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_COMPRESSED_RGB8_ETC2, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_LEFT));
   }
 
   {
     TimeBlock("loadCubeMapTexture - free cubemap texture")
     free(cubeMapData);
   }
+  glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
