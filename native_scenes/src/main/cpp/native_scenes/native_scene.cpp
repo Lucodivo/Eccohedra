@@ -37,6 +37,10 @@ static void handleAndroidCmd(android_app *app, s32 cmd);
 void glDeinit(GLEnvironment *glEnv);
 void closeActivity(ANativeActivity* activity);
 
+void onTerminate(Engine *engine);
+void onResume(Engine *engine);
+void onPause(Engine *engine);
+
 // The VM calls JNI_OnLoad when the native library is loaded (ex: System.loadLibrary)
 // JNI_OnLoad must return the JNI version needed by the native library.
 //JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
@@ -51,10 +55,9 @@ void closeActivity(ANativeActivity* activity);
 void android_main(android_app *app) {
   BeginProfile();
 
-  Engine engine{};
+  Engine engine{0};
   engine.initializing = true;
 
-  memset(&engine, 0, sizeof(engine));
   app->userData = &engine;
   app->onAppCmd = handleAndroidCmd;
   app->onInputEvent = handleInput;
@@ -67,7 +70,7 @@ void android_main(android_app *app) {
   {
     TimeBlock("Acquire Android Resource Managers")
     assetManager_GLOBAL = app->activity->assetManager;
-    engine.sensorManager = acquireASensorManagerInstance(app);
+    engine.sensorManager = ASensorManager_getInstance();
     engine.accelerometerSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
                                                                  ASENSOR_TYPE_ACCELEROMETER);
     engine.sensorEventQueue = ASensorManager_createEventQueue(engine.sensorManager, app->looper,
@@ -100,16 +103,18 @@ void android_main(android_app *app) {
         source->process(app, source);
       }
 
-      switch (pollResult) {
-        case LOOPER_ID_USER: { // user defined ALooper identifiers
-          if (engine.accelerometerSensor != nullptr && engine.sensorEventQueue != nullptr) {
-            while (ASensorEventQueue_getEvents(engine.sensorEventQueue, &sensorEvent, 1) > 0) {
-//                            LOGI("accelerometer: inputX=%f inputY=%f z=%f", sensorEvent.acceleration.x, sensorEvent.acceleration.y, sensorEvent.acceleration.z);
-            }
+      if (pollResult == LOOPER_ID_USER) {
+        if (engine.accelerometerSensor != nullptr && engine.sensorEventQueue != nullptr) {
+          while (ASensorEventQueue_getEvents(engine.sensorEventQueue, &sensorEvent, 1) > 0) {
+//              LOGI("accelerometer: inputX=%f inputY=%f z=%f", sensorEvent.acceleration.x, sensorEvent.acceleration.y, sensorEvent.acceleration.z);
           }
         }
-        default: {
-        }
+      }
+
+      // Check if we are exiting.
+      if (app->destroyRequested != 0) {
+        onTerminate(&engine);
+        return;
       }
     }
 
@@ -175,31 +180,7 @@ static s32 handleInput(android_app *app, AInputEvent *event) {
   return 0;
 }
 
-void onResume(Engine *engine) {
-  if (engine->accelerometerSensor != nullptr) {
-    ASensorEventQueue_enableSensor(engine->sensorEventQueue, engine->accelerometerSensor);
-    const s32 microsecondsPerSecond = 1000000;
-    const s32 samplesPerSecond = 60;
-    const s32 microsecondsPerSample = microsecondsPerSecond / samplesPerSecond;
-    ASensorEventQueue_setEventRate(engine->sensorEventQueue, engine->accelerometerSensor,
-                                   microsecondsPerSample);
-  }
-  engine->paused = false;
-}
-
-void onPause(Engine *engine) {
-  // Stop monitoring the accelerometer to avoid consuming battery while not being used.
-  if (engine->accelerometerSensor != nullptr) {
-    ASensorEventQueue_disableSensor(engine->sensorEventQueue, engine->accelerometerSensor);
-  }
-  engine->paused = true;
-}
-
 void closeActivity(ANativeActivity* activity) { ANativeActivity_finish(activity); }
-
-void onTerminate(Engine *engine) {
-  glDeinit(&engine->glEnv);
-}
 
 /**
  * This function is called from android_native_app_glue.c::process_cmd()
@@ -233,7 +214,6 @@ static void handleAndroidCmd(android_app *app, s32 cmd) {
       break;
     }
     case APP_CMD_TERM_WINDOW: { // The window is being hidden or closed. Clean up.
-      onTerminate(engine);
       break;
     }
     case APP_CMD_GAINED_FOCUS: { // the app's activity window has gained input focus.
@@ -253,4 +233,30 @@ static void handleAndroidCmd(android_app *app, s32 cmd) {
     default:
       break;
   }
+}
+
+void onResume(Engine *engine) {
+  if (engine->accelerometerSensor != nullptr) {
+    ASensorEventQueue_enableSensor(engine->sensorEventQueue, engine->accelerometerSensor);
+    const s32 microsecondsPerSecond = 1000000;
+    const s32 samplesPerSecond = 60;
+    const s32 microsecondsPerSample = microsecondsPerSecond / samplesPerSecond;
+    ASensorEventQueue_setEventRate(engine->sensorEventQueue, engine->accelerometerSensor,
+                                   microsecondsPerSample);
+  }
+  engine->paused = false;
+}
+
+void onTerminate(Engine *engine) {
+  ASensorManager_destroyEventQueue(engine->sensorManager, engine->sensorEventQueue);
+  deinitPortalScene();
+  glDeinit(&engine->glEnv);
+}
+
+void onPause(Engine *engine) {
+  // Stop monitoring the accelerometer to avoid consuming battery while not being used.
+  if (engine->accelerometerSensor != nullptr) {
+    ASensorEventQueue_disableSensor(engine->sensorEventQueue, engine->accelerometerSensor);
+  }
+  engine->paused = true;
 }

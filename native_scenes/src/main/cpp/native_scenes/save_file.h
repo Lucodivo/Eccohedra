@@ -78,20 +78,20 @@ SaveFormat originalWorld() {
   shaders.reserve(3);
   shaders.push_back({
       0,
-      "shaders/gate.vert",
-      "shaders/gate.frag",
+      "gate.vert",
+      "gate.frag",
       "tiled_musgrave_texture_1_blur"
   });
   shaders.push_back({
       1,
-      "shaders/pos.vert",
-      "shaders/single_color.frag",
+      "pos.vert",
+      "single_color.frag",
       ""
   });
   shaders.push_back({
       2,
-      "shaders/pos_norm.vert",
-      "shaders/skybox_rhzup_to_lhyup.frag",
+      "pos_norm.vert",
+      "skybox_rhzup_to_lhyup.frag",
       ""
   });
 

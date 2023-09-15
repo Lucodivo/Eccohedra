@@ -64,7 +64,7 @@ class SceneListDetailViewModel : ViewModel() {
                                                 val nativeActivity: Class<*>)
             : ListItemDataI by listItemData
 
-        private val programListItemsData = listOf<ListItemDataI>(
+        private val programListItemsData = listOf(
             KotlinProgramListItemData(ListItemData(
                 imageResId = R.drawable.infinite_cube_2720_1440,
                 displayTextResId = R.string.infinite_cube_scene_title,
@@ -85,6 +85,7 @@ class SceneListDetailViewModel : ViewModel() {
                 displayTextResId = R.string.menger_prison_scene_title,
                 descTextResId = R.string.menger_prison_thumbnail_description),
                 sceneCreator = ::MengerPrisonScene),
+            // TODO: Update image and text
             NativeProgramListItemData(ListItemData(
                 imageResId = R.drawable.blue_debug,
                 displayTextResId = R.string.debug_string_id,

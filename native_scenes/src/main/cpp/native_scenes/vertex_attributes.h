@@ -28,8 +28,8 @@ const BoundingBox cubeVertAttBoundingBox = {
         {1.0f, 1.0f, 1.0f}
 };
 
-VertexAtt cubePosVertexAttBuffers(bool invertedWindingOrder = false, bool openNegYFace = false);
-VertexAtt quadVertexPosAttBuffers(b32 textureAtt = false);
+VertexAtt* cubePosVertexAttBuffers(bool invertedWindingOrder = false, bool openNegYFace = false);
+VertexAtt* quadPosVertexAttBuffers(b32 textureAtt = false);
 
 void drawTriangles(const VertexAtt* vertexAtt, u32 count, u32 offset);
 void drawTriangles(const VertexAtt* vertexAtt);

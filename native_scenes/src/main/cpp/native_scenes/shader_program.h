@@ -1,6 +1,6 @@
 #pragma once
 
-internal_func u32 loadShader(const char* shaderPath, GLenum shaderType);
+internal_func u32 loadShader(const char* shaderFileName, GLenum shaderType);
 
 ShaderProgram createShaderProgram(const char* vertexPath, const char* fragmentPath, const char* noiseTexture = nullptr) {
   TimeFunction
@@ -38,22 +38,25 @@ ShaderProgram createShaderProgram(const char* vertexPath, const char* fragmentPa
   return shaderProgram;
 }
 
-void deleteShaderProgram(ShaderProgram* shaderProgram)
-{
-  // delete the shaders
-  delete[] shaderProgram->vertexFileName;
-  delete[] shaderProgram->fragmentFileName;
+void deleteShaderPrograms(ShaderProgram* shaderPrograms, u32 count) {
+  for(u32 i = 0; i < count; i++) {
+    ShaderProgram* shader = shaderPrograms + i;
 
-  glDeleteShader(shaderProgram->vertexShader);
-  glDeleteShader(shaderProgram->fragmentShader);
-  glDeleteProgram(shaderProgram->id);
+    // delete the shaders
+    delete[] shader->vertexFileName;
+    delete[] shader->fragmentFileName;
 
-  if(shaderProgram->noiseTextureFileName != nullptr) {
-    delete[] shaderProgram->noiseTextureFileName;
-    glDeleteTextures(1, &shaderProgram->noiseTextureId);
+    glDeleteShader(shader->vertexShader);
+    glDeleteShader(shader->fragmentShader);
+    glDeleteProgram(shader->id);
+
+    if(shader->noiseTextureFileName != nullptr) {
+      delete[] shader->noiseTextureFileName;
+      glDeleteTextures(1, &shader->noiseTextureId);
+    }
+
+    *shader = {};
   }
-
-  *shaderProgram = {}; // clear to zero
 }
 
 // utility uniform functions
@@ -149,7 +152,7 @@ inline void bindBlockIndex(GLuint shaderId, const std::string& name, u32 index)
  *  - Shader id
  *    - 0 is returned on error to load shader
  */
-internal_func GLuint loadShader(const char* shaderPath, GLenum shaderType) {
+internal_func GLuint loadShader(const char* shaderFileName, GLenum shaderType) {
   TimeFunction
 
   std::string shaderTypeStr;
@@ -159,9 +162,11 @@ internal_func GLuint loadShader(const char* shaderPath, GLenum shaderType) {
     shaderTypeStr = "FRAGMENT";
   }
 
-  Asset shaderAsset = Asset(assetManager_GLOBAL, shaderPath);
+  std::string shaderDir = "shaders/";
+  std::string assetPath = shaderDir + shaderFileName;
+  Asset shaderAsset = Asset(assetManager_GLOBAL, assetPath.c_str());
   if(!shaderAsset.success()) {
-    LOGE("ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ - %s", shaderPath);
+    LOGE("ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ - %s", shaderFileName);
     return 0;
   }
 
@@ -177,7 +182,7 @@ internal_func GLuint loadShader(const char* shaderPath, GLenum shaderType) {
   {
     char infoLog[1024];
     glGetShaderInfoLog(shader, ArrayCount(infoLog), NULL, infoLog);
-    LOGE("ERROR::SHADER::%s::COMPILATION_FAILED - %s\n%s", shaderTypeStr.c_str(), shaderPath, infoLog);
+    LOGE("ERROR::SHADER::%s::COMPILATION_FAILED - %s\n%s", shaderTypeStr.c_str(), shaderFileName, infoLog);
     return 0;
   }
 

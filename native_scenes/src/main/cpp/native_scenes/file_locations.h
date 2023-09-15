@@ -2,12 +2,12 @@
 
 // ==== shaders ====
 #define COMMON_SHADER_BASE "shaders/"
-const char* posVertexShaderFileLoc = COMMON_SHADER_BASE"pos.vert";
-const char* skyboxVertexShaderFileLoc = COMMON_SHADER_BASE"skybox.vert";
-const char* singleColorFragmentShaderFileLoc = COMMON_SHADER_BASE"single_color.frag";
-const char* skyboxFragmentShaderFileLoc = COMMON_SHADER_BASE"skybox_rhzup_to_lhyup.frag";
-const char* gateFragmentShaderFileLoc = COMMON_SHADER_BASE"gat.frag";
-const char* blackFragmentShaderFileLoc = COMMON_SHADER_BASE"black.frag";
+const char* posVertexShaderFileLoc = "pos.vert";
+const char* skyboxVertexShaderFileLoc = "skybox.vert";
+const char* singleColorFragmentShaderFileLoc = "single_color.frag";
+const char* skyboxFragmentShaderFileLoc = "skybox_rhzup_to_lhyup.frag";
+const char* gateFragmentShaderFileLoc = "gat.frag";
+const char* blackFragmentShaderFileLoc = "black.frag";
 
 // Textures
 #define COMMON_TEXTURE_BASE "textures/"

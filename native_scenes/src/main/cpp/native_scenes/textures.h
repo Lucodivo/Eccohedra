@@ -51,17 +51,15 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
   char* textureData = textureAssetFile.binaryBlob.data();
 
   if(textureInfo.format == assets::TextureFormat_R8) {
-    u32 dataColorSpace = GL_R8;
-    u32 dataComponentComposition = GL_RED;
-    glTexImage2D(GL_TEXTURE_2D, // target
-                 0, // level of detail (level n is the nth mipmap reduction image)
-                 dataColorSpace, // What is the color space of the data
-                 textureInfo.width, // width of texture
-                 textureInfo.height, // height of texture
-                 0, // border (legacy stuff, MUST BE 0)
-                 dataComponentComposition, // How are the components of the data composed
-                 GL_UNSIGNED_BYTE, // specifies data type of pixel data
-                 textureData); // pointer to the image data
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_R8,
+                 textureInfo.width,
+                 textureInfo.height,
+                 0,
+                 GL_RED,
+                 GL_UNSIGNED_BYTE,
+                 textureData);
   } else if (textureInfo.format == assets::TextureFormat_ETC2_RGB) {
     glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X,
                            0,

@@ -83,13 +83,8 @@ const vec3 defaultPlayerDimensionInMeters{0.5f, 0.25f, 1.75f}; // NOTE: ~1'7"w, 
 const f32 near = 0.1f;
 const f32 far = 200.0f;
 
-global_variable GLuint portalQueryObjects[MAX_PORTALS];
-
-global_variable struct {
-  VertexAtt portalQuad{};
-  VertexAtt portalBox{};
-  VertexAtt skyboxBox{};
-} globalVertexAtts;
+// TODO: Why is this global?
+global_variable GLuint portalQueryObjects_GLOBAL[MAX_PORTALS];
 
 global_variable union {
   struct {
@@ -98,7 +93,7 @@ global_variable union {
     ShaderProgram stencil;
   };
   ShaderProgram shaders[3];
-} globalShaders;
+} shaders_GLOBAL;
 
 void drawScene(World* world, const u32 sceneIndex, u32 stencilMask = 0x00);
 void drawPortals(World* world, const u32 sceneIndex);
@@ -187,26 +182,9 @@ void adjustAmbientLight(World* world, u32 sceneIndex, vec3 lightColor, f32 light
   scene->ambientLight.a = lightPower;
 }
 
-void removeAmbientLight(World* world, u32 sceneIndex) {
-  world->scenes[sceneIndex].ambientLight = {};
-}
-
 u32 addNewModel(World* world, const char* modelFileLoc) {
   u32 modelIndex = world->modelCount++;
   loadModel(modelFileLoc, world->models + modelIndex);
-  return modelIndex;
-}
-
-u32 addNewModel_Skybox(World* world) {
-  u32 modelIndex = world->modelCount++;
-  Model* model = world->models + modelIndex;
-  model->boundingBox = cubeVertAttBoundingBox;
-  model->meshes = new Mesh[1];
-  model->meshCount = 1;
-  model->meshes[0].vertexAtt = cubePosVertexAttBuffers(true);
-  model->meshes[0].textureData = {};
-  model->meshes[0].textureData.albedoTextureId = TEXTURE_ID_NO_TEXTURE;
-  model->meshes[0].textureData.normalTextureId = TEXTURE_ID_NO_TEXTURE;
   return modelIndex;
 }
 
@@ -223,8 +201,8 @@ void drawTrianglesWireframe(const VertexAtt* vertexAtt) {
   // TODO: This will not work at all in a general case
   // TODO: It only currently works because the wireframe shapes are the first things we draw in each scene
   // TODO: can't just disable the depth test whenever
-  glUseProgram(globalShaders.singleColor.id);
-  setUniform(globalShaders.singleColor.id, "baseColor", vec3{0.0f, 0.0f, 0.0f});
+  glUseProgram(shaders_GLOBAL.singleColor.id);
+  setUniform(shaders_GLOBAL.singleColor.id, "baseColor", vec3{0.0f, 0.0f, 0.0f});
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
   drawLines(vertexAtt); // TODO: This probably does not work and should be monitored
@@ -237,7 +215,7 @@ mat4 calcBoxStencilModelMatFromPortalModelMat(const mat4& portalModelMat) {
 }
 
 void drawPortal(const World* world, Portal* portal) {
-  glUseProgram(globalShaders.stencil.id);
+  glUseProgram(shaders_GLOBAL.stencil.id);
 
   // NOTE: Stencil function Example
   // GL_LEQUAL
@@ -250,16 +228,16 @@ void drawPortal(const World* world, Portal* portal) {
               GL_REPLACE); // action when both stencil and depth pass
 
   mat4 portalModelMat = quadModelMatrix(portal->centerPosition, portal->normal, portal->dimens.x, portal->dimens.y);
-  VertexAtt* portalVertexAtt = &globalVertexAtts.portalQuad;
+  VertexAtt* portalVertexAtt = quadPosVertexAttBuffers(false);
   if(flagIsSet(portal->stateFlags, PortalState_InFocus)) {
     portalModelMat = calcBoxStencilModelMatFromPortalModelMat(portalModelMat);
-    portalVertexAtt = &globalVertexAtts.portalBox;
+    portalVertexAtt = cubePosVertexAttBuffers(true, true);
   }
 
   glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
   glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &portalModelMat);
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
-  glUseProgram(globalShaders.stencil.id);
+  glUseProgram(shaders_GLOBAL.stencil.id);
   glStencilMask(portal->stencilMask);
   drawTriangles(portalVertexAtt);
 }
@@ -275,7 +253,7 @@ void drawPortals(World* world, const u32 sceneIndex){
     if(!flagIsSet(portal->stateFlags, PortalState_FacingCamera)) { continue; }
 
     // begin occlusion query
-    glBeginQuery(GL_ANY_SAMPLES_PASSED, portalQueryObjects[portalIndex]);
+    glBeginQuery(GL_ANY_SAMPLES_PASSED, portalQueryObjects_GLOBAL[portalIndex]);
     drawPortal(world, portal);
     // end occlusion query
     glEndQuery(GL_ANY_SAMPLES_PASSED);
@@ -317,14 +295,14 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
   Scene* scene = world->scenes + sceneIndex;
 
   if(scene->skyboxTexture != TEXTURE_ID_NO_TEXTURE) { // draw skybox if one exists
-    glUseProgram(globalShaders.skybox.id);
+    glUseProgram(shaders_GLOBAL.skybox.id);
     bindActiveTextureCubeMap(skyboxActiveTextureIndex, scene->skyboxTexture);
-    setSamplerCube(globalShaders.skybox.id, skyboxTexUniformName, skyboxActiveTextureIndex);
+    setSamplerCube(shaders_GLOBAL.skybox.id, skyboxTexUniformName, skyboxActiveTextureIndex);
     mat4 identityMat4 = identity_mat4();
     glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
     glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &identityMat4);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    drawTriangles(&globalVertexAtts.skyboxBox);
+    drawTriangles(cubePosVertexAttBuffers(true));
   }
 
   // update scene light uniform buffer object
@@ -471,15 +449,13 @@ void updateEntities(World* world) {
 }
 
 void initGlobalShaders() {
-  globalShaders.singleColor = createShaderProgram(posVertexShaderFileLoc, singleColorFragmentShaderFileLoc);
-  globalShaders.stencil = createShaderProgram(posVertexShaderFileLoc, blackFragmentShaderFileLoc);
-  globalShaders.skybox = createShaderProgram(skyboxVertexShaderFileLoc, skyboxFragmentShaderFileLoc);
+  shaders_GLOBAL.singleColor = createShaderProgram(posVertexShaderFileLoc, singleColorFragmentShaderFileLoc);
+  shaders_GLOBAL.stencil = createShaderProgram(posVertexShaderFileLoc, blackFragmentShaderFileLoc);
+  shaders_GLOBAL.skybox = createShaderProgram(skyboxVertexShaderFileLoc, skyboxFragmentShaderFileLoc);
 }
 
-void initGlobalVertexAtts() {
-  globalVertexAtts.portalQuad = quadPosVertexAttBuffers(false);
-  globalVertexAtts.portalBox = cubePosVertexAttBuffers(true, true);
-  globalVertexAtts.skyboxBox = cubePosVertexAttBuffers(true);
+void deinitGlobalShaders() {
+  deleteShaderPrograms(shaders_GLOBAL.shaders, ArrayCount(shaders_GLOBAL.shaders));
 }
 
 void cleanupScene(Scene* scene) {
@@ -510,11 +486,9 @@ void cleanupWorld(World* world) {
   deleteModels(world->models, world->modelCount);
   memset(world->models, 0, sizeof(Model) * world->modelCount);
 
-  for(u32 shaderIndex = 0; shaderIndex < world->shaderCount; shaderIndex++) {
-    deleteShaderProgram(world->shaders + shaderIndex);
-  }
+  deleteShaderPrograms(world->shaders, world->shaderCount);
 
-  world = {};
+  *world = {0};
 }
 
 void initPlayer(Player* player) {
@@ -647,7 +621,7 @@ void updateSceneWindow(u32 width, u32 height) {
 void initPortalScene() {
   TimeFunction
 
-  glGenQueries(ArrayCount(portalQueryObjects), portalQueryObjects);
+  glGenQueries(ArrayCount(portalQueryObjects_GLOBAL), portalQueryObjects_GLOBAL);
 
   initGlobalShaders();
   initGlobalVertexAtts();
@@ -757,12 +731,13 @@ void drawPortalScene() {
 
 void deinitPortalScene() {
   cleanupWorld(&globalWorld);
+  deinitGlobalShaders();
+  deinitGlobalVertexAtts();
+  glDeleteQueries(ArrayCount(portalQueryObjects_GLOBAL), portalQueryObjects_GLOBAL);
 }
 
 void portalScene() {
-  glGenQueries(ArrayCount(portalQueryObjects), portalQueryObjects);
-
-  VertexAtt cubePosVertexAtt = cubePosVertexAttBuffers();
+  glGenQueries(ArrayCount(portalQueryObjects_GLOBAL), portalQueryObjects_GLOBAL);
 
   initGlobalShaders();
   initGlobalVertexAtts();
@@ -870,6 +845,4 @@ void portalScene() {
 
     // TODO: End of render loop, make sure to swap buffers and make sure we get input for next frame
   }
-
-  cleanupWorld(&globalWorld);
 }

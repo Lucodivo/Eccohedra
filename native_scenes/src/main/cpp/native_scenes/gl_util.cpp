@@ -111,9 +111,23 @@ void glDeinit(GLEnvironment *glEnv) {
 }
 
 void logDeviceGLEnvironment() {
-  auto opengl_info = {GL_VENDOR, GL_RENDERER, GL_VERSION, GL_EXTENSIONS};
-  for (auto name: opengl_info) {
-    auto info = glGetString(name);
-    LOGI("OpenGL Info: %s", info);
+  auto info = glGetString(GL_VENDOR);
+  LOGI("OpenGL Info: Vendor\t- %s", info);
+
+  info = glGetString(GL_RENDERER);
+  LOGI("OpenGL Info: GPU\t- %s", info);
+
+  info = glGetString(GL_VERSION);
+  LOGI("OpenGL Info: Version\t- %s", info);
+
+  info = glGetString(GL_EXTENSIONS);
+  LOGI("OpenGL Info: Extensions", info);
+  char* substrBegin = (char*)info;
+  char* substrEnd = (char*)info;
+  while(*substrEnd != '\0') {
+    while(*substrEnd++ != ' '){}
+    LOGI("\t\t%.*s", substrEnd - substrBegin, substrBegin);
+    substrBegin = substrEnd;
   }
+  LOGI("\t\t%s", substrBegin);
 }

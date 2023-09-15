@@ -299,58 +299,21 @@ void loadModel(const char* filePath, Model* returnModel) {
   }
 }
 
-void loadModels(const char** filePaths, u32 count, Model** returnModels) {
-  tinygltf::TinyGLTF loader;
-
-  for(u32 i = 0; i < count; i++) {
-    std::string err;
-    std::string warn;
-    tinygltf::Model tinyGLTFModel;
-
-    bool ret = loader.LoadBinaryFromFile(&tinyGLTFModel, &err, &warn, filePaths[i]); // for binary glTF(.glb)
-
-    if (!warn.empty()) {
-      printf("Warn: %s\n", warn.c_str());
-      return;
-    }
-
-    if (!err.empty()) {
-      printf("Err: %s\n", err.c_str());
-      return;
-    }
-
-    if (!ret) {
-      printf("Failed to parse glTF\n");
-      return;
-    }
-
-    returnModels[i]->fileName = cStrAllocateAndCopy(filePaths[i]);
-    initializeModelVertexData(&tinyGLTFModel, returnModels[i]);
-  }
-}
-
-void drawModel(const Model& model) {
-  for(u32 i = 0; i < model.meshCount; ++i) {
-    Mesh* meshPtr = model.meshes + i;
-    drawTriangles(&meshPtr->vertexAtt);
-  }
-}
-
 void deleteModels(Model* models, u32 count) {
   std::vector<VertexAtt> vertexAtts;
   std::vector<GLuint> textureData;
 
-  for(u32 i = 0; i < count; ++i) {
-    Model* modelPtr = models + i;
-    for(u32 i = 0; i < modelPtr->meshCount; ++i) {
-      Mesh* meshPtr = modelPtr->meshes;
+  for(u32 modelIndex = 0; modelIndex < count; ++modelIndex) {
+    Model* modelPtr = models + modelIndex;
+    for(u32 meshIndex = 0; meshIndex < modelPtr->meshCount; ++meshIndex) {
+      Mesh* meshPtr = modelPtr->meshes + meshIndex;
       vertexAtts.push_back(meshPtr->vertexAtt);
-      TextureData textureDatum = meshPtr->textureData;
-      if(textureDatum.normalTextureId != TEXTURE_ID_NO_TEXTURE) {
-        textureData.push_back(textureDatum.normalTextureId);
+      TextureData texData = meshPtr->textureData;
+      if(texData.normalTextureId != TEXTURE_ID_NO_TEXTURE) {
+        textureData.push_back(texData.normalTextureId);
       }
-      if(textureDatum.albedoTextureId != TEXTURE_ID_NO_TEXTURE) {
-        textureData.push_back(textureDatum.albedoTextureId);
+      if(texData.albedoTextureId != TEXTURE_ID_NO_TEXTURE) {
+        textureData.push_back(texData.albedoTextureId);
       }
     }
     delete[] modelPtr->meshes;
