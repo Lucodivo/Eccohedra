@@ -42,14 +42,13 @@ struct {
   const char* cubeMap = ".cbtx";
 } bakedExtensions;
 
+const char* assetBakerCacheFileName = "Asset-Baker-Cache.asb";
 struct {
-  const char* assetBakerCacheFileName = "Asset-Baker-Cache.asb";
   const char* cacheFiles = "cacheFiles";
   const char* originalFileName = "originalFileName";
   const char* originalFileLastModified = "originalFileLastModified";
   const char* bakedFiles = "bakedFiles";
   const char* fileName = "fileName";
-  const char* fileExt = "fileExt";
   const char* filePath = "filePath";
 } cacheJsonStrings;
 
@@ -76,6 +75,7 @@ struct AssetBakeCachedItem {
 };
 
 bool convertTexture(const fs::path& inputPath, const char* outputFilename);
+bool convertCubeMapTexture(const fs::path& inputDir, const char* outputFilename);
 
 //void packVertex(assets::Vertex_PNCV_f32& new_vert, tinyobj::real_t vx, tinyobj::real_t vy, tinyobj::real_t vz, tinyobj::real_t nx, tinyobj::real_t ny, tinyobj::real_t nz, tinyobj::real_t ux, tinyobj::real_t uy);
 //void packVertex(assets::Vertex_P32N8C8V16& new_vert, tinyobj::real_t vx, tinyobj::real_t vy, tinyobj::real_t vz, tinyobj::real_t nx, tinyobj::real_t ny, tinyobj::real_t nz, tinyobj::real_t ux, tinyobj::real_t uy);
@@ -108,7 +108,7 @@ f64 lastModifiedTimeStamp(const fs::path& file) {
 }
 
 bool fileUpToDate(const std::unordered_map<std::string, AssetBakeCachedItem>& cache, fs::path file) {
-  std::string fileName = file.filename().string();
+  std::string fileName = file.string();
   auto cachedItem = cache.find(fileName);
   if(cachedItem == cache.end()) {
     return false;
@@ -233,12 +233,12 @@ void saveCache(const std::unordered_map<std::string, AssetBakeCachedItem>& oldCa
       const AssetBakeCachedItem::BakedFile& bakedFile = oldCacheItem.bakedFiles[i];
       newCacheBakedFile[cacheJsonStrings.filePath] = bakedFile.path;
       newCacheBakedFile[cacheJsonStrings.fileName] = bakedFile.name;
-      newCacheBakedFile[cacheJsonStrings.fileExt] = bakedFile.ext;
       newCacheBakedFiles.push_back(newCacheBakedFile);
     }
     newCacheItemJson[cacheJsonStrings.bakedFiles] = newCacheBakedFiles;
     bakedFiles.push_back(newCacheItemJson);
   }
+
   for(auto& newCacheItem : newBakedItems) {
     nlohmann::json newCacheItemJson;
     newCacheItemJson[cacheJsonStrings.originalFileName] = newCacheItem.originalFileName;
@@ -250,7 +250,6 @@ void saveCache(const std::unordered_map<std::string, AssetBakeCachedItem>& oldCa
       const AssetBakeCachedItem::BakedFile& bakedFile = newCacheItem.bakedFiles[i];
       newCacheBakedFile[cacheJsonStrings.filePath] = bakedFile.path;
       newCacheBakedFile[cacheJsonStrings.fileName] = bakedFile.name;
-      newCacheBakedFile[cacheJsonStrings.fileExt] = bakedFile.ext;
       newCacheBakedFiles.push_back(newCacheBakedFile);
     }
     newCacheItemJson[cacheJsonStrings.bakedFiles] = newCacheBakedFiles;
@@ -259,13 +258,13 @@ void saveCache(const std::unordered_map<std::string, AssetBakeCachedItem>& oldCa
 
   cacheJson[cacheJsonStrings.cacheFiles] = bakedFiles;
   std::string jsonString = cacheJson.dump(1);
-  writeFile(cacheJsonStrings.assetBakerCacheFileName, jsonString);
+  writeFile(assetBakerCacheFileName, jsonString);
 }
 
 void loadCache(std::unordered_map<std::string, AssetBakeCachedItem>& assetBakeCache) {
   std::vector<char> fileBytes;
 
-  if(!readFile(cacheJsonStrings.assetBakerCacheFileName, fileBytes)) {
+  if(!readFile(assetBakerCacheFileName, fileBytes)) {
     return;
   }
 
@@ -284,7 +283,6 @@ void loadCache(std::unordered_map<std::string, AssetBakeCachedItem>& assetBakeCa
       AssetBakeCachedItem::BakedFile bakedFile;
       bakedFile.path = bakedFileJson[cacheJsonStrings.filePath];
       bakedFile.name = bakedFileJson[cacheJsonStrings.fileName];
-      bakedFile.ext = bakedFileJson[cacheJsonStrings.fileExt];
       cachedItem.bakedFiles.push_back(bakedFile);
     }
     assetBakeCache[cachedItem.originalFileName] = cachedItem;
@@ -295,6 +293,17 @@ int main(int argc, char* argv[]) {
 
   // NOTE: Count is often at least 1, as argv[0] is full path of the program being run
   if(argc < 4) {
+    char* arg1 = {argv[1]};
+    if(strcmp(arg1, "--clean") == 0) {
+      fs::path cacheFile{assetBakerCacheFileName};
+      if(fs::remove(cacheFile)) {
+        printf("Successfully deleted cache.");
+      } else {
+        printf("Attempted to clean but cache file was not found.");
+      }
+      return 0;
+    }
+
     printf("Incorrect number of arguments.\n");
     printf("Use ex: .\\assetbaker {raw assets dir} {baked asset output dir} {baked asset metadata output dir}\n");
     return -1;
@@ -330,17 +339,21 @@ int main(int argc, char* argv[]) {
   fs::create_directory(converterState.bakedAssetDir / "textures");
 
   // TODO: Bring back with a cache that respects file formats
-//  size_t skyboxDirCount = dirCountInDir(asset_skyboxes_dir);
-//  printf("skybox directories found: %d\n", (int)skyboxDirCount);
-//  for(auto const& skyboxDir: std::filesystem::directory_iterator(asset_skyboxes_dir)) {
-//    if(fileUpToDate(oldAssetBakeCache, skyboxDir)) {
-//      continue;
-//    } else if(fs::is_directory(skyboxDir)) {
-//      fs::path exportPath = converterState.bakedAssetDir / "skyboxes" / skyboxDir.path().filename().replace_extension(bakedExtensions.cubeMap);
-//      printf("%s\n", skyboxDir.path().string().c_str());
-//      convertCubeMapTexture(skyboxDir, exportPath.string().c_str());
-//    }
-//  }
+  size_t skyboxDirCount = dirCountInDir(asset_skyboxes_dir);
+  printf("skybox directories found: %d\n", (int)skyboxDirCount);
+  for(auto const& skyboxDir: std::filesystem::directory_iterator(asset_skyboxes_dir)) {
+    if(fileUpToDate(oldAssetBakeCache, skyboxDir)) {
+      continue;
+    } else if(fs::is_directory(skyboxDir)) {
+      fs::path exportPath = converterState.bakedAssetDir / "skyboxes" / skyboxDir.path().filename().replace_extension(bakedExtensions.cubeMap);
+      printf("Beginning bake of skybox asset: %s\n", skyboxDir.path().string().c_str());
+      if(convertCubeMapTexture(skyboxDir, exportPath.string().c_str())) {
+        converterState.bakedFilePaths.push_back(skyboxDir);
+      } else {
+        printf("Failed to bake skybox asset: %s\n", skyboxDir.path().string().c_str());
+      }
+    }
+  }
 
   if(exists(asset_textures_dir)) {
     for(auto const& textureFileEntry: std::filesystem::directory_iterator(asset_textures_dir)) {
@@ -348,121 +361,132 @@ int main(int argc, char* argv[]) {
         continue;
       } else if(fs::is_regular_file(textureFileEntry)) {
         fs::path exportPath = converterState.bakedAssetDir / "textures" / textureFileEntry.path().filename().replace_extension(bakedExtensions.texture);
-        printf("%s\n", textureFileEntry.path().string().c_str());
-        convertTexture(textureFileEntry, exportPath.string().c_str());
+        printf("Beginning bake of texture asset: %s\n", textureFileEntry.path().string().c_str());
+        if(convertTexture(textureFileEntry, exportPath.string().c_str())) {
+          converterState.bakedFilePaths.push_back(textureFileEntry);
+        } else {
+          printf("Failed to bake texture asset: %s\n", textureFileEntry.path().string().c_str());
+        }
       }
     }
   } else {
-    printf("Could not find textures asset directory.");
+    printf("Could not find textures asset directory at: %s", asset_textures_dir.string().c_str());
   }
 
-  /*
-  size_t fileCount = fileCountInDir(converterState.assetsDir);
-  converterState.bakedFilePaths.reserve(fileCount * 4);
-  for(const fs::directory_entry& p: fs::directory_iterator(converterState.assetsDir)) { //fs::recursive_directory_iterator(directory)) {
+//  if(exists(asset_models_dir)) {
+//    for(auto const& modelFileEntry: std::filesystem::directory_iterator(asset_models_dir)) {
+//      if(fileUpToDate(oldAssetBakeCache, modelFileEntry)) {
+//        continue;
+//      } else if(fs::is_regular_file(modelFileEntry)) {
+//        fs::path exportPath = converterState.bakedAssetDir / "models" / modelFileEntry.path().filename().replace_extension(bakedExtensions.texture);
+//        printf("%s\n", modelFileEntry.path().string().c_str());
+//        //convertTexture(modelFileEntry, exportPath.string().c_str());
+//      }
+//    }
+//  } else {
+//    printf("Could not find models asset directory at: %s", asset_models_dir.string().c_str());
+//  }
 
-    fs::path filePath = p.path();
-    fs::path fileExt = filePath.extension();
-    std::string pathStr = filePath.string();
+//  for(const fs::directory_entry& p: fs::directory_iterator(asset_models_dir)) {
+//
+//    fs::path filePath = p.path();
+//    fs::path fileExt = filePath.extension();
+//    std::string pathStr = filePath.string();
+//
+//    if(fs::is_directory(filePath) || fileUpToDate(oldAssetBakeCache, filePath)) {
+//      continue;
+//    }
+//
+//    printf("Beginning bake of model asset: %s\n", pathStr.c_str());
+//
+//    u32 convertedFilesCountBefore = (u32)converterState.bakedFilePaths.size();
+//
+//    if(fileExt == supportedFileExtensions.png || fileExt == supportedFileExtensions.jpg || fileExt == supportedFileExtensions.tga) {
+//      convertImage(p.path(), converterState);
+//    }
+//    else if(fileExt == supportedFileExtensions.obj) {
+//      std::cout << "OBJ: " << filePath.string() << std::endl;
+//
+//      // find directory of file
+//      fs::path materialSearchPath = filePath.parent_path();
+//      assert(fs::is_directory(materialSearchPath));
+//
+//      tinyobj::ObjReaderConfig readerConfig;
+//      readerConfig.mtl_search_path = materialSearchPath.string();
+//
+//      tinyobj::ObjReader reader;
+//      if(!reader.ParseFromFile(filePath.string(), readerConfig)) {
+//        if(!reader.Error().empty()) {
+//          std::cerr << "TinyObjReader: " << reader.Error();
+//        }
+//        exit(1);
+//      }
+//
+//      if(!reader.Warning().empty()) {
+//        std::cout << "WARN (tinyobjloader): " << reader.Warning();
+//      }
+//
+//      fs::path outputFolder = converterState.bakedAssetDir / (filePath.stem().string() + "_OBJ");
+//      fs::create_directory(outputFolder);
+//
+//      extractObjCombinedMesh(reader, filePath, outputFolder, converterState);
+//    }
+//    else if(fileExt == supportedFileExtensions.gltf || fileExt == supportedFileExtensions.glb) {
+//      using namespace tinygltf;
+//      Model model;
+//      TinyGLTF loader;
+//      std::string err;
+//      std::string warn;
+//
+//      bool ret;
+//      if(fileExt == supportedFileExtensions.gltf) {
+//        ret = loader.LoadASCIIFromFile(&model, &err, &warn, filePath.string());
+//      } else { // glbExtension
+//        ret = loader.LoadBinaryFromFile(&model, &err, &warn, filePath.string());
+//      }
+//
+//      if(!warn.empty()) {
+//        printf("Warn: %s\n", warn.c_str());
+//      }
+//
+//      if(!err.empty()) {
+//        printf("Err: %s\n", err.c_str());
+//      }
+//
+//      if(!ret) {
+//        printf("Failed to parse glTF\n");
+//        return -1;
+//      } else {
+//        fs::path outputFolder = converterState.bakedAssetDir / (p.path().stem().string() + "_GLTF");
+//        fs::create_directory(outputFolder);
+//
+//        extractGltfCombinedMesh(model, filePath, outputFolder, converterState);
+//        extractGltfMaterials(model, filePath, outputFolder, converterState);
+////        extractGltfMeshes(model, pathStr, outputFolder, converterState);
+////        extractGltfNodes(model, filePath, outputFolder, converterState);
+//      }
+//    } else {
+//      continue;
+//    }
+//  }
 
-    // skip directories and up-to-date baked assets
-    if(fs::is_directory(filePath) || fileUpToDate(oldAssetBakeCache, filePath)) {
-      continue;
-    }
-
-    std::cout << "File: " << pathStr << std::endl;
-
-    u32 convertedFilesCountBefore = (u32)converterState.bakedFilePaths.size();
-
-    if(fileExt == supportedFileExtensions.png || fileExt == supportedFileExtensions.jpg || fileExt == supportedFileExtensions.tga) {
-      convertImage(p.path(), converterState);
-    }
-    else if(fileExt == supportedFileExtensions.obj) {
-      std::cout << "OBJ: " << filePath.string() << std::endl;
-
-      // find directory of file
-      fs::path materialSearchPath = filePath.parent_path();
-      assert(fs::is_directory(materialSearchPath));
-
-      tinyobj::ObjReaderConfig readerConfig;
-      readerConfig.mtl_search_path = materialSearchPath.string();
-
-      tinyobj::ObjReader reader;
-      if(!reader.ParseFromFile(filePath.string(), readerConfig)) {
-        if(!reader.Error().empty()) {
-          std::cerr << "TinyObjReader: " << reader.Error();
-        }
-        exit(1);
-      }
-
-      if(!reader.Warning().empty()) {
-        std::cout << "WARN (tinyobjloader): " << reader.Warning();
-      }
-
-      fs::path outputFolder = converterState.bakedAssetDir / (filePath.stem().string() + "_OBJ");
-      fs::create_directory(outputFolder);
-
-      extractObjCombinedMesh(reader, filePath, outputFolder, converterState);
-    }
-    else if(fileExt == supportedFileExtensions.gltf || fileExt == supportedFileExtensions.glb) {
-      using namespace tinygltf;
-      Model model;
-      TinyGLTF loader;
-      std::string err;
-      std::string warn;
-
-      bool ret;
-      if(fileExt == supportedFileExtensions.gltf) {
-        ret = loader.LoadASCIIFromFile(&model, &err, &warn, filePath.string());
-      } else { // glbExtension
-        ret = loader.LoadBinaryFromFile(&model, &err, &warn, filePath.string());
-      }
-
-      if(!warn.empty()) {
-        printf("Warn: %s\n", warn.c_str());
-      }
-
-      if(!err.empty()) {
-        printf("Err: %s\n", err.c_str());
-      }
-
-      if(!ret) {
-        printf("Failed to parse glTF\n");
-        return -1;
-      } else {
-        fs::path outputFolder = converterState.bakedAssetDir / (p.path().stem().string() + "_GLTF");
-        fs::create_directory(outputFolder);
-
-        extractGltfCombinedMesh(model, filePath, outputFolder, converterState);
-        extractGltfMaterials(model, filePath, outputFolder, converterState);
-//        extractGltfMeshes(model, pathStr, outputFolder, converterState);
-//        extractGltfNodes(model, filePath, outputFolder, converterState);
-      }
-    } else {
-      continue;
-    }
-
-    // remember baked item
+  // remember baked item
+  u32 convertedFilesCount = (u32)converterState.bakedFilePaths.size();
+  for(u32 i = 0; i < convertedFilesCount; i++) {
+    const fs::path& recentlyBakedFile = converterState.bakedFilePaths[i];
     AssetBakeCachedItem newlyBakedItem;
-    newlyBakedItem.originalFileName = filePath.filename().string();
-    newlyBakedItem.originalFileLastModified = lastModifiedTimeStamp(filePath);
-    const fs::path& recentlyBakedFile = converterState.bakedFilePaths.back();
-    u32 convertedFilesCount = (u32)converterState.bakedFilePaths.size();
-    u32 newlyConvertedItemCount = convertedFilesCount - convertedFilesCountBefore;
-    for(u32 i = 0; i < newlyConvertedItemCount; i++) {
-      const fs::path& recentlyBakedFile = converterState.bakedFilePaths[convertedFilesCount - i - 1];
-      AssetBakeCachedItem::BakedFile bakedFile;
-      bakedFile.path = recentlyBakedFile.string();
-      bakedFile.name = recentlyBakedFile.filename().string();
-      bakedFile.ext = recentlyBakedFile.extension().string();
-      newlyBakedItem.bakedFiles.push_back(bakedFile);
-    }
+    newlyBakedItem.originalFileName = recentlyBakedFile.string();
+    newlyBakedItem.originalFileLastModified = lastModifiedTimeStamp(recentlyBakedFile);
+    AssetBakeCachedItem::BakedFile bakedFile;
+    bakedFile.path = recentlyBakedFile.string();
+    bakedFile.name = recentlyBakedFile.filename().string();
+    bakedFile.ext = recentlyBakedFile.extension().string();
+    newlyBakedItem.bakedFiles.push_back(bakedFile);
     newlyCachedItems.push_back(newlyBakedItem);
   }
 
   writeOutputData(oldAssetBakeCache, converterState);
   saveCache(oldAssetBakeCache, newlyCachedItems);
-  */
 
   return 0;
 }
