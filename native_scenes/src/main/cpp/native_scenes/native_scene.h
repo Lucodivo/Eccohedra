@@ -31,6 +31,7 @@ global_variable AAssetManager* assetManager_GLOBAL = nullptr;
 using namespace noop;
 
 #include "asset_loader.h"
+#include "texture_asset.h"
 #include "cubemap_asset.h"
 
 #include "android_platform.cpp"

@@ -97,5 +97,6 @@ CMakeFiles/
 
 #asset_baker
 native_scenes/src/main/assets/skyboxes/
+native_scenes/src/main/assets/textures/
 baked_*.incl
 Asset-Baker-Cache.asb

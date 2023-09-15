@@ -16,8 +16,8 @@ namespace assets {
   // TODO: Merge CubeMap format with TextureFormat?
   enum CubeMapFormat : u32
   {
-    Unknown = 0,
-#define Texture(name) name,
+    CubeMapFormat_Unknown = 0,
+#define Texture(name) CubeMapFormat_##name,
 #include "texture_format.incl"
 #undef Texture
   };

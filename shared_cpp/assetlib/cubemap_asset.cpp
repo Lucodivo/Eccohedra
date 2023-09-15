@@ -41,8 +41,8 @@ assets::AssetFile assets::packCubeMap(CubeMapInfo *info, void *data_FBTBLR) {
   file.version = ASSET_LIB_VERSION;
 
   nlohmann::json cubeMapJson;
-  cubeMapJson[jsonKeys.format] = cubeMapFormatToString(CubeMapFormat::RGB8);
-  cubeMapJson[jsonKeys.formatEnum] = cubeMapFormatToEnumVal(CubeMapFormat::RGB8);
+  cubeMapJson[jsonKeys.format] = cubeMapFormatToString(CubeMapFormat_RGB8);
+  cubeMapJson[jsonKeys.formatEnum] = cubeMapFormatToEnumVal(CubeMapFormat_RGB8);
   cubeMapJson[jsonKeys.faceSize] = info->faceSize;
   cubeMapJson[jsonKeys.originalFolder] = info->originalFolder;
   cubeMapJson[jsonKeys.faceWidth] = info->faceWidth;

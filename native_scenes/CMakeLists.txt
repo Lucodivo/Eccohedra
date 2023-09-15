@@ -66,6 +66,7 @@ add_library (assetlib STATIC)
 target_sources(assetlib PRIVATE
         ${SHARED_CPP}/assetlib/asset_loader.cpp
         ${SHARED_CPP}/assetlib/cubemap_asset.cpp
+        ${SHARED_CPP}/assetlib/texture_asset.cpp
 )
 target_include_directories(assetlib PRIVATE
         ${EXT_DIR}/lz4

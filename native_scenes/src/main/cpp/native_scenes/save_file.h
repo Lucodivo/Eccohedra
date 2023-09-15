@@ -80,7 +80,7 @@ SaveFormat originalWorld() {
       0,
       "shaders/gate.vert",
       "shaders/gate.frag",
-      "textures/tiled_musgrave_texture_1_blur.png"
+      "tiled_musgrave_texture_1_blur"
   });
   shaders.push_back({
       1,

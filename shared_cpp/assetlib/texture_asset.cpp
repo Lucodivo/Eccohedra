@@ -41,8 +41,8 @@ assets::AssetFile assets::packTexture(TextureInfo* info, void *data) {
   file.version = ASSET_LIB_VERSION;
 
   nlohmann::json textureJson;
-  textureJson[jsonKeys.format] = textureFormatToString(TextureFormat::RGB8);
-  textureJson[jsonKeys.formatEnum] = textureFormatToEnumVal(TextureFormat::RGB8);
+  textureJson[jsonKeys.format] = textureFormatToString(info->format);
+  textureJson[jsonKeys.formatEnum] = textureFormatToEnumVal(info->format);
   textureJson[jsonKeys.size] = info->size;
   textureJson[jsonKeys.originalFileName] = info->originalFileName;
   textureJson[jsonKeys.width] = info->width;

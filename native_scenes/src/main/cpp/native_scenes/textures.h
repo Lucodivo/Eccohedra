@@ -32,58 +32,55 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
   //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // disables bilinear filtering (creates sharp edges when magnifying texture)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-  // load image data
-  s32 w, h, numChannels;
-  stbi_set_flip_vertically_on_load(flipImageVert);
-  Asset imageAsset = Asset(assetManager_GLOBAL, imgLocation);
-  if(!imageAsset.success()) {
-    LOGI("Failed to find texture asset: %s", imgLocation);
-    return;
-  }
-  u8* data = stbi_load_from_memory((stbi_uc const *)imageAsset.buffer, imageAsset.bufferLengthInBytes, &w, &h, &numChannels, 0 /*desired channels*/);
-  if (data && numChannels <= 4)
-  {
-    u32 dataColorSpace;
-    u32 dataComponentComposition;
-    switch(numChannels) {
-      case 1:
-        dataColorSpace = GL_R8;
-        dataComponentComposition = GL_RED;
-        break;
-      case 2:
-        dataColorSpace = GL_RG8;
-        dataComponentComposition = GL_RG;
-        break;
-      case 3:
-        dataColorSpace = inputSRGB ? GL_SRGB8 : GL_RGB8;
-        dataComponentComposition = GL_RGB;
-        break;
-      case 4:
-        dataColorSpace = inputSRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
-        dataComponentComposition = GL_RGBA;
-        break;
-      default:
-        InvalidCodePath;
-    }
+  // TODO: This is NOT where exported assets directory should be stored. Move this or related solution to assetlib or potentially a asset_baker header.
+  std::string textureDir = "textures/";
+  std::string assetPath = textureDir + imgLocation + ".tx";
 
+  // TODO: Investigate what can be done, if anything, to load cubemap assets faster
+  assets::AssetFile textureAssetFile;
+  {
+    TimeBlock("assets::loadAssetFile")
+    assets::loadAssetFile(assetManager_GLOBAL, assetPath.c_str(), &textureAssetFile);
+  }
+
+  assets::TextureInfo textureInfo;
+  {
+    assets::readTextureInfo(textureAssetFile, &textureInfo);
+  }
+
+  char* textureData = textureAssetFile.binaryBlob.data();
+
+  if(textureInfo.format == assets::TextureFormat_R8) {
+    u32 dataColorSpace = GL_R8;
+    u32 dataComponentComposition = GL_RED;
     glTexImage2D(GL_TEXTURE_2D, // target
                  0, // level of detail (level n is the nth mipmap reduction image)
                  dataColorSpace, // What is the color space of the data
-                 w, // width of texture
-                 h, // height of texture
+                 textureInfo.width, // width of texture
+                 textureInfo.height, // height of texture
                  0, // border (legacy stuff, MUST BE 0)
                  dataComponentComposition, // How are the components of the data composed
                  GL_UNSIGNED_BYTE, // specifies data type of pixel data
-                 data); // pointer to the image data
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    if (width != NULL) *width = w;
-    if (height != NULL) *height = h;
+                 textureData); // pointer to the image data
+  } else if (textureInfo.format == assets::TextureFormat_ETC2_RGB) {
+    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+                           0,
+                           GL_COMPRESSED_RGB8_ETC2,
+                           textureInfo.width,
+                           textureInfo.height,
+                           0,
+                           textureInfo.size,
+                           textureData);
   } else {
-    LOGE("Texture asset found but failed to load image - %s", imgLocation);
+    InvalidCodePath
   }
+
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  if (width != NULL) *width = textureInfo.width;
+  if (height != NULL) *height = textureInfo.height;
+
   glBindTexture(GL_TEXTURE_2D, 0);
-  stbi_image_free(data); // free texture image memory
 }
 
 void loadCubeMapTexture(const char* fileName, GLuint* textureId) {

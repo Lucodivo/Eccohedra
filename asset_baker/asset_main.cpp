@@ -19,6 +19,7 @@ namespace fs = std::filesystem;
 
 #include "asset_loader.h"
 #include "cubemap_asset.h"
+#include "texture_asset.h"
 using namespace assets;
 
 #include "noop_math.h"
@@ -74,8 +75,7 @@ struct AssetBakeCachedItem {
   std::vector<BakedFile> bakedFiles;
 };
 
-bool convertImage(const fs::path& inputPath, ConverterState& converterState);
-bool convertCubeMapTexture(const fs::path& inputDir, ConverterState* converterState);
+bool convertTexture(const fs::path& inputPath, const char* outputFilename);
 
 //void packVertex(assets::Vertex_PNCV_f32& new_vert, tinyobj::real_t vx, tinyobj::real_t vy, tinyobj::real_t vz, tinyobj::real_t nx, tinyobj::real_t ny, tinyobj::real_t nz, tinyobj::real_t ux, tinyobj::real_t uy);
 //void packVertex(assets::Vertex_P32N8C8V16& new_vert, tinyobj::real_t vx, tinyobj::real_t vy, tinyobj::real_t vz, tinyobj::real_t nx, tinyobj::real_t ny, tinyobj::real_t nz, tinyobj::real_t ux, tinyobj::real_t uy);
@@ -294,8 +294,9 @@ void loadCache(std::unordered_map<std::string, AssetBakeCachedItem>& assetBakeCa
 int main(int argc, char* argv[]) {
 
   // NOTE: Count is often at least 1, as argv[0] is full path of the program being run
-  if(argc < 3) {
-    std::cout << "You need to supply the assets directory";
+  if(argc < 4) {
+    printf("Incorrect number of arguments.\n");
+    printf("Use ex: .\\assetbaker {raw assets dir} {baked asset output dir} {baked asset metadata output dir}\n");
     return -1;
   }
 
@@ -306,8 +307,8 @@ int main(int argc, char* argv[]) {
 
   ConverterState converterState;
   converterState.assetsDir = {argv[1]};
-  converterState.bakedAssetDir = converterState.assetsDir / "assets_export";
-  converterState.outputFileDir = {argv[2]};
+  converterState.bakedAssetDir = { argv[2] };
+  converterState.outputFileDir = { argv[3] };
 
   if(!fs::is_directory(converterState.assetsDir)) {
     std::cout << "Could not find assets directory: " << argv[1];
@@ -324,19 +325,35 @@ int main(int argc, char* argv[]) {
   fs::path asset_models_dir = converterState.assetsDir / "models";
   fs::path asset_skyboxes_dir = converterState.assetsDir / "skyboxes";
   fs::path asset_textures_dir = converterState.assetsDir / "textures";
-  size_t fileCount = dirCountInDir(asset_skyboxes_dir);
-  printf("skybox directories found: %d\n", (int)fileCount);
+  fs::create_directory(converterState.bakedAssetDir / "models");
+  fs::create_directory(converterState.bakedAssetDir / "skyboxes");
+  fs::create_directory(converterState.bakedAssetDir / "textures");
 
-  std::filesystem::create_directory(converterState.bakedAssetDir / "models");
-  std::filesystem::create_directory(converterState.bakedAssetDir / "skyboxes");
-  std::filesystem::create_directory(converterState.bakedAssetDir / "textures");
-  for(auto const& skyboxDir: std::filesystem::directory_iterator(asset_skyboxes_dir)) {
-    if(fileUpToDate(oldAssetBakeCache, skyboxDir)) {
-      continue;
-    } else if(fs::is_directory(skyboxDir)) {
-      printf("%s\n", skyboxDir.path().string().c_str());
-      convertCubeMapTexture(skyboxDir, &converterState);
+  // TODO: Bring back with a cache that respects file formats
+//  size_t skyboxDirCount = dirCountInDir(asset_skyboxes_dir);
+//  printf("skybox directories found: %d\n", (int)skyboxDirCount);
+//  for(auto const& skyboxDir: std::filesystem::directory_iterator(asset_skyboxes_dir)) {
+//    if(fileUpToDate(oldAssetBakeCache, skyboxDir)) {
+//      continue;
+//    } else if(fs::is_directory(skyboxDir)) {
+//      fs::path exportPath = converterState.bakedAssetDir / "skyboxes" / skyboxDir.path().filename().replace_extension(bakedExtensions.cubeMap);
+//      printf("%s\n", skyboxDir.path().string().c_str());
+//      convertCubeMapTexture(skyboxDir, exportPath.string().c_str());
+//    }
+//  }
+
+  if(exists(asset_textures_dir)) {
+    for(auto const& textureFileEntry: std::filesystem::directory_iterator(asset_textures_dir)) {
+      if(fileUpToDate(oldAssetBakeCache, textureFileEntry)) {
+        continue;
+      } else if(fs::is_regular_file(textureFileEntry)) {
+        fs::path exportPath = converterState.bakedAssetDir / "textures" / textureFileEntry.path().filename().replace_extension(bakedExtensions.texture);
+        printf("%s\n", textureFileEntry.path().string().c_str());
+        convertTexture(textureFileEntry, exportPath.string().c_str());
+      }
     }
+  } else {
+    printf("Could not find textures asset directory.");
   }
 
   /*
@@ -456,7 +473,7 @@ bool CompressionCallback(float fProgress, CMP_DWORD_PTR pUser1, CMP_DWORD_PTR pU
   return abortCompression;
 }
 
-bool convertCubeMapTexture(const fs::path& inputDir, ConverterState* converterState) {
+bool convertCubeMapTexture(const fs::path& inputDir, const char* outputFilename) {
 
   int frontWidth, frontHeight, frontChannels,
       backWidth, backHeight, backChannels,
@@ -532,26 +549,25 @@ bool convertCubeMapTexture(const fs::path& inputDir, ConverterState* converterSt
   stbi_image_free(leftPixels);
   stbi_image_free(rightPixels);
 
-  CMP_Texture srcTexture;
+  CMP_Texture srcTexture = {0};
   srcTexture.dwSize = sizeof(srcTexture);
   srcTexture.dwWidth = topWidth;
   srcTexture.dwHeight = topHeight * 6;
   srcTexture.dwPitch = topWidth * topChannels;
   srcTexture.format = CMP_FORMAT_RGB_888;
-  srcTexture.transcodeFormat = CMP_FORMAT_Unknown; // Should not be used
-  srcTexture.nBlockHeight = 4;
-  srcTexture.nBlockWidth = 4;
-  srcTexture.nBlockDepth = 1;
   srcTexture.dwDataSize = topWidth * topHeight * topChannels * topChannels * 6;
   srcTexture.pData = cubeMapPixels_fbtbrl;
   srcTexture.pMipSet = nullptr;
 
-  CMP_Texture destTexture;
+  CMP_Texture destTexture = {0};
   destTexture.dwSize     = sizeof(destTexture);
   destTexture.dwWidth    = srcTexture.dwWidth;
   destTexture.dwHeight   = srcTexture.dwHeight;
   destTexture.dwPitch    = 0;
   destTexture.format     = CMP_FORMAT_ETC2_RGB;
+  destTexture.nBlockHeight = 4;
+  destTexture.nBlockWidth = 4;
+  destTexture.nBlockDepth = 1;
   destTexture.dwDataSize = CMP_CalculateBufferSize(&destTexture);
   destTexture.pData      = (CMP_BYTE*)malloc(destTexture.dwDataSize);
 
@@ -560,18 +576,11 @@ bool convertCubeMapTexture(const fs::path& inputDir, ConverterState* converterSt
   options.fquality     = 1.0f;            // Quality
   options.dwnumThreads = 0;               // Number of threads to use per texture set to auto
 
-  CubeMapInfo info;
-  info.format = CubeMapFormat::ETC2_RGB;
-  info.faceWidth = topWidth;
-  info.faceHeight = topHeight;
-  info.originalFolder = inputDir.string();
-  info.faceSize = (u32)(ceil(info.faceWidth / 4.f) * ceil(info.faceHeight / 4.f)) * 8;
-
   auto compressionStart = std::chrono::high_resolution_clock::now();
   try {
     CMP_ERROR cmp_status = CMP_ConvertTexture(&srcTexture, &destTexture, &options, &CompressionCallback);
     if(cmp_status != CMP_OK) {
-      std::printf("Error: Something went wrong with compressing %s\n", info.originalFolder.c_str());
+      std::printf("Error %d: Something went wrong with compressing %s\n", cmp_status, inputDir.string().c_str());
     }
   } catch (const std::exception& ex) {
     std::printf("Error: %s\n",ex.what());
@@ -580,66 +589,100 @@ bool convertCubeMapTexture(const fs::path& inputDir, ConverterState* converterSt
   diff = compressionEnd - compressionStart;
   std::cout << "compression took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0 << "ms" << std::endl;
 
+  CubeMapInfo info;
+  info.format = CubeMapFormat_ETC2_RGB;
+  info.faceWidth = topWidth;
+  info.faceHeight = topHeight;
+  info.originalFolder = inputDir.string();
+  info.faceSize = (u32)(ceil(info.faceWidth / 4.f) * ceil(info.faceHeight / 4.f)) * 8;
   assets::AssetFile cubeMapAssetFile = assets::packCubeMap(&info, destTexture.pData);
 
   free(cubeMapPixels_fbtbrl);
   free(destTexture.pData);
 
-  fs::path relative = inputDir.lexically_proximate(converterState->assetsDir);
-  fs::path exportPath = converterState->bakedAssetDir / relative;
-  exportPath.replace_extension(bakedExtensions.cubeMap);
-
-  saveAssetFile(exportPath.string().c_str(), cubeMapAssetFile);
-  converterState->bakedFilePaths.push_back(exportPath);
+  saveAssetFile(outputFilename, cubeMapAssetFile);
 
   return true;
 }
 
-//bool convertImage(const fs::path& inputPath, ConverterState& converterState) {
-//  int texWidth, texHeight, texChannels;
-//
-//  auto imageLoadStart = std::chrono::high_resolution_clock::now();
-//
-//  stbi_uc* pixels = stbi_load(inputPath.u8string().c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-//
-//  auto imageLoadEnd = std::chrono::high_resolution_clock::now();
-//
-//  auto diff = imageLoadEnd - imageLoadStart;
-//
-//  std::cout << "texture took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0 << "ms to load" << std::endl;
-//
-//  if(!pixels) {
-//    std::cout << "Failed to load texture file " << inputPath << std::endl;
-//    return false;
-//  }
-//
-//  TextureInfo texInfo;
-//  texInfo.textureSize = texWidth * texHeight * 4;
-//  texInfo.textureFormat = TextureFormat::RGBA8;
-//  texInfo.originalFile = inputPath.string();
-//  texInfo.width = texWidth;
-//  texInfo.height = texHeight;
-//
-//  auto compressionStart = std::chrono::high_resolution_clock::now();
-//  assets::AssetFile newImage = assets::packTexture(&texInfo, pixels);
-//  auto compressionEnd = std::chrono::high_resolution_clock::now();
-//
-//  diff = compressionEnd - compressionStart;
-//
-//  std::cout << "compression took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0 << "ms" << std::endl;
-//
-//  stbi_image_free(pixels);
-//
-//  fs::path relative = inputPath.lexically_proximate(converterState.assetsDir);
-//  fs::path exportPath = converterState.bakedAssetDir / relative;
-//  exportPath.replace_extension(bakedExtensions.texture);
-//
-//  saveAssetFile(exportPath.string().c_str(), newImage);
-//  converterState.bakedFilePaths.push_back(exportPath);
-//
-//  return true;
-//}
-//
+bool convertTexture(const fs::path& inputPath, const char* outputFilename) {
+  int texWidth, texHeight, texChannels;
+
+  auto imageLoadStart = std::chrono::high_resolution_clock::now();
+  stbi_uc* pixels = stbi_load(inputPath.u8string().c_str(), &texWidth, &texHeight, &texChannels, 0);
+  auto imageLoadEnd = std::chrono::high_resolution_clock::now();
+  auto diff = imageLoadEnd - imageLoadStart;
+  std::cout << "texture took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0 << "ms to load" << std::endl;
+
+  if(!pixels) {
+    std::cout << "Failed to load texture file " << inputPath << std::endl;
+    return false;
+  }
+
+  assert(texChannels == 3 || texChannels == 1 && "Texture has an unsupported amount of channels.");
+
+  TextureInfo texInfo;
+  texInfo.size = texWidth * texHeight * texChannels;
+  texInfo.originalFileName = inputPath.string();
+  texInfo.width = texWidth;
+  texInfo.height = texHeight;
+
+  if(texChannels == 1) {
+    texInfo.format = TextureFormat_R8;
+    assets::AssetFile newImage = assets::packTexture(&texInfo, pixels);
+    saveAssetFile(outputFilename, newImage);
+  } else if(texChannels == 3) {
+    CMP_Texture srcTexture = {0};
+    srcTexture.dwSize = sizeof(srcTexture);
+    srcTexture.dwWidth = texWidth;
+    srcTexture.dwHeight = texHeight;
+    srcTexture.dwPitch = texWidth * texChannels;
+    srcTexture.format = CMP_FORMAT_RGB_888;
+    srcTexture.dwDataSize = texWidth * texHeight * texChannels;
+    srcTexture.pData = pixels;
+    srcTexture.pMipSet = nullptr;
+
+    CMP_Texture destTexture = {0};
+    destTexture.dwSize     = sizeof(destTexture);
+    destTexture.dwWidth    = srcTexture.dwWidth;
+    destTexture.dwHeight   = srcTexture.dwHeight;
+    destTexture.dwPitch    = 0;
+    destTexture.format     = CMP_FORMAT_ETC2_RGB;
+    destTexture.nBlockHeight = 4;
+    destTexture.nBlockWidth = 4;
+    destTexture.nBlockDepth = 1;
+    destTexture.dwDataSize = CMP_CalculateBufferSize(&destTexture);
+    destTexture.pData      = (CMP_BYTE*)malloc(destTexture.dwDataSize);
+
+    CMP_CompressOptions options = {0};
+    options.dwSize       = sizeof(options);
+    options.fquality     = 1.0f;            // Quality
+    options.dwnumThreads = 0;               // Number of threads to use per texture set to auto
+
+    auto compressionStart = std::chrono::high_resolution_clock::now();
+    try {
+      CMP_ERROR cmp_status = CMP_ConvertTexture(&srcTexture, &destTexture, &options, &CompressionCallback);
+      if(cmp_status != CMP_OK) {
+        std::printf("Error %d: Something went wrong with compressing %s\n", cmp_status, inputPath.string().c_str());
+      }
+    } catch (const std::exception& ex) {
+      std::printf("Error: %s\n",ex.what());
+    }
+    auto compressionEnd = std::chrono::high_resolution_clock::now();
+    diff = compressionEnd - compressionStart;
+    std::cout << "compression took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0 << "ms" << std::endl;
+
+    texInfo.format = TextureFormat_ETC2_RGB;
+    assets::AssetFile newImage = assets::packTexture(&texInfo, destTexture.pData);
+    saveAssetFile(outputFilename, newImage);
+    free(destTexture.pData);
+  }
+
+  stbi_image_free(pixels);
+
+  return true;
+}
+
 //void packVertex(assets::Vertex_PNCV_f32& new_vert, tinyobj::real_t vx, tinyobj::real_t vy, tinyobj::real_t vz, tinyobj::real_t nx, tinyobj::real_t ny, tinyobj::real_t nz, tinyobj::real_t ux, tinyobj::real_t uy) {
 //  new_vert.position[0] = vx;
 //  new_vert.position[1] = vy;

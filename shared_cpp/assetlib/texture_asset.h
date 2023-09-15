@@ -5,8 +5,8 @@
 namespace assets {
   enum TextureFormat : u32
   {
-    Unknown = 0,
-#define Texture(name) name,
+    TextureFormat_Unknown = 0,
+#define Texture(name) TextureFormat_##name,
 #include "texture_format.incl"
 #undef Texture
   };
