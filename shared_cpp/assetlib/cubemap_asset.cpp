@@ -2,9 +2,9 @@
 
 const internal_func char* mapCubeMapFormatToString[] = {
     "Unknown",
-#define CubeMapFormat(name) #name,
-#include "cubemap_format.incl"
-#undef CubeMapFormat
+#define Texture(name) #name,
+#include "texture_format.incl"
+#undef Texture
 };
 
 const internal_func char* CUBE_MAP_FOURCC = "CBMP";
@@ -53,8 +53,4 @@ assets::AssetFile assets::packCubeMap(CubeMapInfo *info, void *data_FBTBLR) {
   memcpy(&file.binaryBlob[0], data_FBTBLR, info->size());
 
   return file;
-}
-
-void assets::unpackCubeMap(const CubeMapInfo& texInfo, char* srcBuff, size_t srcBuffSize, char* dest) {
-  memcpy(dest, srcBuff, srcBuffSize);
 }

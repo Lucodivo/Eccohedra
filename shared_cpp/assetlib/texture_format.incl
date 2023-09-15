@@ -1,1 +1,6 @@
-TextureFormat(RGBA8)
+//Texture(name)
+Texture(RGB8)
+Texture(ETC1_RGB)
+Texture(ETC2_RGB)
+Texture(ETC2_SRGB)
+Texture(ASTC_RGBA_4x4)

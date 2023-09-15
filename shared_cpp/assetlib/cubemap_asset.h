@@ -12,12 +12,14 @@ enum SkyboxFace: size_t {
 };
 
 namespace assets {
+
+  // TODO: Merge CubeMap format with TextureFormat?
   enum CubeMapFormat : u32
   {
     Unknown = 0,
-#define CubeMapFormat(name) name,
-#include "cubemap_format.incl"
-#undef CubeMapFormat
+#define Texture(name) name,
+#include "texture_format.incl"
+#undef Texture
   };
 
   struct CubeMapInfo {
@@ -32,6 +34,5 @@ namespace assets {
   };
 
   void readCubeMapInfo(const AssetFile& file, CubeMapInfo* info);
-  void unpackCubeMap(const CubeMapInfo& texInfo, char* srcBuff, size_t srcBuffSize, char* dest);
   AssetFile packCubeMap(CubeMapInfo *info, void* data_FBTBLR);
 }

@@ -2,9 +2,7 @@
 add_library (assetlib STATIC
         "asset_loader.cpp"
         "texture_asset.cpp"
-        "mesh_asset.cpp"
-        "material_asset.cpp"
-        "prefab_asset.cpp"
+        "cubemap_asset.cpp"
 )
 
 set(ASSETLIB_INCL

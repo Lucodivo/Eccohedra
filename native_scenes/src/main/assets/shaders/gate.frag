@@ -41,7 +41,7 @@ void main() {
   vec2 noiseTexSize = vec2(float(noiseTexSize_i.x), float(noiseTexSize_i.y));
 
   vec2 noiseTexCoord = ((inTexCoord * albedoTexSize) / noiseTexSize) + (vec2(-time.x, time.y) / noiseTexSize);
-  float noise = texture(noiseTex, noiseTexCoord * 0.4).r;
+  float noise = texture(noiseTex, noiseTexCoord).r;
   noise = (noise - 0.5) * 2.0; // [-1,1]
   noise = noise * noiseStength;
   vec2 texCoordNoise = inTexCoord + (vec2(noise) / albedoTexSize);

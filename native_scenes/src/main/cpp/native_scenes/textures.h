@@ -47,17 +47,19 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
     u32 dataComponentComposition;
     switch(numChannels) {
       case 1:
-        dataColorSpace = dataComponentComposition = GL_RED;
+        dataColorSpace = GL_R8;
+        dataComponentComposition = GL_RED;
         break;
       case 2:
-        dataColorSpace = dataComponentComposition = GL_RG;
+        dataColorSpace = GL_RG8;
+        dataComponentComposition = GL_RG;
         break;
       case 3:
-        dataColorSpace = inputSRGB ? GL_SRGB : GL_RGB;
+        dataColorSpace = inputSRGB ? GL_SRGB8 : GL_RGB8;
         dataComponentComposition = GL_RGB;
         break;
       case 4:
-        dataColorSpace = inputSRGB ? GL_SRGB8_ALPHA8 : GL_RGBA;
+        dataColorSpace = inputSRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
         dataComponentComposition = GL_RGBA;
         break;
       default:
@@ -96,45 +98,29 @@ void loadCubeMapTexture(const char* fileName, GLuint* textureId) {
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
   // TODO: This is NOT where exported assets directory should be stored. Move this or related solution to assetlib or potentially a asset_baker header.
-  std::string bakedSkyboxesDir = "assets_export/skyboxes/";
+  std::string bakedSkyboxesDir = "skyboxes/";
   std::string assetPath = bakedSkyboxesDir + fileName + ".cbtx";
 
+  // TODO: Investigate what can be done, if anything, to load cubemap assets faster
   assets::AssetFile cubeMapAssetFile;
   {
     TimeBlock("assets::loadAssetFile")
     assets::loadAssetFile(assetManager_GLOBAL, assetPath.c_str(), &cubeMapAssetFile);
   }
-  assets::CubeMapInfo cubeMapInfo;
-  {
-    TimeBlock("assets::readCubeMapInfo")
-    assets::readCubeMapInfo(cubeMapAssetFile, &cubeMapInfo);
-  }
 
-  // TODO: Avoid the binary blob business and just have the asset supply the data directly.
-  char* cubeMapData;
-  {
-    TimeBlock("loadCubeMapTexture - malloc cubemap texture")
-    cubeMapData = (char*)malloc(cubeMapInfo.size());
-  }
-  {
-    TimeBlock("assets::unpackCubeMap")
-    assets::unpackCubeMap(cubeMapInfo, cubeMapAssetFile.binaryBlob.data(), cubeMapAssetFile.binaryBlob.size(), cubeMapData);
-  }
+  assets::CubeMapInfo cubeMapInfo;
+  assets::readCubeMapInfo(cubeMapAssetFile, &cubeMapInfo);
 
   {
     TimeBlock("loadCubeMapTexture - glTexImage2D")
+    char* cubeMapData = cubeMapAssetFile.binaryBlob.data();
+    GLenum compressionFormat = GL_COMPRESSED_RGB8_ETC2;
     // TODO: If we ever support other formats besides RGB8 we will need to explicitly translate the CubeMapInfo.format to a GL_{format}
-    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_COMPRESSED_RGB8_ETC2, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_FRONT));
-    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_COMPRESSED_RGB8_ETC2, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_BACK));
-    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_COMPRESSED_RGB8_ETC2, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_TOP));
-    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_COMPRESSED_RGB8_ETC2, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_BOTTOM));
-    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_COMPRESSED_RGB8_ETC2, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_RIGHT));
-    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_COMPRESSED_RGB8_ETC2, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_LEFT));
+    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, compressionFormat, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_FRONT));
+    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, compressionFormat, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_BACK));
+    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, compressionFormat, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_TOP));
+    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, compressionFormat, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_BOTTOM));
+    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, compressionFormat, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_RIGHT));
+    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, compressionFormat, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_LEFT));
   }
-
-  {
-    TimeBlock("loadCubeMapTexture - free cubemap texture")
-    free(cubeMapData);
-  }
-  glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }

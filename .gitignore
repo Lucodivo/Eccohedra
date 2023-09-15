@@ -96,6 +96,6 @@ cmake-build*/
 CMakeFiles/
 
 #asset_baker
-assets_export/
+native_scenes/src/main/assets/skyboxes/
 baked_*.incl
 Asset-Baker-Cache.asb

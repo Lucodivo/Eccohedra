@@ -3,30 +3,22 @@
 #include "asset_loader.h"
 
 namespace assets {
-  enum class TextureFormat : u32
+  enum TextureFormat : u32
   {
     Unknown = 0,
-#define TextureFormat(name) name,
+#define Texture(name) name,
 #include "texture_format.incl"
-#undef TextureFormat
+#undef Texture
   };
 
   struct TextureInfo {
-    // supplied by caller
-    u64 textureSize;
-    TextureFormat textureFormat;
+    TextureFormat format;
+    u32 size;
     u32 width;
     u32 height;
-    std::string originalFile;
-
-    // Filled in when packed
-    CompressionMode compressionMode;
+    std::string originalFileName;
   };
 
-  //parses the texture metadata from an asset file
-  void readTextureInfo(const AssetFile& file, TextureInfo* texInfo);
-
-  void unpackTexture(const TextureInfo& texInfo, const char* sourceBuffer, size_t sourceSize, char* destination);
-
-  AssetFile packTexture(TextureInfo* info, void* pixelData);
+  void readTextureInfo(const AssetFile& file, TextureInfo* info);
+  AssetFile packTexture(TextureInfo* info, void* data);
 }
