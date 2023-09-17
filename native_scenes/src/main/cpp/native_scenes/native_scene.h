@@ -33,6 +33,7 @@ using namespace noop;
 #include "asset_loader.h"
 #include "texture_asset.h"
 #include "cubemap_asset.h"
+#include "model_asset.h"
 
 #include "android_platform.cpp"
 #include "shader_types_and_constants.h"

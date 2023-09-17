@@ -184,7 +184,7 @@ void adjustAmbientLight(World* world, u32 sceneIndex, vec3 lightColor, f32 light
 
 u32 addNewModel(World* world, const char* modelFileLoc) {
   u32 modelIndex = world->modelCount++;
-  loadModel(modelFileLoc, world->models + modelIndex);
+  loadModelAsset(modelFileLoc, world->models + modelIndex);
   return modelIndex;
 }
 
@@ -493,7 +493,7 @@ void cleanupWorld(World* world) {
 
 void initPlayer(Player* player) {
   player->boundingBox.diagonal = defaultPlayerDimensionInMeters;
-  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f), -15.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
+  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f) - 2.8f, -3.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
 }
 
 void initCamera(Camera* camera, const Player& player) {

@@ -1,12 +1,5 @@
 #include "cubemap_asset.h"
 
-const internal_func char* mapCubeMapFormatToString[] = {
-    "Unknown",
-#define Texture(name) #name,
-#include "texture_format.incl"
-#undef Texture
-};
-
 const internal_func char* CUBE_MAP_FOURCC = "CBMP";
 
 const struct {
@@ -18,15 +11,10 @@ const struct {
   const char* faceHeight = "face_height";
 } jsonKeys;
 
-inline u32 cubeMapFormatToEnumVal(assets::CubeMapFormat format) { return static_cast<u32>(format); }
-const char* cubeMapFormatToString(assets::CubeMapFormat format) { return mapCubeMapFormatToString[cubeMapFormatToEnumVal(format)]; }
-
 void assets::readCubeMapInfo(const assets::AssetFile &file, assets::CubeMapInfo *info) {
   nlohmann::json cubeMapJson = nlohmann::json::parse(file.json);
-
-  const std::string& formatString = cubeMapJson[jsonKeys.format];
   u32 cubeMapFormatEnum = cubeMapJson[jsonKeys.formatEnum];
-  info->format = CubeMapFormat(cubeMapFormatEnum);
+  info->format = TextureFormat(cubeMapFormatEnum);
   info->faceSize = cubeMapJson[jsonKeys.faceSize];
   info->faceWidth = cubeMapJson[jsonKeys.faceWidth];
   info->faceHeight = cubeMapJson[jsonKeys.faceHeight];
@@ -41,8 +29,8 @@ assets::AssetFile assets::packCubeMap(CubeMapInfo *info, void *data_FBTBLR) {
   file.version = ASSET_LIB_VERSION;
 
   nlohmann::json cubeMapJson;
-  cubeMapJson[jsonKeys.format] = cubeMapFormatToString(CubeMapFormat_RGB8);
-  cubeMapJson[jsonKeys.formatEnum] = cubeMapFormatToEnumVal(CubeMapFormat_RGB8);
+  cubeMapJson[jsonKeys.format] = textureFormatToString(TextureFormat_RGB8);
+  cubeMapJson[jsonKeys.formatEnum] = textureFormatToEnumVal(TextureFormat_RGB8);
   cubeMapJson[jsonKeys.faceSize] = info->faceSize;
   cubeMapJson[jsonKeys.originalFolder] = info->originalFolder;
   cubeMapJson[jsonKeys.faceWidth] = info->faceWidth;

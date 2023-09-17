@@ -21,4 +21,7 @@ namespace assets {
 
   void readTextureInfo(const AssetFile& file, TextureInfo* info);
   AssetFile packTexture(TextureInfo* info, void* data);
+
+  u32 textureFormatToEnumVal(assets::TextureFormat format);
+  const char* textureFormatToString(assets::TextureFormat format);
 }

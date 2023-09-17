@@ -30,6 +30,9 @@ android {
             }
         }
         release {
+            ndk {
+                abiFilters += listOf("arm64-v8a")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

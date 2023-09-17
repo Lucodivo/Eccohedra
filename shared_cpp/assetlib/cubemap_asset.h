@@ -1,6 +1,7 @@
 #pragma once
 
 #include "asset_loader.h"
+#include "texture_asset.h"
 
 enum SkyboxFace: size_t {
   SKYBOX_FACE_FRONT = 0,
@@ -12,18 +13,8 @@ enum SkyboxFace: size_t {
 };
 
 namespace assets {
-
-  // TODO: Merge CubeMap format with TextureFormat?
-  enum CubeMapFormat : u32
-  {
-    CubeMapFormat_Unknown = 0,
-#define Texture(name) CubeMapFormat_##name,
-#include "texture_format.incl"
-#undef Texture
-  };
-
   struct CubeMapInfo {
-    CubeMapFormat format;
+    TextureFormat format;
     u32 faceSize;
     u32 faceWidth;
     u32 faceHeight;

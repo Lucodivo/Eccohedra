@@ -60,8 +60,9 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
                  GL_RED,
                  GL_UNSIGNED_BYTE,
                  textureData);
+    glGenerateMipmap(GL_TEXTURE_2D);
   } else if (textureInfo.format == assets::TextureFormat_ETC2_RGB) {
-    glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+    glCompressedTexImage2D(GL_TEXTURE_2D,
                            0,
                            GL_COMPRESSED_RGB8_ETC2,
                            textureInfo.width,
@@ -69,11 +70,11 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
                            0,
                            textureInfo.size,
                            textureData);
+    // TODO: Can you generate compressed mipmaps?
   } else {
     InvalidCodePath
   }
 
-  glGenerateMipmap(GL_TEXTURE_2D);
 
   if (width != NULL) *width = textureInfo.width;
   if (height != NULL) *height = textureInfo.height;
@@ -118,4 +119,6 @@ void loadCubeMapTexture(const char* fileName, GLuint* textureId) {
     glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, compressionFormat, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_RIGHT));
     glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, compressionFormat, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_LEFT));
   }
+
+  // TODO: Can you generate compressed mipmaps?
 }

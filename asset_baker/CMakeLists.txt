@@ -76,6 +76,7 @@ add_library (assetlib STATIC
         ${ASSETLIB_DIR}/asset_loader.cpp
         ${ASSETLIB_DIR}/cubemap_asset.cpp
         ${ASSETLIB_DIR}/texture_asset.cpp
+        ${ASSETLIB_DIR}/model_asset.cpp
 )
 target_include_directories(assetlib PRIVATE
         ${ASSETLIB_INCL}

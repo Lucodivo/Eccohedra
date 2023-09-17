@@ -99,32 +99,32 @@ SaveFormat originalWorld() {
   models.reserve(6);
   models.push_back({
       0,
-      "models/gate.glb",
+      "gate",
       vec4{0, 0, 0, 0}
   });
   models.push_back({
       1,
-      "models/tetrahedron.glb",
+      "tetrahedron",
       vec4{1, .4, .4, 1}
   });
   models.push_back({
       2,
-      "models/octahedron.glb",
+      "octahedron",
       vec4{.4, 1, .4, 1}
   });
   models.push_back({
       3,
-      "models/icosahedron.glb",
+      "icosahedron",
       vec4{.9, .9, .9, 1}
   });
   models.push_back({
       4,
-      "models/mrsaturn.glb",
+      "mrsaturn",
       vec4{.4, .4, 1, 1}
   });
   models.push_back({
       5,
-      "models/portal_back.glb",
+      "portal_back",
       vec4{0, 0, 0, 0}
   });
 

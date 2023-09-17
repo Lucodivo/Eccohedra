@@ -1,12 +1,5 @@
 #include "texture_asset.h"
 
-const internal_func char* mapTextureFormatToString[] = {
-    "Unknown",
-#define Texture(name) #name,
-#include "texture_format.incl"
-#undef Texture
-};
-
 const internal_func char* TEXTURE_FOURCC = "TEXI";
 
 const struct {
@@ -18,8 +11,15 @@ const struct {
   const char* height = "height";
 } jsonKeys;
 
-inline u32 textureFormatToEnumVal(assets::TextureFormat format) { return static_cast<u32>(format); }
-const char* textureFormatToString(assets::TextureFormat format) { return mapTextureFormatToString[textureFormatToEnumVal(format)]; }
+const char* mapTextureFormatToString[] = {
+    "Unknown",
+#define Texture(name) #name,
+#include "texture_format.incl"
+#undef Texture
+};
+
+u32 assets::textureFormatToEnumVal(assets::TextureFormat format) { return static_cast<u32>(format); }
+const char* assets::textureFormatToString(assets::TextureFormat format) { return mapTextureFormatToString[textureFormatToEnumVal(format)]; }
 
 void assets::readTextureInfo(const assets::AssetFile &file, assets::TextureInfo *info) {
   nlohmann::json cubeMapJson = nlohmann::json::parse(file.json);
