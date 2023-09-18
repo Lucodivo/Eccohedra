@@ -1,0 +1,9 @@
+- There is major bug with compression that seems to turn yellow into blue and blue into yellow.
+- Integrate compressinator into an actual dependency to the git repo
+- Mipmaps
+    - Probably just bake mipmaps with the help of compressinator
+    - Double check that OpenGL can't just generate mipmaps for us, though I believe with compressed textures it cannot.
+- I don't believe I need to use JSON for my baked assets at all...
+- They should just be compiled into the binary as raw strings.
+    - Using the asset_baker might be overkill but there's no reason we need to manually be reading shaders through AAssetManager
+- asset_baker cache should take into consideration the assetlib version number

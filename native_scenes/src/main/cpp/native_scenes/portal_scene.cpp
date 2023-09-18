@@ -493,7 +493,7 @@ void cleanupWorld(World* world) {
 
 void initPlayer(Player* player) {
   player->boundingBox.diagonal = defaultPlayerDimensionInMeters;
-  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f) - 2.8f, -3.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
+  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f), -15.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
 }
 
 void initCamera(Camera* camera, const Player& player) {
@@ -507,7 +507,7 @@ void initCamera(Camera* camera, const Player& player) {
 void loadWorld(World* world, const char* saveJsonFile) {
   TimeFunction
 
-  LOGI("Currently loading world: %s", saveJsonFile);
+  LOGI("Loading native Portal Scene...");
 
   SaveFormat saveFormat = originalWorld();
 

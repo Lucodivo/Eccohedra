@@ -79,10 +79,101 @@ f64 lastModifiedTimeStamp(const fs::path& file);
 bool fileUpToDate(const std::unordered_map<std::string, AssetBakeCachedItem>& cache, const fs::path& file);
 void replace(std::string& str, const char* oldTokens, u32 oldTokensCount, char newToken);
 
+bool compressImage(u8* uncompressedBytes, u32 width, u32 height, u32 numChannels, u8* compressedBytes);
 bool CompressionCallback(float fProgress, CMP_DWORD_PTR pUser1, CMP_DWORD_PTR pUser2);
 
-int main(int argc, char* argv[]) {
+/* Arguments
+ *  - u8** compressedBytes: If the image was not compressed, the returned pointer may be the same as uncompressedBytes
+ *              - If it is not the same as uncompressed bytes, it must be manually free'd by the callee.
+ * Returns false if error occurred during compression.
+ */
+bool compressImage(u8* uncompressedBytes, u32 width, u32 height, u32 numChannels, u8** compressedBytes, u32* compressedImageSize, TextureFormat* compressedFormat) {
+  u32 imageSize = width * height * numChannels;
 
+  CMP_FORMAT srcFormat = CMP_FORMAT_Unknown;
+  CMP_FORMAT dstFormat = CMP_FORMAT_Unknown;
+  switch(numChannels) {
+    case 1: {
+      // TODO: Single channel textures should be able to be compacted for GL_COMPRESSED_R11_EAC
+      *compressedFormat = TextureFormat_R8;
+      *compressedImageSize = imageSize;
+      *compressedBytes = uncompressedBytes;
+      return true;
+    }
+    case 3: {
+      /*
+       * TODO: We should *NOT* be using ETC2 format for normals. It is just not the right encoding for the job.
+       *      - GLES 3.0 only guarantees ETC1, ETC2, EAC, ASTC.
+       *      - My personal device also supports a few ATC formats.
+       *      - Determine best format from limited selection.
+       */
+      CMP_FORMAT normalDesiredFormat = CMP_FORMAT_ETC2_RGB;
+      srcFormat = CMP_FORMAT_RGB_888;
+      dstFormat = CMP_FORMAT_ETC2_RGB;
+      *compressedFormat = TextureFormat_ETC2_RGB;
+      break;
+    }
+    case 4: {
+      srcFormat = CMP_FORMAT_RGBA_8888;
+      dstFormat = CMP_FORMAT_ETC2_RGBA;
+      *compressedFormat = TextureFormat_ETC2_RGBA;
+      break;
+    }
+    default: {
+      assert(false && "Error: Asset baker does not yet support images with 2 or greater than 4 channels.");
+    }
+  }
+
+  CMP_Texture srcTexture = {0};
+  srcTexture.dwSize = sizeof(srcTexture);
+  srcTexture.dwWidth = (CMP_DWORD)width;
+  srcTexture.dwHeight = (CMP_DWORD)height;
+  srcTexture.dwPitch = (CMP_DWORD)(width * 3);
+  srcTexture.format = srcFormat;
+  srcTexture.dwDataSize = (CMP_DWORD)imageSize;
+  srcTexture.pData = (CMP_BYTE *)uncompressedBytes;
+  srcTexture.pMipSet = nullptr;
+
+  CMP_Texture destTexture = {0};
+  destTexture.dwSize = sizeof(destTexture);
+  destTexture.dwWidth = srcTexture.dwWidth;
+  destTexture.dwHeight = srcTexture.dwHeight;
+  destTexture.format = dstFormat;
+  destTexture.nBlockHeight = 4;
+  destTexture.nBlockWidth = 4;
+  destTexture.nBlockDepth = 1;
+  *compressedImageSize = CMP_CalculateBufferSize(&destTexture);
+  *compressedBytes = (u8*)malloc(*compressedImageSize);
+  destTexture.dwDataSize = *compressedImageSize;
+  destTexture.pData = *compressedBytes;
+
+  CMP_CompressOptions options = {0};
+  options.dwSize = sizeof(options);
+  options.fquality = 1.0f; // Quality
+  options.dwnumThreads = 0; // Number of threads to use per texture set to auto
+  options.SourceFormat = srcTexture.format;
+  options.DestFormat = destTexture.format;
+
+  // TODO: Uncomment and get compressinator to generate mipmap levels
+//    options.genGPUMipMaps = true;
+//    options.miplevels = 3;
+
+  auto compressionStart = std::chrono::high_resolution_clock::now();
+  try {
+    CMP_ERROR cmp_status = CMP_ConvertTexture(&srcTexture, &destTexture, &options, &CompressionCallback);
+    if(cmp_status != CMP_OK) { return false; }
+  } catch (const std::exception &ex) {
+    std::printf("Error: %s\n", ex.what());
+  }
+  auto compressionEnd = std::chrono::high_resolution_clock::now();
+  auto diff = compressionEnd - compressionStart;
+  std::cout << "compression took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0
+            << "ms" << std::endl;
+
+  return true;
+}
+
+int main(int argc, char* argv[]) {
   // NOTE: Count is often at least 1, as argv[0] is full path of the program being run
   if(argc < 4) {
     char* arg1 = {argv[1]};
@@ -327,13 +418,16 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
   s32 albedoImageIndex = -1;
 
   s32 gltfMaterialIndex = gltfPrimitive.material;
-  f64* baseColor = nullptr;
   if(gltfMaterialIndex >= 0) {
     tinygltf::Material gltfMaterial = tinyGLTFModel.materials[gltfMaterialIndex];
     // TODO: Handle more then just TEXCOORD_0 vertex attribute?
     assert(gltfMaterial.normalTexture.texCoord == 0 && gltfMaterial.pbrMetallicRoughness.baseColorTexture.texCoord == 0);
 
-    baseColor = gltfMaterial.pbrMetallicRoughness.baseColorFactor.data();
+    f64* baseColor = gltfMaterial.pbrMetallicRoughness.baseColorFactor.data();
+    modelInfo.baseColor[0] = (f32)baseColor[0];
+    modelInfo.baseColor[1] = (f32)baseColor[1];
+    modelInfo.baseColor[2] = (f32)baseColor[2];
+    modelInfo.baseColor[3] = (f32)baseColor[3];
 
     // NOTE: gltf.textures.samplers gives info about how to magnify/minify textures and how texture wrapping should work
     s32 normalTextureIndex = gltfMaterial.normalTexture.index;
@@ -352,17 +446,10 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
   modelInfo.uvAttributeSize = texture0Attribute.bufferByteLength;
   modelInfo.indicesSize = indicesGLTFBufferByteLength;
 
-  f64 defaultBaseColor[] = {0.0, 0.0, 0.0, 0.0};
-  baseColor = baseColor == nullptr ? defaultBaseColor : baseColor;
-  modelInfo.baseColor[0] = (f32)baseColor[0];
-  modelInfo.baseColor[1] = (f32)baseColor[1];
-  modelInfo.baseColor[2] = (f32)baseColor[2];
-  modelInfo.baseColor[3] = (f32)baseColor[3];
-
-  CMP_BYTE* compressedAlbedo = nullptr;
+  u8* compressedAlbedo = nullptr;
   if(albedoImageIndex != -1) {
-    tinygltf::Image albedoImage = tinyGLTFModel.images[albedoImageIndex];
-    void* albedoImageData = albedoImage.image.data();
+    tinygltf::Image& albedoImage = tinyGLTFModel.images[albedoImageIndex];
+    u8* albedoImageData = albedoImage.image.data();
     u64 albedoImageSize = albedoImage.image.size();
     u64 albedoImageWidth = albedoImage.width;
     u64 albedoImageHeight = albedoImage.height;
@@ -371,118 +458,42 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
     modelInfo.albedoTexWidth = albedoImageWidth;
     modelInfo.albedoTexHeight = albedoImageHeight;
 
-    assert(albedoImageChannels == 3 || albedoImageChannels == 4);
-    CMP_FORMAT albedoStartFormat = albedoImageChannels == 3 ? CMP_FORMAT_RGB_888 : CMP_FORMAT_RGBA_8888;
-    CMP_FORMAT albedoDesiredFormat = albedoImageChannels == 3 ? CMP_FORMAT_ETC2_RGB : CMP_FORMAT_ETC2_RGBA;
+    u32 compressedSize;
+    TextureFormat compressedFormat;
+    bool success = compressImage(albedoImageData, albedoImageWidth, albedoImageHeight, albedoImageChannels, &compressedAlbedo, &compressedSize, &compressedFormat);
 
-    CMP_Texture srcTexture = {0};
-    srcTexture.dwSize = sizeof(srcTexture);
-    srcTexture.dwWidth = (CMP_DWORD)albedoImageWidth;
-    srcTexture.dwHeight = (CMP_DWORD)albedoImageHeight;
-    srcTexture.dwPitch = (CMP_DWORD)(albedoImageWidth * albedoImageChannels);
-    srcTexture.format = albedoStartFormat;
-    srcTexture.dwDataSize = (CMP_DWORD)albedoImageSize;
-    srcTexture.pData = (CMP_BYTE *)albedoImageData;
-    srcTexture.pMipSet = nullptr;
-
-    CMP_Texture destTexture = {0};
-    destTexture.dwSize = sizeof(destTexture);
-    destTexture.dwWidth = srcTexture.dwWidth;
-    destTexture.dwHeight = srcTexture.dwHeight;
-    destTexture.format = albedoDesiredFormat;
-    destTexture.nBlockHeight = 4;
-    destTexture.nBlockWidth = 4;
-    destTexture.nBlockDepth = 1;
-    destTexture.dwDataSize = CMP_CalculateBufferSize(&destTexture);
-    compressedAlbedo = (CMP_BYTE *) malloc(destTexture.dwDataSize);
-    destTexture.pData = compressedAlbedo;
-
-    CMP_CompressOptions options = {0};
-    options.dwSize = sizeof(options);
-    options.fquality = 1.0f;            // Quality
-    options.dwnumThreads = 0;               // Number of threads to use per texture set to auto
-
-    auto compressionStart = std::chrono::high_resolution_clock::now();
-    try {
-      CMP_ERROR cmp_status = CMP_ConvertTexture(&srcTexture, &destTexture, &options, &CompressionCallback);
-      if (cmp_status != CMP_OK) {
-        std::printf("Error %d: Something went wrong with compressing albedo texture for %s\n", cmp_status,
-                    inputPath.string().c_str());
-      }
-    } catch (const std::exception &ex) {
-      std::printf("Error: %s\n", ex.what());
+    if(!success) {
+      std::printf("Error: Something went wrong with compressing albedo texture for %s\n", inputPath.string().c_str());
     }
-    auto compressionEnd = std::chrono::high_resolution_clock::now();
-    auto diff = compressionEnd - compressionStart;
-    std::cout << "compression took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0
-              << "ms" << std::endl;
 
-    modelInfo.albedoTexSize = destTexture.dwDataSize;
-    modelInfo.albedoTexFormat = destTexture.format == CMP_FORMAT_ETC2_RGB ? TextureFormat_ETC2_RGB : TextureFormat_ETC2_RGBA;
+    modelInfo.albedoTexSize = compressedSize;
+    modelInfo.albedoTexFormat = compressedFormat;
   }
 
   u8* compressedNormal = nullptr;
   if(normalImageIndex != -1) {
-    CMP_FORMAT normalStartFormat = CMP_FORMAT_RGB_888;
-    // TODO: We should *NOT* be using ETC2 format for normals. It is just not the right encoding for such a thing.
-    // TODO: GLES 3.0 only guarantees ETC1, ETC2, EAC, ASTC.
-    // TODO: My personal device also supports a few ATC formats.
-    CMP_FORMAT normalDesiredFormat = CMP_FORMAT_ETC2_RGB;
-
-    tinygltf::Image normalImage = tinyGLTFModel.images[normalImageIndex];
-    void* normalImageData = normalImage.image.data();
+    tinygltf::Image& normalImage = tinyGLTFModel.images[normalImageIndex];
+    u8* normalImageData = normalImage.image.data();
     u64 normalImageSize = normalImage.image.size();
     u64 normalImageWidth = normalImage.width;
     u64 normalImageHeight = normalImage.height;
+    u64 normalImageChannels = normalImage.component;
+    assert(normalImageChannels == 3 && "Normal map has incorrect number of components.");
 
     modelInfo.normalTexWidth = normalImageWidth;
     modelInfo.normalTexHeight = normalImageHeight;
 
-    CMP_Texture srcTexture = {0};
-    srcTexture.dwSize = sizeof(srcTexture);
-    srcTexture.dwWidth = (CMP_DWORD)normalImageWidth;
-    srcTexture.dwHeight = (CMP_DWORD)normalImageHeight;
-    srcTexture.dwPitch = (CMP_DWORD)(normalImageWidth * 3);
-    srcTexture.format = normalStartFormat;
-    srcTexture.dwDataSize = (CMP_DWORD)normalImageSize;
-    srcTexture.pData = (CMP_BYTE *) normalImageData;
-    srcTexture.pMipSet = nullptr;
+    u32 compressedSize;
+    TextureFormat compressedFormat;
+    // TODO: compressImage does not currently support ideal compression for normals
+    bool success = compressImage(normalImageData, normalImageWidth, normalImageHeight, normalImageChannels, &compressedNormal, &compressedSize, &compressedFormat);
 
-    CMP_Texture destTexture = {0};
-    destTexture.dwSize = sizeof(destTexture);
-    destTexture.dwWidth = srcTexture.dwWidth;
-    destTexture.dwHeight = srcTexture.dwHeight;
-    destTexture.dwPitch = 0;
-    destTexture.format = normalDesiredFormat;
-    destTexture.nBlockHeight = 4;
-    destTexture.nBlockWidth = 4;
-    destTexture.nBlockDepth = 1;
-    destTexture.dwDataSize = CMP_CalculateBufferSize(&destTexture);
-    compressedNormal = (CMP_BYTE *) malloc(destTexture.dwDataSize);
-    destTexture.pData = compressedNormal;
-
-    CMP_CompressOptions options = {0};
-    options.dwSize = sizeof(options);
-    options.fquality = 1.0f;            // Quality
-    options.dwnumThreads = 0;               // Number of threads to use per texture set to auto
-
-    auto compressionStart = std::chrono::high_resolution_clock::now();
-    try {
-      CMP_ERROR cmp_status = CMP_ConvertTexture(&srcTexture, &destTexture, &options, &CompressionCallback);
-      if (cmp_status != CMP_OK) {
-        std::printf("Error %d: Something went wrong with compressing normal texture for %s\n", cmp_status,
-                    inputPath.string().c_str());
-      }
-    } catch (const std::exception &ex) {
-      std::printf("Error: %s\n", ex.what());
+    if(!success) {
+      std::printf("Error: Something went wrong with compressing normal texture for %s\n", inputPath.string().c_str());
     }
-    auto compressionEnd = std::chrono::high_resolution_clock::now();
-    auto diff = compressionEnd - compressionStart;
-    std::cout << "compression took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0
-              << "ms" << std::endl;
 
-    modelInfo.normalTexSize = destTexture.dwDataSize;
-    modelInfo.normalTexFormat = TextureFormat_ETC2_RGB;
+    modelInfo.normalTexSize = compressedSize;
+    modelInfo.normalTexFormat = compressedFormat;
   }
 
   AssetFile modelAsset = packModel(&modelInfo,
@@ -495,8 +506,14 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
 
   saveAssetFile(outputFileName, modelAsset);
 
-  free(compressedAlbedo);
-  free(compressedNormal);
+  if(normalImageIndex != -1 && compressedNormal != tinyGLTFModel.images[normalImageIndex].image.data()) {
+    free(compressedNormal);
+  }
+
+  if(albedoImageIndex != -1 && compressedAlbedo != tinyGLTFModel.images[albedoImageIndex].image.data()) {
+    free(compressedAlbedo);
+  }
+
 
   return false;
 }
@@ -577,56 +594,25 @@ bool convertCubeMapTexture(const fs::path& inputDir, const char* outputFilename)
   stbi_image_free(leftPixels);
   stbi_image_free(rightPixels);
 
-  CMP_Texture srcTexture = {0};
-  srcTexture.dwSize = sizeof(srcTexture);
-  srcTexture.dwWidth = topWidth;
-  srcTexture.dwHeight = topHeight * 6;
-  srcTexture.dwPitch = topWidth * topChannels;
-  srcTexture.format = CMP_FORMAT_RGB_888;
-  srcTexture.dwDataSize = topWidth * topHeight * topChannels * topChannels * 6;
-  srcTexture.pData = cubeMapPixels_fbtbrl;
-  srcTexture.pMipSet = nullptr;
+  u8* compressedBytes;
+  u32 compressedSize;
+  TextureFormat compressedFormat;
+  bool success = compressImage(cubeMapPixels_fbtbrl, topWidth, topHeight * 6, topChannels, &compressedBytes, &compressedSize, &compressedFormat);
 
-  CMP_Texture destTexture = {0};
-  destTexture.dwSize     = sizeof(destTexture);
-  destTexture.dwWidth    = srcTexture.dwWidth;
-  destTexture.dwHeight   = srcTexture.dwHeight;
-  destTexture.dwPitch    = 0;
-  destTexture.format     = CMP_FORMAT_ETC2_RGB;
-  destTexture.nBlockHeight = 4;
-  destTexture.nBlockWidth = 4;
-  destTexture.nBlockDepth = 1;
-  destTexture.dwDataSize = CMP_CalculateBufferSize(&destTexture);
-  destTexture.pData      = (CMP_BYTE*)malloc(destTexture.dwDataSize);
-
-  CMP_CompressOptions options = {0};
-  options.dwSize       = sizeof(options);
-  options.fquality     = 1.0f;            // Quality
-  options.dwnumThreads = 0;               // Number of threads to use per texture set to auto
-
-  auto compressionStart = std::chrono::high_resolution_clock::now();
-  try {
-    CMP_ERROR cmp_status = CMP_ConvertTexture(&srcTexture, &destTexture, &options, &CompressionCallback);
-    if(cmp_status != CMP_OK) {
-      std::printf("Error %d: Something went wrong with compressing %s\n", cmp_status, inputDir.string().c_str());
-    }
-  } catch (const std::exception& ex) {
-    std::printf("Error: %s\n",ex.what());
+  if(!success) {
+    std::printf("Error: Something went wrong with compressing %s\n", inputDir.string().c_str());
   }
-  auto compressionEnd = std::chrono::high_resolution_clock::now();
-  diff = compressionEnd - compressionStart;
-  std::cout << "compression took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0 << "ms" << std::endl;
 
   CubeMapInfo info;
-  info.format = TextureFormat_ETC2_RGB;
+  info.format = compressedFormat;
   info.faceWidth = topWidth;
   info.faceHeight = topHeight;
   info.originalFolder = inputDir.string();
-  info.faceSize = (u32)(ceil(info.faceWidth / 4.f) * ceil(info.faceHeight / 4.f)) * 8;
-  assets::AssetFile cubeMapAssetFile = assets::packCubeMap(&info, destTexture.pData);
+  info.faceSize = compressedSize / 6;
+  assets::AssetFile cubeMapAssetFile = assets::packCubeMap(&info, compressedBytes);
 
+  if(compressedBytes != cubeMapPixels_fbtbrl){ free(compressedBytes); }
   free(cubeMapPixels_fbtbrl);
-  free(destTexture.pData);
 
   saveAssetFile(outputFilename, cubeMapAssetFile);
 
@@ -649,63 +635,26 @@ bool convertTexture(const fs::path& inputPath, const char* outputFilename) {
 
   assert(texChannels == 3 || texChannels == 1 && "Texture has an unsupported amount of channels.");
 
+  u8* compressedBytes;
+  u32 compressedSize;
+  TextureFormat compressedFormat;
+  bool success = compressImage(pixels, texWidth, texHeight, texChannels, &compressedBytes, &compressedSize, &compressedFormat);
+
+  if(!success) {
+    std::printf("Error: Something went wrong with compressing %s\n", inputPath.string().c_str());
+  }
+
   TextureInfo texInfo;
-  texInfo.size = texWidth * texHeight * texChannels;
+  texInfo.size = compressedSize;
   texInfo.originalFileName = inputPath.string();
   texInfo.width = texWidth;
   texInfo.height = texHeight;
+  texInfo.format = compressedFormat;
 
-  if(texChannels == 1) {
-    texInfo.format = TextureFormat_R8;
-    assets::AssetFile newImage = assets::packTexture(&texInfo, pixels);
-    saveAssetFile(outputFilename, newImage);
-  } else if(texChannels == 3) {
-    CMP_Texture srcTexture = {0};
-    srcTexture.dwSize = sizeof(srcTexture);
-    srcTexture.dwWidth = texWidth;
-    srcTexture.dwHeight = texHeight;
-    srcTexture.dwPitch = texWidth * texChannels;
-    srcTexture.format = CMP_FORMAT_RGB_888;
-    srcTexture.dwDataSize = texWidth * texHeight * texChannels;
-    srcTexture.pData = pixels;
-    srcTexture.pMipSet = nullptr;
+  assets::AssetFile newImage = assets::packTexture(&texInfo, compressedBytes);
+  saveAssetFile(outputFilename, newImage);
 
-    CMP_Texture destTexture = {0};
-    destTexture.dwSize     = sizeof(destTexture);
-    destTexture.dwWidth    = srcTexture.dwWidth;
-    destTexture.dwHeight   = srcTexture.dwHeight;
-    destTexture.dwPitch    = 0;
-    destTexture.format     = CMP_FORMAT_ETC2_RGB;
-    destTexture.nBlockHeight = 4;
-    destTexture.nBlockWidth = 4;
-    destTexture.nBlockDepth = 1;
-    destTexture.dwDataSize = CMP_CalculateBufferSize(&destTexture);
-    destTexture.pData      = (CMP_BYTE*)malloc(destTexture.dwDataSize);
-
-    CMP_CompressOptions options = {0};
-    options.dwSize       = sizeof(options);
-    options.fquality     = 1.0f;            // Quality
-    options.dwnumThreads = 0;               // Number of threads to use per texture set to auto
-
-    auto compressionStart = std::chrono::high_resolution_clock::now();
-    try {
-      CMP_ERROR cmp_status = CMP_ConvertTexture(&srcTexture, &destTexture, &options, &CompressionCallback);
-      if(cmp_status != CMP_OK) {
-        std::printf("Error %d: Something went wrong with compressing %s\n", cmp_status, inputPath.string().c_str());
-      }
-    } catch (const std::exception& ex) {
-      std::printf("Error: %s\n",ex.what());
-    }
-    auto compressionEnd = std::chrono::high_resolution_clock::now();
-    diff = compressionEnd - compressionStart;
-    std::cout << "compression took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0 << "ms" << std::endl;
-
-    texInfo.format = TextureFormat_ETC2_RGB;
-    assets::AssetFile newImage = assets::packTexture(&texInfo, destTexture.pData);
-    saveAssetFile(outputFilename, newImage);
-    free(destTexture.pData);
-  }
-
+  if(compressedBytes != pixels){ free(compressedBytes); }
   stbi_image_free(pixels);
 
   return true;
