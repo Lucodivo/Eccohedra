@@ -319,7 +319,7 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
   const u32 texture0AttributeIndex = 2;
 
   void* positionAttributeData = (void*)(vertexAttributeDataOffset + positionAttribute.bufferByteOffset);
-  void* normalAttributeData = (void*)(vertexAttributeDataOffset + normalAttribute.bufferByteOffset );
+  void* normalAttributeData = (void*)(vertexAttributeDataOffset + normalAttribute.bufferByteOffset);
   void* uvAttributeData = (void*)(vertexAttributeDataOffset + texture0Attribute.bufferByteOffset);
   void* indicesData = (void*)indicesDataOffset;
 
@@ -637,7 +637,7 @@ bool convertTexture(const fs::path& inputPath, const char* outputFilename) {
   int texWidth, texHeight, texChannels;
 
   auto imageLoadStart = std::chrono::high_resolution_clock::now();
-  stbi_uc* pixels = stbi_load(inputPath.u8string().c_str(), &texWidth, &texHeight, &texChannels, 0);
+  stbi_uc* pixels = stbi_load(inputPath.u8string().c_str(), &texWidth, &texHeight, &texChannels, STBI_default);
   auto imageLoadEnd = std::chrono::high_resolution_clock::now();
   auto diff = imageLoadEnd - imageLoadStart;
   std::cout << "texture took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0 << "ms to load" << std::endl;

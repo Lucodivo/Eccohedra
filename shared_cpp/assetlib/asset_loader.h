@@ -26,7 +26,7 @@
 namespace assets {
   struct AssetFile{
     char type[FILE_TYPE_SIZE_IN_BYTES];
-    int version;
+    u32 version;
     // TODO: Remove json, just use bytes
     std::string json; // metadata specific to asset type
     std::vector<char> binaryBlob; // the actual asset
