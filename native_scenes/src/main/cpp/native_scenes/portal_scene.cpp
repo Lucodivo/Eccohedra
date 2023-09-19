@@ -310,7 +310,8 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
     const u32 maxLights = ArrayCount(world->UBOs.lightUbo.dirPosLightStack);
     assert((scene->dirLightCount + scene->posLightCount) <= maxLights);
 
-
+    // NOTE: The lights are on a single double ended array where directional lights are added to the beginning
+    // and directional lights are added to the end.
     // TODO: If LightUniform and Light struct for class were the same we could do a simple memcpy
     world->UBOs.lightUbo.dirLightCount = scene->dirLightCount;
     for(u32 i = 0; i < scene->dirLightCount; ++i) {
@@ -493,7 +494,7 @@ void cleanupWorld(World* world) {
 
 void initPlayer(Player* player) {
   player->boundingBox.diagonal = defaultPlayerDimensionInMeters;
-  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f), -15.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
+  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f) - 2.8f, -3.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
 }
 
 void initCamera(Camera* camera, const Player& player) {

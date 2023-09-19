@@ -41,7 +41,7 @@ void main() {
   vec2 noiseTexSize = vec2(float(noiseTexSize_i.x), float(noiseTexSize_i.y));
 
   vec2 noiseTexCoord = ((inTexCoord * albedoTexSize) / noiseTexSize) + (vec2(-time.x, time.y) / noiseTexSize);
-  float noise = texture(noiseTex, noiseTexCoord).r;
+  float noise = texture(noiseTex, noiseTexCoord * 0.8).r;
   noise = (noise - 0.5) * 2.0; // [-1,1]
   noise = noise * noiseStength;
   vec2 texCoordNoise = inTexCoord + (vec2(noise) / albedoTexSize);
@@ -49,11 +49,10 @@ void main() {
 
   vec3 albedoColor = texture(albedoTex, texCoordNoiseTime).rgb;
 
-  vec3 surfaceNormal = getNormal(texCoordNoiseTime);
+  vec3 surfaceNormal = getNormal(inTexCoord);
 
   vec3 lightContribution = lightInfoUbo.ambientLightColor.rgb * lightInfoUbo.ambientLightColor.a;
 
-  float directLightContribution = 0.0;
   for(uint i = 0u; i < lightInfoUbo.dirLightCount; i++) {
     vec3 surfaceToSource = lightInfoUbo.dirPosLightStack[i].pos.xyz;
     float cosTerm = max(dot(surfaceNormal, surfaceToSource), 0.0);

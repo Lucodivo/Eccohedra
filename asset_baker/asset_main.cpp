@@ -90,6 +90,21 @@ bool CompressionCallback(float fProgress, CMP_DWORD_PTR pUser1, CMP_DWORD_PTR pU
 bool compressImage(u8* uncompressedBytes, u32 width, u32 height, u32 numChannels, u8** compressedBytes, u32* compressedImageSize, TextureFormat* compressedFormat) {
   u32 imageSize = width * height * numChannels;
 
+  struct LOCAL_FUNCS {
+    // NOTE: This is only necessary as a workaround for a bug in the Compressinator lib that swizzles red and blue
+    // https://github.com/GPUOpen-Tools/compressonator/issues/244 & https://github.com/GPUOpen-Tools/compressonator/issues/247
+    static void swizzleRB(u8* pixelChannels, u32 pixelCount, u32 numChannels) {
+      u8 tmp;
+      for(u32 i = 0; i < pixelCount; i++) {
+        u8* redChannel = &pixelChannels[i * numChannels];
+        u8* blueChannel = redChannel + 2;
+        tmp = *redChannel;
+        *redChannel = *blueChannel;
+        *blueChannel = tmp;
+      }
+    }
+  };
+
   CMP_FORMAT srcFormat = CMP_FORMAT_Unknown;
   CMP_FORMAT dstFormat = CMP_FORMAT_Unknown;
   switch(numChannels) {
@@ -111,12 +126,20 @@ bool compressImage(u8* uncompressedBytes, u32 width, u32 height, u32 numChannels
       srcFormat = CMP_FORMAT_RGB_888;
       dstFormat = CMP_FORMAT_ETC2_RGB;
       *compressedFormat = TextureFormat_ETC2_RGB;
+
+      // TODO: Compressinator lib workaround. Remove when it is fixed.
+      LOCAL_FUNCS::swizzleRB(uncompressedBytes, width * height, numChannels);
+
       break;
     }
     case 4: {
       srcFormat = CMP_FORMAT_RGBA_8888;
       dstFormat = CMP_FORMAT_ETC2_RGBA;
       *compressedFormat = TextureFormat_ETC2_RGBA;
+
+      // TODO: Compressinator lib workaround. Remove when it is fixed.
+      LOCAL_FUNCS::swizzleRB(uncompressedBytes, width * height, numChannels);
+
       break;
     }
     default: {
@@ -396,8 +419,7 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
   u64 indicesGLTFBufferByteLength = indicesGLTFBufferView.byteLength;
 
   u64 minOffset = Min(positionAttribute.bufferByteOffset, Min(texture0Attribute.bufferByteOffset, normalAttribute.bufferByteOffset));
-  u8* vertexAttributeDataOffset = tinyGLTFModel.buffers[indicesGLTFBufferIndex].data.data() + minOffset;
-  u8* indicesDataOffset = tinyGLTFModel.buffers[indicesGLTFBufferIndex].data.data() + indicesGLTFBufferByteOffset;
+  u8* vertexAttributeData = tinyGLTFModel.buffers[vertexAttBufferIndex].data.data();
 
   modelInfo.indexCount = u32(gltfAccessors->at(indicesAccessorIndex).count);
   modelInfo.indexTypeSize = tinygltf::GetComponentSizeInBytes(gltfAccessors->at(indicesAccessorIndex).componentType);
@@ -409,10 +431,10 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
   const u32 normalAttributeIndex = 1;
   const u32 texture0AttributeIndex = 2;
 
-  void* positionAttributeData = (void*)(vertexAttributeDataOffset + positionAttribute.bufferByteOffset);
-  void* normalAttributeData = (void*)(vertexAttributeDataOffset + normalAttribute.bufferByteOffset);
-  void* uvAttributeData = (void*)(vertexAttributeDataOffset + texture0Attribute.bufferByteOffset);
-  void* indicesData = (void*)indicesDataOffset;
+  u8* positionAttributeData = vertexAttributeData + positionAttribute.bufferByteOffset;
+  u8* normalAttributeData = vertexAttributeData + normalAttribute.bufferByteOffset;
+  u8* uvAttributeData = vertexAttributeData + texture0Attribute.bufferByteOffset;
+  u8* indicesData = tinyGLTFModel.buffers[indicesGLTFBufferIndex].data.data() + indicesGLTFBufferByteOffset;
 
   s32 normalImageIndex = -1;
   s32 albedoImageIndex = -1;
@@ -430,7 +452,7 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
     modelInfo.baseColor[3] = (f32)baseColor[3];
 
     // NOTE: gltf.textures.samplers gives info about how to magnify/minify textures and how texture wrapping should work
-    s32 normalTextureIndex = gltfMaterial.normalTexture.index;
+    s32 normalTextureIndex = -1;//gltfMaterial.normalTexture.index;
     if(normalTextureIndex >= 0) {
       normalImageIndex = tinyGLTFModel.textures[normalTextureIndex].source;
     }
@@ -485,16 +507,23 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
 
     u32 compressedSize;
     TextureFormat compressedFormat;
-    // TODO: compressImage does not currently support ideal compression for normals
-    bool success = compressImage(normalImageData, normalImageWidth, normalImageHeight, normalImageChannels, &compressedNormal, &compressedSize, &compressedFormat);
 
-    if(!success) {
-      std::printf("Error: Something went wrong with compressing normal texture for %s\n", inputPath.string().c_str());
-    }
-
-    modelInfo.normalTexSize = compressedSize;
-    modelInfo.normalTexFormat = compressedFormat;
+    // TODO: Enable normals when normal compression is better and the project needs more of a need for normals.
+    compressedNormal = normalImageData;
+//    bool success = compressImage(normalImageData, normalImageWidth, normalImageHeight, normalImageChannels, &compressedNormal, &compressedSize, &compressedFormat);
+//    if(!success) {
+//      std::printf("Error: Something went wrong with compressing normal texture for %s\n", inputPath.string().c_str());
+//    }
+//    modelInfo.normalTexSize = compressedSize;
+//    modelInfo.normalTexFormat = compressedFormat;
   }
+
+  // TODO: Enable normals when normal compression is better and the project needs more of a need for normals.
+  modelInfo.normalTexHeight = 0;
+  modelInfo.normalTexWidth = 0;
+  modelInfo.normalAttributeSize = 0;
+  modelInfo.normalTexSize = 0;
+  modelInfo.normalTexFormat = TextureFormat_Unknown;
 
   AssetFile modelAsset = packModel(&modelInfo,
                                    positionAttributeData,

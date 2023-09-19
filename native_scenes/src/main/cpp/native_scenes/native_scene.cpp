@@ -65,6 +65,8 @@ void android_main(android_app *app) {
   if (app->savedState != nullptr) {
     // grab saved state if available
     engine.state = *(SceneState *) app->savedState;
+    free(app->savedState);
+    app->savedState = nullptr;
   }
 
   {

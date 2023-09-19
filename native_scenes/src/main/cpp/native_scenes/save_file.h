@@ -174,7 +174,8 @@ SaveFormat originalWorld() {
   gateScene.directionalLights.push_back({
     vec3{1, 1, 1},
     0.5,
-    vec3{0.69, -0.69, 0.23}
+    // TODO: The results from the position of the directional light is cursed, makes no sense, and must be looked into.
+    vec3{0.0, 0.0, -1.0}
   });
   scenes.push_back(gateScene);
 
