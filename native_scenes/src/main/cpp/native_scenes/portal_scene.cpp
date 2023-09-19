@@ -329,9 +329,8 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
 
     world->UBOs.lightUbo.ambientLight = scene->ambientLight;
 
-    glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.lightUboId);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(globalWorld.UBOs.lightUbo), &globalWorld.UBOs.lightUbo, GL_STREAM_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.lightUboId);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(LightUBO), &world->UBOs.lightUbo);
   }
 
   for(u32 sceneEntityIndex = 0; sceneEntityIndex < scene->entityCount; ++sceneEntityIndex) {
@@ -490,7 +489,8 @@ void cleanupWorld(World* world) {
 
 void initPlayer(Player* player) {
   player->boundingBox.diagonal = defaultPlayerDimensionInMeters;
-  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f) - 2.8f, -3.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
+//  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f) - 2.8f, -3.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
+  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f), -12.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
 }
 
 void initCamera(Camera* camera, const Player& player) {
@@ -649,7 +649,7 @@ void initPortalScene() {
 
     glGenBuffers(1, &globalWorld.UBOs.lightUboId);
     glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.lightUboId);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(globalWorld.UBOs.lightUbo), NULL, GL_STREAM_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(LightUBO), NULL, GL_DYNAMIC_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, lightUBOBindingIndex, globalWorld.UBOs.lightUboId, 0, sizeof(LightUBO));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
   }

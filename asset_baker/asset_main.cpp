@@ -26,6 +26,8 @@ using namespace assets;
 #include "noop_math.h"
 using namespace noop;
 
+#define assert_release(expression) ((void)0)
+
 struct {
   const char* texture = ".tx";
   const char* cubeMap = ".cbtx";
@@ -112,6 +114,8 @@ bool compressImage(u8* uncompressedBytes, u32 width, u32 height, u32 numChannels
       // TODO: Single channel textures should be able to be compacted for GL_COMPRESSED_R11_EAC
       *compressedFormat = TextureFormat_R8;
       *compressedImageSize = imageSize;
+      *compressedBytes = (u8*)malloc(*compressedImageSize);
+      memcpy(*compressedBytes, uncompressedBytes, *compressedImageSize);
       *compressedBytes = uncompressedBytes;
       return true;
     }
@@ -143,7 +147,7 @@ bool compressImage(u8* uncompressedBytes, u32 width, u32 height, u32 numChannels
       break;
     }
     default: {
-      assert(false && "Error: Asset baker does not yet support images with 2 or greater than 4 channels.");
+      assert_release(false && "Error: Asset baker does not yet support images with 2 or greater than 4 channels.");
     }
   }
 
@@ -151,7 +155,7 @@ bool compressImage(u8* uncompressedBytes, u32 width, u32 height, u32 numChannels
   srcTexture.dwSize = sizeof(srcTexture);
   srcTexture.dwWidth = (CMP_DWORD)width;
   srcTexture.dwHeight = (CMP_DWORD)height;
-  srcTexture.dwPitch = (CMP_DWORD)(width * 3);
+  srcTexture.dwPitch = (CMP_DWORD)(width * numChannels);
   srcTexture.format = srcFormat;
   srcTexture.dwDataSize = (CMP_DWORD)imageSize;
   srcTexture.pData = (CMP_BYTE *)uncompressedBytes;
@@ -357,7 +361,7 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
   const char* texture0IndexKeyString = "TEXCOORD_0";
 
   u32 meshCount = (u32)tinyGLTFModel.meshes.size();
-  assert(meshCount != 0);
+  assert_release(meshCount != 0);
   std::vector<tinygltf::Accessor>* gltfAccessors = &tinyGLTFModel.accessors;
   std::vector<tinygltf::BufferView>* gltfBufferViews = &tinyGLTFModel.bufferViews;
 
@@ -375,13 +379,13 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
   // TODO: Handle models with more than one mesh
   tinygltf::Mesh gltfMesh = tinyGLTFModel.meshes[0];
 
-  assert(!gltfMesh.primitives.empty());
+  assert_release(!gltfMesh.primitives.empty());
   // TODO: handle meshes that have more than one primitive
   tinygltf::Primitive gltfPrimitive = gltfMesh.primitives[0];
-  assert(gltfPrimitive.indices > -1); // TODO: Should we deal with models that don't have indices?
+  assert_release(gltfPrimitive.indices > -1); // TODO: Should we deal with models that don't have indices?
 
   // TODO: Allow variability in attributes beyond POSITION, NORMAL, TEXCOORD_0?
-  assert(gltfPrimitive.attributes.find(positionIndexKeyString) != gltfPrimitive.attributes.end());
+  assert_release(gltfPrimitive.attributes.find(positionIndexKeyString) != gltfPrimitive.attributes.end());
   gltfAttributeMetadata positionAttribute = populateAttributeMetadata(positionIndexKeyString, gltfPrimitive);
 
   f64* minValues = tinyGLTFModel.accessors[positionAttribute.accessorIndex].minValues.data();
@@ -398,19 +402,19 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
   gltfAttributeMetadata normalAttribute = {0};
   if(normalAttributesAvailable) { // normal attribute data
     normalAttribute = populateAttributeMetadata(normalIndexKeyString, gltfPrimitive);
-    assert(positionAttribute.bufferIndex == normalAttribute.bufferIndex);
+    assert_release(positionAttribute.bufferIndex == normalAttribute.bufferIndex);
   }
 
   b32 texture0AttributesAvailable = gltfPrimitive.attributes.find(texture0IndexKeyString) != gltfPrimitive.attributes.end();
   gltfAttributeMetadata texture0Attribute = {0};
   if(texture0AttributesAvailable) { // texture 0 uv coord attribute data
     texture0Attribute = populateAttributeMetadata(texture0IndexKeyString, gltfPrimitive);
-    assert(positionAttribute.bufferIndex == texture0Attribute.bufferIndex);
+    assert_release(positionAttribute.bufferIndex == texture0Attribute.bufferIndex);
   }
 
   // TODO: Handle vertex attributes that don't share the same buffer?
   u32 vertexAttBufferIndex = positionAttribute.bufferIndex;
-  assert(tinyGLTFModel.buffers.size() > vertexAttBufferIndex);
+  assert_release(tinyGLTFModel.buffers.size() > vertexAttBufferIndex);
 
   u32 indicesAccessorIndex = gltfPrimitive.indices;
   tinygltf::BufferView indicesGLTFBufferView = gltfBufferViews->at(gltfAccessors->at(indicesAccessorIndex).bufferView);
@@ -426,7 +430,7 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
 
   // TODO: Handle the possibility of the three attributes not being side-by-side in the buffer
   u64 sizeOfAttributeData = positionAttribute.bufferByteLength + normalAttribute.bufferByteLength + texture0Attribute.bufferByteLength;
-  assert(tinyGLTFModel.buffers[vertexAttBufferIndex].data.size() >= sizeOfAttributeData);
+  assert_release(tinyGLTFModel.buffers[vertexAttBufferIndex].data.size() >= sizeOfAttributeData);
   const u32 positionAttributeIndex = 0;
   const u32 normalAttributeIndex = 1;
   const u32 texture0AttributeIndex = 2;
@@ -443,7 +447,7 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
   if(gltfMaterialIndex >= 0) {
     tinygltf::Material gltfMaterial = tinyGLTFModel.materials[gltfMaterialIndex];
     // TODO: Handle more then just TEXCOORD_0 vertex attribute?
-    assert(gltfMaterial.normalTexture.texCoord == 0 && gltfMaterial.pbrMetallicRoughness.baseColorTexture.texCoord == 0);
+    assert_release(gltfMaterial.normalTexture.texCoord == 0 && gltfMaterial.pbrMetallicRoughness.baseColorTexture.texCoord == 0);
 
     f64* baseColor = gltfMaterial.pbrMetallicRoughness.baseColorFactor.data();
     modelInfo.baseColor[0] = (f32)baseColor[0];
@@ -452,7 +456,7 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
     modelInfo.baseColor[3] = (f32)baseColor[3];
 
     // NOTE: gltf.textures.samplers gives info about how to magnify/minify textures and how texture wrapping should work
-    s32 normalTextureIndex = -1;//gltfMaterial.normalTexture.index;
+    s32 normalTextureIndex = gltfMaterial.normalTexture.index;
     if(normalTextureIndex >= 0) {
       normalImageIndex = tinyGLTFModel.textures[normalTextureIndex].source;
     }
@@ -495,12 +499,30 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
   u8* compressedNormal = nullptr;
   if(normalImageIndex != -1) {
     tinygltf::Image& normalImage = tinyGLTFModel.images[normalImageIndex];
-    u8* normalImageData = normalImage.image.data();
-    u64 normalImageSize = normalImage.image.size();
     u64 normalImageWidth = normalImage.width;
     u64 normalImageHeight = normalImage.height;
-    u64 normalImageChannels = normalImage.component;
-    assert(normalImageChannels == 3 && "Normal map has incorrect number of components.");
+
+    u8* normalImageData;
+    u64 normalImageSize;
+    u64 normalImageChannels = 3;
+    if(normalImage.component == 3) {
+      normalImageData = normalImage.image.data();
+      normalImageSize = normalImage.image.size();
+    } else if(normalImage.component == 4) {
+      u8* normalImageData_fourComponent = normalImage.image.data();
+      normalImageSize = normalImageWidth * normalImageHeight * 3;
+      normalImageData = (u8*)malloc(normalImageSize);
+      u64 pixelCount = normalImageWidth * normalImageHeight;
+      for(u64 i = 0; i < pixelCount; i++) {
+        u8* fourComponentPixel = &normalImageData_fourComponent[i * 4];
+        u8* threeComponentPixel = &normalImageData[i * 3];
+        threeComponentPixel[0] = fourComponentPixel[0];
+        threeComponentPixel[1] = fourComponentPixel[1];
+        threeComponentPixel[2] = fourComponentPixel[2];
+      }
+    } else {
+      assert_release(false && "Normal map has insufficient number of components.");
+    }
 
     modelInfo.normalTexWidth = normalImageWidth;
     modelInfo.normalTexHeight = normalImageHeight;
@@ -510,20 +532,15 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
 
     // TODO: Enable normals when normal compression is better and the project needs more of a need for normals.
     compressedNormal = normalImageData;
-//    bool success = compressImage(normalImageData, normalImageWidth, normalImageHeight, normalImageChannels, &compressedNormal, &compressedSize, &compressedFormat);
-//    if(!success) {
-//      std::printf("Error: Something went wrong with compressing normal texture for %s\n", inputPath.string().c_str());
-//    }
-//    modelInfo.normalTexSize = compressedSize;
-//    modelInfo.normalTexFormat = compressedFormat;
-  }
+    bool success = compressImage(normalImageData, normalImageWidth, normalImageHeight, normalImageChannels, &compressedNormal, &compressedSize, &compressedFormat);
+    if(!success) {
+      std::printf("Error: Something went wrong with compressing normal texture for %s\n", inputPath.string().c_str());
+    }
+    modelInfo.normalTexSize = compressedSize;
+    modelInfo.normalTexFormat = compressedFormat;
 
-  // TODO: Enable normals when normal compression is better and the project needs more of a need for normals.
-  modelInfo.normalTexHeight = 0;
-  modelInfo.normalTexWidth = 0;
-  modelInfo.normalAttributeSize = 0;
-  modelInfo.normalTexSize = 0;
-  modelInfo.normalTexFormat = TextureFormat_Unknown;
+    if(normalImage.component == 4) { free(normalImageData); }
+  }
 
   AssetFile modelAsset = packModel(&modelInfo,
                                    positionAttributeData,
@@ -535,14 +552,8 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
 
   saveAssetFile(outputFileName, modelAsset);
 
-  if(normalImageIndex != -1 && compressedNormal != tinyGLTFModel.images[normalImageIndex].image.data()) {
-    free(compressedNormal);
-  }
-
-  if(albedoImageIndex != -1 && compressedAlbedo != tinyGLTFModel.images[albedoImageIndex].image.data()) {
-    free(compressedAlbedo);
-  }
-
+  free(compressedNormal);
+  free(compressedAlbedo);
 
   return false;
 }
@@ -605,7 +616,7 @@ bool convertCubeMapTexture(const fs::path& inputDir, const char* outputFilename)
     return false;
   }
 
-  assert(topChannels == 3 && "Number of channels for cube map asset does not match desired");
+  assert_release(topChannels == 3 && "Number of channels for cube map asset does not match desired");
 
   u32 facePixelsSize = frontWidth * frontHeight * frontChannels;
   unsigned char* cubeMapPixels_fbtbrl = (unsigned char*)malloc(facePixelsSize * 6);
@@ -662,7 +673,7 @@ bool convertTexture(const fs::path& inputPath, const char* outputFilename) {
     return false;
   }
 
-  assert(texChannels == 3 || texChannels == 1 && "Texture has an unsupported amount of channels.");
+  assert_release(texChannels == 3 || texChannels == 1 && "Texture has an unsupported amount of channels.");
 
   u8* compressedBytes;
   u32 compressedSize;

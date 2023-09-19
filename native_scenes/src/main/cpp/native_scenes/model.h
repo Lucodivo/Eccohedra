@@ -134,7 +134,7 @@ void loadModelAsset(const char* filePath, Model* returnModel) {
     mesh.textureData.albedoTextureId = TEXTURE_ID_NO_TEXTURE;
   }
 
-  if(false) { // TODO: Normal maps work but the compression encoding is currently seizure enducing
+  if(modelInfo.normalTexSize > 0) {
     glGenTextures(1, &mesh.textureData.normalTextureId);
     glBindTexture(GL_TEXTURE_2D, mesh.textureData.normalTextureId);
 
@@ -144,18 +144,30 @@ void loadModelAsset(const char* filePath, Model* returnModel) {
     //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // disables bilinear filtering (creates sharp edges when magnifying texture)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-    assert(modelInfo.normalTexFormat == assets::TextureFormat_ETC2_RGB && "Unsupported texture format");
-
-    glCompressedTexImage2D(GL_TEXTURE_2D,
-                           0,
-                           GL_COMPRESSED_RGB8_ETC2,
-                           modelInfo.normalTexWidth,
-                           modelInfo.normalTexHeight,
-                           0,
-                           modelInfo.normalTexSize,
-                           modelDataPtrs.normalTex);
+    if(modelInfo.normalTexFormat == assets::TextureFormat_ETC2_RGB) {
+      glCompressedTexImage2D(GL_TEXTURE_2D,
+                             0,
+                             GL_COMPRESSED_RGB8_ETC2,
+                             modelInfo.normalTexWidth,
+                             modelInfo.normalTexHeight,
+                             0,
+                             modelInfo.normalTexSize,
+                             modelDataPtrs.normalTex);
+      // TODO: Can you generate compressed mipmaps?
+    } else if(modelInfo.normalTexFormat == assets::TextureFormat_RGB8) {
+      glTexImage2D(GL_TEXTURE_2D,
+                     0,
+                   GL_RGB8,
+                     modelInfo.normalTexWidth,
+                     modelInfo.normalTexHeight,
+                     0,
+                     GL_RGB,
+                   GL_UNSIGNED_BYTE,
+                     modelDataPtrs.normalTex);
+    } else {
+      assert(false && "Unsupported texture format");
+    }
     glBindTexture(GL_TEXTURE_2D, 0);
-    // TODO: Can you generate compressed mipmaps?
   } else {
     mesh.textureData.normalTextureId = TEXTURE_ID_NO_TEXTURE;
   }

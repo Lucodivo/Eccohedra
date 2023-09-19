@@ -131,3 +131,10 @@ void logDeviceGLEnvironment() {
   }
   LOGI("\t\t%s", substrBegin);
 }
+
+s64 sizeOfUniformBlock(GLuint programId, const char* name) {
+  GLuint uniformBlockId = glGetProgramResourceIndex(programId, GL_UNIFORM_BLOCK, name);
+  GLint blockDataSize = 0;
+  glGetActiveUniformBlockiv(programId,uniformBlockId, GL_UNIFORM_BLOCK_DATA_SIZE,  &blockDataSize);
+  return blockDataSize;
+}

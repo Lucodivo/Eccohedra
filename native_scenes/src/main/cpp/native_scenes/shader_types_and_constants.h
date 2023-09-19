@@ -39,6 +39,8 @@ struct LightUBO {
   LightUniform dirPosLightStack[8];
   u32 dirLightCount;
   u32 posLightCount;
+  u32 padding1;
+  u32 padding2;
 };
 
 /*NOTE: GLSL Shader UBO Examples

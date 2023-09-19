@@ -21,6 +21,8 @@ layout (binding = 2, std140) uniform LightInfoUBO {
   InLight dirPosLightStack[8];
   uint dirLightCount;
   uint posLightCount;
+  uint padding1;
+  uint padding2;
 } lightInfoUbo;
 
 uniform sampler2D albedoTex;
@@ -49,7 +51,7 @@ void main() {
 
   vec3 albedoColor = texture(albedoTex, texCoordNoiseTime).rgb;
 
-  vec3 surfaceNormal = getNormal(inTexCoord);
+  vec3 surfaceNormal = getNormal(texCoordNoiseTime);
 
   vec3 lightContribution = lightInfoUbo.ambientLightColor.rgb * lightInfoUbo.ambientLightColor.a;
 
