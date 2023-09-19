@@ -329,13 +329,9 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
 
     world->UBOs.lightUbo.ambientLight = scene->ambientLight;
 
-    glGenBuffers(1, &globalWorld.UBOs.lightUboId);
-    // allocate size for buffer
     glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.lightUboId);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(world->UBOs.lightUbo), &world->UBOs.lightUbo, GL_STATIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(globalWorld.UBOs.lightUbo), &globalWorld.UBOs.lightUbo, GL_STREAM_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    // attach buffer to ubo binding point
-    glBindBufferRange(GL_UNIFORM_BUFFER, lightUBOBindingIndex, globalWorld.UBOs.lightUboId, 0, sizeof(world->UBOs.lightUbo));
   }
 
   for(u32 sceneEntityIndex = 0; sceneEntityIndex < scene->entityCount; ++sceneEntityIndex) {
@@ -642,19 +638,23 @@ void initPortalScene() {
   // UBOs
   {
     glGenBuffers(1, &globalWorld.UBOs.projectionViewModelUboId);
-    // allocate size for buffer
     glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.projectionViewModelUboId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(ProjectionViewModelUBO), NULL, GL_STREAM_DRAW);
-    // attach buffer to ubo binding point
     glBindBufferRange(GL_UNIFORM_BUFFER, projectionViewModelUBOBindingIndex, globalWorld.UBOs.projectionViewModelUboId, 0, sizeof(ProjectionViewModelUBO));
 
     glGenBuffers(1, &globalWorld.UBOs.fragUboId);
-    // allocate size for buffer
     glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.fragUboId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(FragUBO), NULL, GL_STREAM_DRAW);
-    // attach buffer to ubo binding point
     glBindBufferRange(GL_UNIFORM_BUFFER, fragUBOBindingIndex, globalWorld.UBOs.fragUboId, 0, sizeof(FragUBO));
+
+    glGenBuffers(1, &globalWorld.UBOs.lightUboId);
+    glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.lightUboId);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(globalWorld.UBOs.lightUbo), NULL, GL_STREAM_DRAW);
+    glBindBufferRange(GL_UNIFORM_BUFFER, lightUBOBindingIndex, globalWorld.UBOs.lightUboId, 0, sizeof(LightUBO));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
   }
+
+
 
   globalWorld.stopWatch = StopWatch();
 
