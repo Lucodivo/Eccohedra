@@ -84,122 +84,6 @@ void replace(std::string& str, const char* oldTokens, u32 oldTokensCount, char n
 bool compressImage(u8* uncompressedBytes, u32 width, u32 height, u32 numChannels, u8* compressedBytes);
 bool CompressionCallback(float fProgress, CMP_DWORD_PTR pUser1, CMP_DWORD_PTR pUser2);
 
-/* Arguments
- *  - u8** compressedBytes: If the image was not compressed, the returned pointer may be the same as uncompressedBytes
- *              - If it is not the same as uncompressed bytes, it must be manually free'd by the callee.
- * Returns false if error occurred during compression.
- */
-bool compressImage(u8* uncompressedBytes, u32 width, u32 height, u32 numChannels, u8** compressedBytes, u32* compressedImageSize, TextureFormat* compressedFormat) {
-  u32 imageSize = width * height * numChannels;
-
-  struct LOCAL_FUNCS {
-    // NOTE: This is only necessary as a workaround for a bug in the Compressinator lib that swizzles red and blue
-    // https://github.com/GPUOpen-Tools/compressonator/issues/244 & https://github.com/GPUOpen-Tools/compressonator/issues/247
-    static void swizzleRB(u8* pixelChannels, u32 pixelCount, u32 numChannels) {
-      u8 tmp;
-      for(u32 i = 0; i < pixelCount; i++) {
-        u8* redChannel = &pixelChannels[i * numChannels];
-        u8* blueChannel = redChannel + 2;
-        tmp = *redChannel;
-        *redChannel = *blueChannel;
-        *blueChannel = tmp;
-      }
-    }
-  };
-
-  CMP_FORMAT srcFormat = CMP_FORMAT_Unknown;
-  CMP_FORMAT dstFormat = CMP_FORMAT_Unknown;
-  switch(numChannels) {
-    case 1: {
-      // TODO: Single channel textures should be able to be compacted for GL_COMPRESSED_R11_EAC
-      *compressedFormat = TextureFormat_R8;
-      *compressedImageSize = imageSize;
-      *compressedBytes = (u8*)malloc(*compressedImageSize);
-      memcpy(*compressedBytes, uncompressedBytes, *compressedImageSize);
-      *compressedBytes = uncompressedBytes;
-      return true;
-    }
-    case 3: {
-      /*
-       * TODO: We should *NOT* be using ETC2 format for normals. It is just not the right encoding for the job.
-       *      - GLES 3.0 only guarantees ETC1, ETC2, EAC, ASTC.
-       *      - My personal device also supports a few ATC formats.
-       *      - Determine best format from limited selection.
-       */
-      CMP_FORMAT normalDesiredFormat = CMP_FORMAT_ETC2_RGB;
-      srcFormat = CMP_FORMAT_RGB_888;
-      dstFormat = CMP_FORMAT_ETC2_RGB;
-      *compressedFormat = TextureFormat_ETC2_RGB;
-
-      // TODO: Compressinator lib workaround. Remove when it is fixed.
-      LOCAL_FUNCS::swizzleRB(uncompressedBytes, width * height, numChannels);
-
-      break;
-    }
-    case 4: {
-      srcFormat = CMP_FORMAT_RGBA_8888;
-      dstFormat = CMP_FORMAT_ETC2_RGBA;
-      *compressedFormat = TextureFormat_ETC2_RGBA;
-
-      // TODO: Compressinator lib workaround. Remove when it is fixed.
-      LOCAL_FUNCS::swizzleRB(uncompressedBytes, width * height, numChannels);
-
-      break;
-    }
-    default: {
-      assert_release(false && "Error: Asset baker does not yet support images with 2 or greater than 4 channels.");
-    }
-  }
-
-  CMP_Texture srcTexture = {0};
-  srcTexture.dwSize = sizeof(srcTexture);
-  srcTexture.dwWidth = (CMP_DWORD)width;
-  srcTexture.dwHeight = (CMP_DWORD)height;
-  srcTexture.dwPitch = (CMP_DWORD)(width * numChannels);
-  srcTexture.format = srcFormat;
-  srcTexture.dwDataSize = (CMP_DWORD)imageSize;
-  srcTexture.pData = (CMP_BYTE *)uncompressedBytes;
-  srcTexture.pMipSet = nullptr;
-
-  CMP_Texture destTexture = {0};
-  destTexture.dwSize = sizeof(destTexture);
-  destTexture.dwWidth = srcTexture.dwWidth;
-  destTexture.dwHeight = srcTexture.dwHeight;
-  destTexture.format = dstFormat;
-  destTexture.nBlockHeight = 4;
-  destTexture.nBlockWidth = 4;
-  destTexture.nBlockDepth = 1;
-  *compressedImageSize = CMP_CalculateBufferSize(&destTexture);
-  *compressedBytes = (u8*)malloc(*compressedImageSize);
-  destTexture.dwDataSize = *compressedImageSize;
-  destTexture.pData = *compressedBytes;
-
-  CMP_CompressOptions options = {0};
-  options.dwSize = sizeof(options);
-  options.fquality = 1.0f; // Quality
-  options.dwnumThreads = 0; // Number of threads to use per texture set to auto
-  options.SourceFormat = srcTexture.format;
-  options.DestFormat = destTexture.format;
-
-  // TODO: Uncomment and get compressinator to generate mipmap levels
-//    options.genGPUMipMaps = true;
-//    options.miplevels = 3;
-
-  auto compressionStart = std::chrono::high_resolution_clock::now();
-  try {
-    CMP_ERROR cmp_status = CMP_ConvertTexture(&srcTexture, &destTexture, &options, &CompressionCallback);
-    if(cmp_status != CMP_OK) { return false; }
-  } catch (const std::exception &ex) {
-    std::printf("Error: %s\n", ex.what());
-  }
-  auto compressionEnd = std::chrono::high_resolution_clock::now();
-  auto diff = compressionEnd - compressionStart;
-  std::cout << "compression took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0
-            << "ms" << std::endl;
-
-  return true;
-}
-
 int main(int argc, char* argv[]) {
   // NOTE: Count is often at least 1, as argv[0] is full path of the program being run
   if(argc < 4) {
@@ -318,6 +202,122 @@ int main(int argc, char* argv[]) {
   saveCache(oldAssetBakeCache, newlyCachedItems);
 
   return 0;
+}
+
+/* Arguments
+ *  - u8** compressedBytes: If the image was not compressed, the returned pointer may be the same as uncompressedBytes
+ *              - If it is not the same as uncompressed bytes, it must be manually free'd by the callee.
+ * Returns false if error occurred during compression.
+ */
+bool compressImage(u8* uncompressedBytes, u32 width, u32 height, u32 numChannels, u8** compressedBytes, u32* compressedImageSize, TextureFormat* compressedFormat) {
+  u32 imageSize = width * height * numChannels;
+
+  struct LOCAL_FUNCS {
+    // NOTE: This is only necessary as a workaround for a bug in the Compressinator lib that swizzles red and blue
+    // https://github.com/GPUOpen-Tools/compressonator/issues/244 & https://github.com/GPUOpen-Tools/compressonator/issues/247
+    static void swizzleRB(u8* pixelChannels, u32 pixelCount, u32 numChannels) {
+      u8 tmp;
+      for(u32 i = 0; i < pixelCount; i++) {
+        u8* redChannel = &pixelChannels[i * numChannels];
+        u8* blueChannel = redChannel + 2;
+        tmp = *redChannel;
+        *redChannel = *blueChannel;
+        *blueChannel = tmp;
+      }
+    }
+  };
+
+  CMP_FORMAT srcFormat = CMP_FORMAT_Unknown;
+  CMP_FORMAT dstFormat = CMP_FORMAT_Unknown;
+  switch(numChannels) {
+    case 1: {
+      // TODO: Single channel textures should be able to be compacted for GL_COMPRESSED_R11_EAC
+      *compressedFormat = TextureFormat_R8;
+      *compressedImageSize = imageSize;
+      *compressedBytes = (u8*)malloc(*compressedImageSize);
+      memcpy(*compressedBytes, uncompressedBytes, *compressedImageSize);
+      *compressedBytes = uncompressedBytes;
+      return true;
+    }
+    case 3: {
+      /*
+       * TODO: We should *NOT* be using ETC2 format for normals. It is just not the right encoding for the job.
+       *      - GLES 3.0 only guarantees ETC1, ETC2, EAC, ASTC.
+       *      - My personal device also supports a few ATC formats.
+       *      - Determine best format from limited selection.
+       */
+      CMP_FORMAT normalDesiredFormat = CMP_FORMAT_ETC2_RGB;
+      srcFormat = CMP_FORMAT_RGB_888;
+      dstFormat = CMP_FORMAT_ETC2_RGB;
+      *compressedFormat = TextureFormat_ETC2_RGB;
+
+      // TODO: Compressinator lib workaround. Remove when it is fixed.
+      LOCAL_FUNCS::swizzleRB(uncompressedBytes, width * height, numChannels);
+
+      break;
+    }
+    case 4: {
+      srcFormat = CMP_FORMAT_RGBA_8888;
+      dstFormat = CMP_FORMAT_ETC2_RGBA;
+      *compressedFormat = TextureFormat_ETC2_RGBA;
+
+      // TODO: Compressinator lib workaround. Remove when it is fixed.
+      LOCAL_FUNCS::swizzleRB(uncompressedBytes, width * height, numChannels);
+
+      break;
+    }
+    default: {
+      assert_release(false && "Error: Asset baker does not yet support images with 2 or greater than 4 channels.");
+    }
+  }
+
+  CMP_Texture srcTexture = {0};
+  srcTexture.dwSize = sizeof(srcTexture);
+  srcTexture.dwWidth = (CMP_DWORD)width;
+  srcTexture.dwHeight = (CMP_DWORD)height;
+  srcTexture.dwPitch = (CMP_DWORD)(width * numChannels);
+  srcTexture.format = srcFormat;
+  srcTexture.dwDataSize = (CMP_DWORD)imageSize;
+  srcTexture.pData = (CMP_BYTE *)uncompressedBytes;
+  srcTexture.pMipSet = nullptr;
+
+  CMP_Texture destTexture = {0};
+  destTexture.dwSize = sizeof(destTexture);
+  destTexture.dwWidth = srcTexture.dwWidth;
+  destTexture.dwHeight = srcTexture.dwHeight;
+  destTexture.format = dstFormat;
+  destTexture.nBlockHeight = 4;
+  destTexture.nBlockWidth = 4;
+  destTexture.nBlockDepth = 1;
+  *compressedImageSize = CMP_CalculateBufferSize(&destTexture);
+  *compressedBytes = (u8*)malloc(*compressedImageSize);
+  destTexture.dwDataSize = *compressedImageSize;
+  destTexture.pData = *compressedBytes;
+
+  CMP_CompressOptions options = {0};
+  options.dwSize = sizeof(options);
+  options.fquality = 1.0f; // Quality
+  options.dwnumThreads = 0; // Number of threads to use per texture set to auto
+  options.SourceFormat = srcTexture.format;
+  options.DestFormat = destTexture.format;
+
+  // TODO: Uncomment and get compressinator to generate mipmap levels
+//    options.genGPUMipMaps = true;
+//    options.miplevels = 3;
+
+  auto compressionStart = std::chrono::high_resolution_clock::now();
+  try {
+    CMP_ERROR cmp_status = CMP_ConvertTexture(&srcTexture, &destTexture, &options, &CompressionCallback);
+    if(cmp_status != CMP_OK) { return false; }
+  } catch (const std::exception &ex) {
+    std::printf("Error: %s\n", ex.what());
+  }
+  auto compressionEnd = std::chrono::high_resolution_clock::now();
+  auto diff = compressionEnd - compressionStart;
+  std::cout << "compression took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0
+            << "ms" << std::endl;
+
+  return true;
 }
 
 bool convertModel(const fs::path& inputPath, const char* outputFileName) {

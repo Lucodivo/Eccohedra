@@ -8,9 +8,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17 -Wall -Wno-unused-variable 
 
 get_filename_component(ANDROID_ROOT "../" ABSOLUTE)
 get_filename_component(ANDROID_CPP "src/main/cpp/" ABSOLUTE)
+get_filename_component(ANDROID_NATIVE_ASSETS "src/main/assets" ABSOLUTE)
 get_filename_component(ANDROID_NATIVE_APP_GLUE_DIR ${ANDROID_NDK}/sources/android/native_app_glue ABSOLUTE)
 set(EXT_DIR ${ANDROID_ROOT}/external)
 set(SHARED_CPP ${ANDROID_ROOT}/shared_cpp/)
+set(NATIVE_SHADERS_DIR ${ANDROID_NATIVE_ASSETS}/shaders)
 
 find_library(log-lib log)
 find_library(android-lib android)
@@ -80,33 +82,32 @@ target_link_libraries(assetlib ${log-lib} ${android-lib} lz4 json)
 # Android library CMake directories
 add_subdirectory(src/main/cpp/native_scenes)
 
-#[[ Using CMake to validate glsl shader files
-find_package(Vulkan REQUIRED)
-find_program(GLSL_VALIDATOR glslangValidator HINTS /usr/bin /usr/local/bin $ENV{VULKAN_SDK}/Bin/ $ENV{VULKAN_SDK}/Bin32/)
 
-## find all the shader files under the shaders folder
+# validate shaders
+find_package(Vulkan REQUIRED)
+
+# find all the shader files under the shaders folder
 file(GLOB_RECURSE GLSL_SOURCE_FILES
-        "${PROJECT_SOURCE_DIR}/src/assets/shaders/*.frag"
-        "${PROJECT_SOURCE_DIR}/src/assets/shaders/*.vert"
-        "${PROJECT_SOURCE_DIR}/src/assets/shaders/*.comp"
+        ${NATIVE_SHADERS_DIR}/*.frag
+        ${NATIVE_SHADERS_DIR}/*.vert
 )
 
-## iterate each shader
+# iterate each shader
 foreach(GLSL ${GLSL_SOURCE_FILES})
     message(STATUS "BUILDING SHADER")
     get_filename_component(FILE_NAME ${GLSL} NAME)
-    set(SPIRV "${PROJECT_SOURCE_DIR}/src/assets/shaders/spv/${FILE_NAME}.spv")
+    set(GLSL_VALIDATION_TIMESTAMP ${ANDROID_ROOT}/build/shader_validation_timestamps/${FILE_NAME}.stamp)
     message(STATUS ${GLSL})
     ##execute glslang command to compile that specific shader
     add_custom_command(
-            OUTPUT ${SPIRV}
-            COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
+            OUTPUT ${GLSL_VALIDATION_TIMESTAMP}
+            COMMAND Vulkan::glslangValidator ${GLSL}
+            COMMAND ${CMAKE_COMMAND} -E touch ${GLSL_VALIDATION_TIMESTAMP}
             DEPENDS ${GLSL})
-    list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+    list(APPEND GLSL_VALIDATION_STAMPS ${GLSL_VALIDATION_TIMESTAMP})
 endforeach(GLSL)
 
 add_custom_target(
-        Shaders
-        DEPENDS ${SPIRV_BINARY_FILES}
+        shaders-validation
+        DEPENDS ${GLSL_VALIDATION_STAMPS}
 )
-]]

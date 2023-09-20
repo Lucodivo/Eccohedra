@@ -22,9 +22,10 @@ target_link_libraries(native-scene
         assetlib
 )
 
+add_dependencies(native-scene shaders-validation)
+
 #[[
 add_library(native-scene-red SHARED red_scene.cpp)
 target_include_directories(native-scene-red PRIVATE ${NATIVE_SCENE_INCL})
 target_link_libraries(native-scene-red ${NATIVE_SCENE_LIBS})
-add_dependencies(native-scene Shaders)
 ]]
