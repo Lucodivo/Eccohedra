@@ -96,8 +96,12 @@ cmake-build*/
 CMakeFiles/
 
 #asset_baker
-native_scenes/src/main/assets/skyboxes/
-native_scenes/src/main/assets/textures/
-native_scenes/src/main/assets/models/
+**/assets/skyboxes/
+**/assets/textures/
+**/assets/models/
+
+original_resolution/
+lower_resolution/
+
 baked_*.incl
 Asset-Baker-Cache.asb

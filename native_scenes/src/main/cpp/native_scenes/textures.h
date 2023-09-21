@@ -39,7 +39,7 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
   // TODO: Investigate what can be done, if anything, to load cubemap assets faster
   assets::AssetFile textureAssetFile;
   {
-    TimeBlock("assets::loadAssetFile")
+    TimeBlock("load2DTexture - assets::loadAssetFile")
     assets::loadAssetFile(assetManager_GLOBAL, assetPath.c_str(), &textureAssetFile);
   }
 
@@ -75,7 +75,6 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
     InvalidCodePath
   }
 
-
   if (width != NULL) *width = textureInfo.width;
   if (height != NULL) *height = textureInfo.height;
 
@@ -100,7 +99,7 @@ void loadCubeMapTexture(const char* fileName, GLuint* textureId) {
   // TODO: Investigate what can be done, if anything, to load cubemap assets faster
   assets::AssetFile cubeMapAssetFile;
   {
-    TimeBlock("assets::loadAssetFile")
+    TimeBlock("loadCubeMapTexture - assets::loadAssetFile")
     assets::loadAssetFile(assetManager_GLOBAL, assetPath.c_str(), &cubeMapAssetFile);
   }
 

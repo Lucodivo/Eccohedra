@@ -644,8 +644,6 @@ void initPortalScene() {
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
   }
 
-
-
   globalWorld.stopWatch = StopWatch();
 
   loadWorld(&globalWorld);

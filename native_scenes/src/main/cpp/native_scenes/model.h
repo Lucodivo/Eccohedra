@@ -34,7 +34,10 @@ void loadModelAsset(const char* filePath, Model* returnModel) {
   std::string assetPath = bakedModelsDir + filePath + ".modl";
 
   assets::AssetFile modelAssetFile;
-  assets::loadAssetFile(assetManager_GLOBAL, assetPath.c_str(), &modelAssetFile);
+  {
+    TimeBlock("loadModelAsset - assets::loadAssetFile");
+    assets::loadAssetFile(assetManager_GLOBAL, assetPath.c_str(), &modelAssetFile);
+  }
 
   assets::ModelInfo modelInfo;
   assets::readModelInfo(modelAssetFile, &modelInfo);
@@ -113,7 +116,6 @@ void loadModelAsset(const char* filePath, Model* returnModel) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // disables bilinear filtering (creates sharp edges when magnifying texture)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
     GLenum compressedFormat = GL_INVALID_ENUM;
@@ -141,7 +143,6 @@ void loadModelAsset(const char* filePath, Model* returnModel) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // disables bilinear filtering (creates sharp edges when magnifying texture)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
     if(modelInfo.normalTexFormat == assets::TextureFormat_ETC2_RGB) {

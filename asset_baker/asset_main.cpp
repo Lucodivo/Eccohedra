@@ -174,14 +174,16 @@ int main(int argc, char* argv[]) {
       } else if(fs::is_regular_file(modelFileEntry)) {
         fs::path exportPath = converterState.bakedAssetDir / "models" / modelFileEntry.path().filename().replace_extension(bakedExtensions.model);
         printf("%s\n", modelFileEntry.path().string().c_str());
-        convertModel(modelFileEntry, exportPath.string().c_str());
+        if(convertModel(modelFileEntry, exportPath.string().c_str())) {
+          converterState.bakedFilePaths.push_back(modelFileEntry);
+        } else {
+          printf("Failed to bake model asset: %s\n", modelFileEntry.path().string().c_str());
+        }
       }
     }
   } else {
     printf("Could not find models asset directory at: %s", asset_models_dir.string().c_str());
   }
-
-  // TODO: Cache baked models
 
   // remember baked item
   u32 convertedFilesCount = (u32)converterState.bakedFilePaths.size();
@@ -555,7 +557,7 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
   free(compressedNormal);
   free(compressedAlbedo);
 
-  return false;
+  return true;
 }
 
 bool convertCubeMapTexture(const fs::path& inputDir, const char* outputFilename) {

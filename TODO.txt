@@ -2,10 +2,14 @@ Improve iteration speed:
 - [Placeholder]
 
 Optimization ideas:
-- [Placeholder]
-
+- Calm Sea and Polluted Earth skybox textures can be downscaled to match
+    - Tried downscaling and didn't look great...
+    - Potentially use ASTC NxM compression for larger (or all) textures?
+        - [Android developer guid says support is lower than ETC2 but I don't believe it affects](https://developer.android.com/guide/playcore/asset-delivery/texture-compression) but I don't believe that will affect anyone who might run this app.
+        - Could always compress to ASTC and
 Modularization ideas:
 - matrices library (NoopMath.kt) could be set up to be pulled from a maven repository instead of manually embedded into the project
+- purge raw texture/model assets from the repo and store them somewhere else to be downloaded separately.
 
 Scene improvements:
 - Mandelbrot scene
