@@ -17,7 +17,7 @@ struct Model {
   Mesh* meshes;
   u32 meshCount;
   BoundingBox boundingBox;
-  char* fileName;
+  std::string fileName;
 };
 
 void loadModelAsset(const char* filePath, Model* returnModel) {
@@ -27,7 +27,7 @@ void loadModelAsset(const char* filePath, Model* returnModel) {
   const u32 normalAttributeIndex = 1;
   const u32 texture0AttributeIndex = 2;
 
-  returnModel->fileName = cStrAllocateAndCopy(filePath);
+  returnModel->fileName = filePath;
 
   // TODO: This is NOT where exported assets directory should be stored. Move this or related solution to assetlib or potentially a asset_baker header.
   std::string bakedModelsDir = "models/";
@@ -191,7 +191,6 @@ void deleteModels(Model* models, u32 count) {
       }
     }
     delete[] modelPtr->meshes;
-    delete[] modelPtr->fileName;
     *modelPtr = {}; // clear model to zero
   }
 

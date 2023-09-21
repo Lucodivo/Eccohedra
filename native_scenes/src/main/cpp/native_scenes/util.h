@@ -56,12 +56,6 @@ b32 flagsAreSet(b32 flags, b32 checkFlags) {
   return (flags & checkFlags) == checkFlags;
 }
 
-char* cStrAllocateAndCopy(const char* cStr) {
-  char* returnCStr = new char[strlen(cStr) + 1];
-  strcpy(returnCStr, cStr);
-  return returnCStr;
-}
-
 b32 fileReadable(const char* filename) {
   if (FILE* file = fopen(filename, "r")) {
     fclose(file);

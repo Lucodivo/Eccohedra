@@ -1,31 +1,11 @@
 Improve iteration speed:
-- Introduce glslang to build system (either cmake or gradle) to validate glsl shaders at compile time, instead of waiting until runtime
-    - glslc can be found in the ndk at the following location: 
-        *\ndk\{ndk-version}}\shader-tools\windows-x86_64*
-    - glslc/glslangValidator/glslang/shaderc_combined can potentially also be pulled from the VUlkan instillation found through CMake.
-        - search "CMake FindVulkan"
+- [Placeholder]
 
 Optimization ideas:
-- Baking assets ahead of time into custom formats can reduce the amount of runtime massaging of data
-necessary for models, textures, or skyboxes (texture arrays)
-- Shaders could be stored as a constant string to avoid asset/resource file decompression/reads? But
-would this conflict with compile time glsl validation?
-- Profiling native code has proven that massaging texture and model data takes the bulk of the initialization
-time. Highly consider baking assets into custom file formats that get us as close as possible to loading a file
-and sending those bytes directly to the GPU with little steps in between.
-- Consider texture compression for textures sent to OpenGL ES
-    - S3 Texture Compression (S3TC) is an example of a texture compression for GPUs. It does not compress images as greatly
-        as something like JPG/PNG which will increase the application size and cost of reading the texture. But, if natively
-        supported by the GPU hardware, S3CT would come with the advantages of reducing space taken up in GPU memory, reducing
-        the amount of data transferred from CPU to GPU and remove the CPU computation necessary for decompression.
-    - research terms: S3CT, DXT1/DXT3/DXT, BPTC, RGTC, ETC1, ETC2, ASTC
-    - glCompressedTexImage2D() is used to upload compressed textures through OpenGL and has been available since at least OpenGL ES 2.0
-    - Could pair well using a texture compression method as part of the asset baking process.
-    - Target texture compression formats in Android App Bundles: https://developer.android.com/guide/playcore/asset-delivery/texture-compression
-        - ETC2: Supported by all devices that support GLES3.
+- [Placeholder]
 
 Modularization ideas:
-- NoopMathKotlin could be set up to be pulled from a maven repository instead of manually embedded into the project
+- matrices library (NoopMath.kt) could be set up to be pulled from a maven repository instead of manually embedded into the project
 
 Scene improvements:
 - Mandelbrot scene
@@ -34,12 +14,11 @@ Scene improvements:
         - Failed attempts were made at trying to emulate higher floating point precision in the fragment shader.
     - Let user choose two accent colors
 - Native scene
-    - Loading animation
+    - Loading animation? (Might be a worse experience if loading is fast enough...)
 
 Refactoring:
 - Scenes save format was previously used for loading from JSON files. World information is now hardcoded
  to reduce asset reads. Refactor save format code as it contains much superfluous code.
-- Remove cStrAllocateAndCopy and just use strings...
 
 Bugs(?):
 - Exiting a scene seems to sometimes show a frame or two of the users home screen wallpaper

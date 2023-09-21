@@ -6,10 +6,10 @@ ShaderProgram createShaderProgram(const char* vertexPath, const char* fragmentPa
   TimeFunction
 
   ShaderProgram shaderProgram{};
-  shaderProgram.vertexFileName = cStrAllocateAndCopy(vertexPath);
-  shaderProgram.fragmentFileName = cStrAllocateAndCopy(fragmentPath);
-  shaderProgram.vertexShader = loadShader(shaderProgram.vertexFileName, GL_VERTEX_SHADER);
-  shaderProgram.fragmentShader = loadShader(shaderProgram.fragmentFileName, GL_FRAGMENT_SHADER);
+  shaderProgram.vertexFileName = vertexPath;
+  shaderProgram.fragmentFileName = fragmentPath;
+  shaderProgram.vertexShader = loadShader(shaderProgram.vertexFileName.c_str(), GL_VERTEX_SHADER);
+  shaderProgram.fragmentShader = loadShader(shaderProgram.fragmentFileName.c_str(), GL_FRAGMENT_SHADER);
 
   // shader program
   shaderProgram.id = glCreateProgram(); // NOTE: returns 0 if error occurs when creating program
@@ -31,8 +31,8 @@ ShaderProgram createShaderProgram(const char* vertexPath, const char* fragmentPa
   glDetachShader(shaderProgram.id, shaderProgram.fragmentShader);
 
   if(noiseTexture != nullptr) {
-    shaderProgram.noiseTextureFileName = cStrAllocateAndCopy(noiseTexture);
-    load2DTexture(shaderProgram.noiseTextureFileName, &shaderProgram.noiseTextureId);
+    shaderProgram.noiseTextureFileName = noiseTexture;
+    load2DTexture(shaderProgram.noiseTextureFileName.c_str(), &shaderProgram.noiseTextureId);
   }
 
   return shaderProgram;
@@ -43,15 +43,11 @@ void deleteShaderPrograms(ShaderProgram* shaderPrograms, u32 count) {
     ShaderProgram* shader = shaderPrograms + i;
 
     // delete the shaders
-    delete[] shader->vertexFileName;
-    delete[] shader->fragmentFileName;
-
     glDeleteShader(shader->vertexShader);
     glDeleteShader(shader->fragmentShader);
     glDeleteProgram(shader->id);
 
-    if(shader->noiseTextureFileName != nullptr) {
-      delete[] shader->noiseTextureFileName;
+    if(!shader->noiseTextureFileName.empty()) {
       glDeleteTextures(1, &shader->noiseTextureId);
     }
 

@@ -8,13 +8,13 @@
 #define MAX_STENCIL_VALUE 0xFF
 
 struct ShaderProgram {
-  GLuint id;
-  GLuint vertexShader;
-  GLuint fragmentShader;
-  GLuint noiseTextureId;
-  const char* vertexFileName;
-  const char* fragmentFileName;
-  const char* noiseTextureFileName;
+  GLuint id = GL_INVALID_ENUM;
+  GLuint vertexShader = GL_INVALID_ENUM;
+  GLuint fragmentShader = GL_INVALID_ENUM;
+  GLuint noiseTextureId = GL_INVALID_ENUM;
+  std::string vertexFileName = "";
+  std::string fragmentFileName = "";
+  std::string noiseTextureFileName = "";
 };
 
 u32 projectionViewModelUBOBindingIndex = 0;

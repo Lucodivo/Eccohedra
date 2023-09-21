@@ -64,7 +64,7 @@ All the following information is under the assumption the project is being built
   - Failing to have the correct CMake installed might generate an error with the message *java.lang.NullPointerException (no error message)*
 - Debug builds of the *native_scenes* library are currently set to only build for the *arm64-v8a* (AArch64) ABI. 
   - This is specified and can be changed in *native_scenes/build.gradle.kts* under *android > buildTypes > debug > ndk > abiFilters*
-- Although Vulkan is not currently used in this project, Vulkan is currently required for the typical build experience. Finding the Vulkan package
+- Although Vulkan is not currently used in this project, the Vulkan SDK is currently required for the typical build experience. Finding the Vulkan package
   via CMake allows access to all sorts of great tools. For this repository, we use it to find the the _glslangValidator_ tool, which can
   then be used to validate GLSL ES shader files at compile time, instead of waiting until runtime.
   - If you don't already have it, you must download the [Vulkan SDK by LunarG](https://www.lunarg.com/vulkan-sdk/)
