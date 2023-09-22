@@ -451,9 +451,6 @@ void cleanupScene(Scene* scene) {
 
   glDeleteTextures(1, &scene->skyboxTexture);
   scene->skyboxTexture = TEXTURE_ID_NO_TEXTURE;
-
-  scene->title = nullptr;
-  scene->skyboxFileName = nullptr;
 }
 
 void cleanupWorld(World* world) {
