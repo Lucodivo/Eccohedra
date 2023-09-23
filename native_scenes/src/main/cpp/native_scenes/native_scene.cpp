@@ -31,7 +31,7 @@ typedef struct Engine {
   SceneState state;
 } Engine;
 
-static void drawFrame(const Engine &engine);
+static void drawFrame(Engine* engine);
 static s32 handleInput(android_app *app, AInputEvent *event);
 static void handleAndroidCmd(android_app *app, s32 cmd);
 void glDeinit(GLEnvironment *glEnv);
@@ -121,15 +121,15 @@ void android_main(android_app *app) {
     }
 
     if (!engine.paused) {
-      drawFrame(engine);
+      drawFrame(&engine);
     }
   }
 }
 
-static void drawFrame(const Engine &engine) {
-  if (engine.glEnv.surface.handle == EGL_NO_SURFACE) { return; }
+static void drawFrame(Engine *engine) {
+  if (engine->glEnv.surface.handle == EGL_NO_SURFACE) { return; }
 
-  if (engine.initializing) {
+  if (engine->initializing) {
     // TODO: Draw loading screen
     glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -138,7 +138,7 @@ static void drawFrame(const Engine &engine) {
   }
 
   // "eglSwapBuffers performs an implicit flush operation on the context bound to surface before swapping"
-  eglSwapBuffers(engine.glEnv.display, engine.glEnv.surface.handle);
+  eglSwapBuffers(engine->glEnv.display, engine->glEnv.surface.handle);
 }
 
 static s32 handleInput(android_app *app, AInputEvent *event) {
@@ -198,6 +198,7 @@ static void handleAndroidCmd(android_app *app, s32 cmd) {
       //  - before APP_CMD_SAVE_STATE
       //  - after APP_CMD_RESUME
       //  - when the app is destroyed
+      TimeBlock("APP_CMD_SAVE_STATE")
       app->savedState = malloc(sizeof(SceneState));
       *((SceneState *) app->savedState) = engine->state;
       app->savedStateSize = sizeof(SceneState);
@@ -206,12 +207,13 @@ static void handleAndroidCmd(android_app *app, s32 cmd) {
     case APP_CMD_INIT_WINDOW: {
       // The window is being shown, get it ready.
       if (app->window != nullptr) {
-        TimeBlock("APP_CMD_INIT_WINDOW")
-        updateGLSurface(&engine->glEnv, app->window);
-        updateSceneWindow(engine->glEnv.surface.width, engine->glEnv.surface.height);
-        engine->initializing = false;
+        {
+          TimeBlock("APP_CMD_INIT_WINDOW")
+          updateGLSurface(&engine->glEnv, app->window);
+          updateSceneWindow(engine->glEnv.surface.width, engine->glEnv.surface.height);
+          engine->initializing = false;
+        }
         EndAndPrintProfile();
-//        closeActivity(app->activity);
       }
       break;
     }

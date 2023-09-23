@@ -40,7 +40,10 @@ void loadModelAsset(const char* filePath, Model* returnModel) {
   }
 
   assets::ModelInfo modelInfo;
-  assets::readModelInfo(modelAssetFile, &modelInfo);
+  {
+    TimeBlock("loadModelAsset - assets::readModelInfo");
+    assets::readModelInfo(modelAssetFile, &modelInfo);
+  }
 
   assets::ModelDataPtrs modelDataPtrs = modelInfo.calcDataPts(modelAssetFile.binaryBlob.data());
 

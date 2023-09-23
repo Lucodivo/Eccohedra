@@ -19,6 +19,7 @@ Scene improvements:
     - Let user choose two accent colors
 - Native scene
     - Loading animation? (Might be a worse experience if loading is fast enough...)
+    - Gate casting shadow onto self?
 
 Refactoring:
 - Scenes save format was previously used for loading from JSON files. World information is now hardcoded

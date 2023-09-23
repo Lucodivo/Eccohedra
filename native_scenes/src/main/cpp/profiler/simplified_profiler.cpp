@@ -130,5 +130,8 @@ static void EndAndPrintProfile()
             PrintTimeElapsed(TotalCPUElapsed, Anchor);
         }
     }
+
+    GlobalProfiler = {0};
+    GlobalProfilerParent = 0;
 }
         

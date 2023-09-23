@@ -45,6 +45,7 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
 
   assets::TextureInfo textureInfo;
   {
+    TimeBlock("load2DTexture - assets::readTextureInfo")
     assets::readTextureInfo(textureAssetFile, &textureInfo);
   }
 
@@ -104,7 +105,10 @@ void loadCubeMapTexture(const char* fileName, GLuint* textureId) {
   }
 
   assets::CubeMapInfo cubeMapInfo;
-  assets::readCubeMapInfo(cubeMapAssetFile, &cubeMapInfo);
+  {
+    TimeBlock("loadCubeMapTexture - assets::readCubeMapInfo")
+    assets::readCubeMapInfo(cubeMapAssetFile, &cubeMapInfo);
+  }
 
   {
     TimeBlock("loadCubeMapTexture - glTexImage2D")

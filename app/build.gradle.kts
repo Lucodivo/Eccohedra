@@ -79,6 +79,10 @@ android {
             resValue("bool", "FIREBASE_ANALYTICS_DEACTIVATED", "true")
         }
     }
+
+    androidResources {
+        noCompress += listOf("modl", "cbtx", "tx", "vert", "frag")
+    }
 }
 
 dependencies {

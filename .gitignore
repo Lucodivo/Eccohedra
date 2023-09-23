@@ -99,6 +99,16 @@ CMakeFiles/
 **/assets/skyboxes/
 **/assets/textures/
 **/assets/models/
+.vs/
+_deps/
+*.vcxproj*
+*.dir/
+*.sln
+*.pdb
+*.exe
+**/x64/Debug
+CMakeCache.txt
+*temp*/
 
 original_resolution/
 lower_resolution/
