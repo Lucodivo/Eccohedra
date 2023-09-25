@@ -27,3 +27,4 @@ Refactoring:
 
 Bugs(?):
 - Exiting a scene seems to sometimes show a frame or two of the users home screen wallpaper
+- Lock the native scene in it's orientation (portrait/landscape). Right now it is buggy.

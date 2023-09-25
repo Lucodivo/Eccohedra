@@ -1,20 +1,14 @@
-// TODO: When, if ever, does this vertex attribute data get deleted?
-global_variable struct {
-  union {
-    struct {
-      VertexAtt cubePos;
-      VertexAtt invertedCubePos;
-      VertexAtt cubePos_OpenNegYFace;
-      VertexAtt invertedCubePos_OpenNegYFace;
-      VertexAtt quadPos;
-      VertexAtt quadPosTex;
-    };
-    VertexAtt array[6];
-  };
-  bool initialized;
-} vertexAtts_GLOBAL;
+#include "vertex_attributes.h"
 
-void deleteVertexAtts(VertexAtt* vertexAtts, u32 count);
+VertexAtt* CommonVertAtts::cube(bool invertedWindingOrder, bool openNegYFace) {
+  return invertedWindingOrder ?
+         (openNegYFace ? &invertedCubePos_OpenNegYFace : &invertedCubePos) :
+         (openNegYFace ? &cubePos_OpenNegYFace : &cubePos);
+}
+
+VertexAtt* CommonVertAtts::quad(bool textureAtt) {
+  return textureAtt ? &quadPosTex : &quadPos;
+}
 
 const u32 cubePosAttStrideInBytes = 3 * sizeof(f32);
 const f32 cubePosAtts[] = {
@@ -173,20 +167,19 @@ u32 convertSizeInBytesToOpenGLUIntType(u8 sizeInBytes) {
   return 0;
 }
 
-void initGlobalCubeVertexAttBuffers()
-{
+void initGlobalCubeVertexAttBuffers(CommonVertAtts* commonVertAtts) {
   // normal cube vertex attribute
-  vertexAtts_GLOBAL.cubePos.indexCount = ArrayCount(cubePosAttsIndices);
-  vertexAtts_GLOBAL.cubePos.indexTypeSizeInBytes = sizeof(cubePosAttsIndices) / vertexAtts_GLOBAL.cubePos.indexCount;
+  commonVertAtts->cubePos.indexCount = ArrayCount(cubePosAttsIndices);
+  commonVertAtts->cubePos.indexTypeSizeInBytes = sizeof(cubePosAttsIndices) / commonVertAtts->cubePos.indexCount;
 
   const u32 positionAttributeIndex = 0;
 
-  glGenVertexArrays(1, &vertexAtts_GLOBAL.cubePos.arrayObject); // vertex array object
-  glGenBuffers(1, &vertexAtts_GLOBAL.cubePos.bufferObject); // vertex buffer object backing the VAO
-  glGenBuffers(1, &vertexAtts_GLOBAL.cubePos.indexObject);
+  glGenVertexArrays(1, &commonVertAtts->cubePos.arrayObject); // vertex array object
+  glGenBuffers(1, &commonVertAtts->cubePos.bufferObject); // vertex buffer object backing the VAO
+  glGenBuffers(1, &commonVertAtts->cubePos.indexObject);
 
-  glBindVertexArray(vertexAtts_GLOBAL.cubePos.arrayObject);
-  glBindBuffer(GL_ARRAY_BUFFER, vertexAtts_GLOBAL.cubePos.bufferObject);
+  glBindVertexArray(commonVertAtts->cubePos.arrayObject);
+  glBindBuffer(GL_ARRAY_BUFFER, commonVertAtts->cubePos.bufferObject);
   glBufferData(GL_ARRAY_BUFFER, sizeof(cubePosAtts), cubePosAtts, GL_STATIC_DRAW);
 
   // position attribute
@@ -198,8 +191,8 @@ void initGlobalCubeVertexAttBuffers()
                         (void*) 0); // offset
   glEnableVertexAttribArray(positionAttributeIndex);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexAtts_GLOBAL.cubePos.indexObject);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexAtts_GLOBAL.cubePos.indexCount, cubePosAttsIndices, GL_STATIC_DRAW);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, commonVertAtts->cubePos.indexObject);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, commonVertAtts->cubePos.indexCount, cubePosAttsIndices, GL_STATIC_DRAW);
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
@@ -207,12 +200,12 @@ void initGlobalCubeVertexAttBuffers()
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
   // open cube vertex attribute
-  vertexAtts_GLOBAL.cubePos_OpenNegYFace = vertexAtts_GLOBAL.cubePos;
-  vertexAtts_GLOBAL.cubePos_OpenNegYFace.indexCount = ArrayCount(cubePosAttsIndices_OpenNegYFace);
-  glGenVertexArrays(1, &vertexAtts_GLOBAL.cubePos_OpenNegYFace.arrayObject); // vertex array object
-  glGenBuffers(1, &vertexAtts_GLOBAL.cubePos_OpenNegYFace.indexObject);
-  glBindVertexArray(vertexAtts_GLOBAL.cubePos_OpenNegYFace.arrayObject);
-  glBindBuffer(GL_ARRAY_BUFFER, vertexAtts_GLOBAL.cubePos_OpenNegYFace.bufferObject);
+  commonVertAtts->cubePos_OpenNegYFace = commonVertAtts->cubePos;
+  commonVertAtts->cubePos_OpenNegYFace.indexCount = ArrayCount(cubePosAttsIndices_OpenNegYFace);
+  glGenVertexArrays(1, &commonVertAtts->cubePos_OpenNegYFace.arrayObject); // vertex array object
+  glGenBuffers(1, &commonVertAtts->cubePos_OpenNegYFace.indexObject);
+  glBindVertexArray(commonVertAtts->cubePos_OpenNegYFace.arrayObject);
+  glBindBuffer(GL_ARRAY_BUFFER, commonVertAtts->cubePos_OpenNegYFace.bufferObject);
 
   // position attribute
   glVertexAttribPointer(positionAttributeIndex, // index
@@ -223,8 +216,8 @@ void initGlobalCubeVertexAttBuffers()
                         (void*) 0); // offset
   glEnableVertexAttribArray(positionAttributeIndex);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexAtts_GLOBAL.cubePos_OpenNegYFace.indexObject);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexAtts_GLOBAL.cubePos_OpenNegYFace.indexCount, cubePosAttsIndices_OpenNegYFace,
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, commonVertAtts->cubePos_OpenNegYFace.indexObject);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, commonVertAtts->cubePos_OpenNegYFace.indexCount, cubePosAttsIndices_OpenNegYFace,
                GL_STATIC_DRAW);
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -233,11 +226,11 @@ void initGlobalCubeVertexAttBuffers()
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
   // inverted cube vertex att
-  vertexAtts_GLOBAL.invertedCubePos = vertexAtts_GLOBAL.cubePos;
-  glGenVertexArrays(1, &vertexAtts_GLOBAL.invertedCubePos.arrayObject); // vertex array object
-  glGenBuffers(1, &vertexAtts_GLOBAL.invertedCubePos.indexObject);
-  glBindVertexArray(vertexAtts_GLOBAL.invertedCubePos.arrayObject);
-  glBindBuffer(GL_ARRAY_BUFFER, vertexAtts_GLOBAL.invertedCubePos.bufferObject);
+  commonVertAtts->invertedCubePos = commonVertAtts->cubePos;
+  glGenVertexArrays(1, &commonVertAtts->invertedCubePos.arrayObject); // vertex array object
+  glGenBuffers(1, &commonVertAtts->invertedCubePos.indexObject);
+  glBindVertexArray(commonVertAtts->invertedCubePos.arrayObject);
+  glBindBuffer(GL_ARRAY_BUFFER, commonVertAtts->invertedCubePos.bufferObject);
 
   // position attribute
   glVertexAttribPointer(positionAttributeIndex, // index
@@ -248,8 +241,8 @@ void initGlobalCubeVertexAttBuffers()
                         (void*) 0); // offset
   glEnableVertexAttribArray(positionAttributeIndex);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexAtts_GLOBAL.invertedCubePos.indexObject);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexAtts_GLOBAL.invertedCubePos.indexCount, invertedWindingCubePosAttsIndices,
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, commonVertAtts->invertedCubePos.indexObject);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, commonVertAtts->invertedCubePos.indexCount, invertedWindingCubePosAttsIndices,
                GL_STATIC_DRAW);
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -258,12 +251,12 @@ void initGlobalCubeVertexAttBuffers()
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
   // open cube vertex attribute
-  vertexAtts_GLOBAL.invertedCubePos_OpenNegYFace = vertexAtts_GLOBAL.cubePos_OpenNegYFace;
-  vertexAtts_GLOBAL.invertedCubePos_OpenNegYFace.indexCount = ArrayCount(cubePosAttsIndices_OpenNegYFace);
-  glGenVertexArrays(1, &vertexAtts_GLOBAL.invertedCubePos_OpenNegYFace.arrayObject); // vertex array object
-  glGenBuffers(1, &vertexAtts_GLOBAL.invertedCubePos_OpenNegYFace.indexObject);
-  glBindVertexArray(vertexAtts_GLOBAL.invertedCubePos_OpenNegYFace.arrayObject);
-  glBindBuffer(GL_ARRAY_BUFFER, vertexAtts_GLOBAL.invertedCubePos_OpenNegYFace.bufferObject);
+  commonVertAtts->invertedCubePos_OpenNegYFace = commonVertAtts->cubePos_OpenNegYFace;
+  commonVertAtts->invertedCubePos_OpenNegYFace.indexCount = ArrayCount(cubePosAttsIndices_OpenNegYFace);
+  glGenVertexArrays(1, &commonVertAtts->invertedCubePos_OpenNegYFace.arrayObject); // vertex array object
+  glGenBuffers(1, &commonVertAtts->invertedCubePos_OpenNegYFace.indexObject);
+  glBindVertexArray(commonVertAtts->invertedCubePos_OpenNegYFace.arrayObject);
+  glBindBuffer(GL_ARRAY_BUFFER, commonVertAtts->invertedCubePos_OpenNegYFace.bufferObject);
 
   // position attribute
   glVertexAttribPointer(positionAttributeIndex, // index
@@ -274,8 +267,8 @@ void initGlobalCubeVertexAttBuffers()
                         (void*) 0); // offset
   glEnableVertexAttribArray(positionAttributeIndex);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexAtts_GLOBAL.invertedCubePos_OpenNegYFace.indexObject);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexAtts_GLOBAL.invertedCubePos_OpenNegYFace.indexCount, invertedWindingCubePosAttsIndices_OpenNegYFace,
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, commonVertAtts->invertedCubePos_OpenNegYFace.indexObject);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, commonVertAtts->invertedCubePos_OpenNegYFace.indexCount, invertedWindingCubePosAttsIndices_OpenNegYFace,
                GL_STATIC_DRAW);
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -284,19 +277,19 @@ void initGlobalCubeVertexAttBuffers()
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void initGlobalQuadVertexAttBuffers() {
-  vertexAtts_GLOBAL.quadPosTex.indexCount = ArrayCount(quadIndices);
-  vertexAtts_GLOBAL.quadPosTex.indexTypeSizeInBytes = sizeof(quadIndices) / vertexAtts_GLOBAL.quadPosTex.indexCount;
+void initGlobalQuadVertexAttBuffers(CommonVertAtts* commonVertAtts) {
+  commonVertAtts->quadPosTex.indexCount = ArrayCount(quadIndices);
+  commonVertAtts->quadPosTex.indexTypeSizeInBytes = sizeof(quadIndices) / commonVertAtts->quadPosTex.indexCount;
   const u32 positionAttributeIndex = 0;
   const u32 textureAttributeIndex = 1;
 
-  glGenVertexArrays(1, &vertexAtts_GLOBAL.quadPosTex.arrayObject);
-  glGenBuffers(1, &vertexAtts_GLOBAL.quadPosTex.bufferObject);
-  glGenBuffers(1, &vertexAtts_GLOBAL.quadPosTex.indexObject);
+  glGenVertexArrays(1, &commonVertAtts->quadPosTex.arrayObject);
+  glGenBuffers(1, &commonVertAtts->quadPosTex.bufferObject);
+  glGenBuffers(1, &commonVertAtts->quadPosTex.indexObject);
 
-  glBindVertexArray(vertexAtts_GLOBAL.quadPosTex.arrayObject);
+  glBindVertexArray(commonVertAtts->quadPosTex.arrayObject);
 
-  glBindBuffer(GL_ARRAY_BUFFER, vertexAtts_GLOBAL.quadPosTex.bufferObject);
+  glBindBuffer(GL_ARRAY_BUFFER, commonVertAtts->quadPosTex.bufferObject);
   glBufferData(GL_ARRAY_BUFFER,
                sizeof(quadPosTexVertexAttributes),
                quadPosTexVertexAttributes,
@@ -322,7 +315,7 @@ void initGlobalQuadVertexAttBuffers() {
   glEnableVertexAttribArray(textureAttributeIndex);
 
   // bind element buffer object to give indices
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexAtts_GLOBAL.quadPosTex.indexObject);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, commonVertAtts->quadPosTex.indexObject);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
 
   // unbind VBO, VAO, & EBO
@@ -331,12 +324,12 @@ void initGlobalQuadVertexAttBuffers() {
   // Must unbind EBO AFTER unbinding VAO, since VAO stores all glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _) calls
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-  vertexAtts_GLOBAL.quadPos = vertexAtts_GLOBAL.quadPosTex;
+  commonVertAtts->quadPos = commonVertAtts->quadPosTex;
 
   // only need to create a new array object, the index buffer and data buffer will be the same
-  glGenVertexArrays(1, &vertexAtts_GLOBAL.quadPos.arrayObject);
-  glBindVertexArray(vertexAtts_GLOBAL.quadPos.arrayObject);
-  glBindBuffer(GL_ARRAY_BUFFER, vertexAtts_GLOBAL.quadPos.bufferObject);
+  glGenVertexArrays(1, &commonVertAtts->quadPos.arrayObject);
+  glBindVertexArray(commonVertAtts->quadPos.arrayObject);
+  glBindBuffer(GL_ARRAY_BUFFER, commonVertAtts->quadPos.bufferObject);
 
   // set the vertex attributes (position and texture)
   // position attribute
@@ -349,7 +342,7 @@ void initGlobalQuadVertexAttBuffers() {
   glEnableVertexAttribArray(positionAttributeIndex);
 
   // bind element buffer object to give indices
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexAtts_GLOBAL.quadPos.indexObject);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, commonVertAtts->quadPos.indexObject);
 
   // unbind VBO, VAO, & EBO
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -358,29 +351,13 @@ void initGlobalQuadVertexAttBuffers() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void initGlobalVertexAtts() {
-  if(!vertexAtts_GLOBAL.initialized) {
-    initGlobalCubeVertexAttBuffers();
-    initGlobalQuadVertexAttBuffers();
-  }
-  vertexAtts_GLOBAL.initialized = true;
+void initCommonVertexAtt(CommonVertAtts* commonVertAtts) {
+  initGlobalCubeVertexAttBuffers(commonVertAtts);
+  initGlobalQuadVertexAttBuffers(commonVertAtts);
 }
 
-void deinitGlobalVertexAtts() {
-  if(vertexAtts_GLOBAL.initialized) {
-    deleteVertexAtts(vertexAtts_GLOBAL.array, ArrayCount(vertexAtts_GLOBAL.array));
-  }
-  vertexAtts_GLOBAL = {0};
-}
-
-VertexAtt* cubePosVertexAttBuffers(bool invertedWindingOrder, bool openNegYFace) {
-  return invertedWindingOrder ?
-         (openNegYFace ? &vertexAtts_GLOBAL.invertedCubePos_OpenNegYFace : &vertexAtts_GLOBAL.invertedCubePos) :
-         (openNegYFace ? &vertexAtts_GLOBAL.cubePos_OpenNegYFace : &vertexAtts_GLOBAL.cubePos);
-}
-
-VertexAtt* quadPosVertexAttBuffers(b32 textureAtt) {
-  return textureAtt ? &vertexAtts_GLOBAL.quadPosTex : &vertexAtts_GLOBAL.quadPos;
+void deinitCommonVertexAtts(CommonVertAtts* commonVertAtts) {
+  deleteVertexAtts(commonVertAtts->array, ArrayCount(commonVertAtts->array));
 }
 
 internal_func void drawIndexedTriangles(const VertexAtt* vertexAtt, u32 indexCount, u64 indexOffset) {

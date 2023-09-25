@@ -1,13 +1,28 @@
 #pragma once
 
-#define VERTEX_ATT_NO_INDEX_OBJECT -1
-
 struct VertexAtt {
   GLuint arrayObject;
   GLuint bufferObject;
   GLuint indexObject;
   u32 indexCount;
   u32 indexTypeSizeInBytes;
+};
+
+struct CommonVertAtts {
+  union {
+    struct {
+      VertexAtt cubePos;
+      VertexAtt invertedCubePos;
+      VertexAtt cubePos_OpenNegYFace;
+      VertexAtt invertedCubePos_OpenNegYFace;
+      VertexAtt quadPos;
+      VertexAtt quadPosTex;
+    };
+    VertexAtt array[6];
+  };
+
+  VertexAtt* cube(bool invertedWindingOrder = false, bool openNegYFace = false);
+  VertexAtt* quad(bool textureAtt = false);
 };
 
 const vec3 cubeFaceNegativeXCenter{-0.5f, 0.0f, 0.0f};
@@ -28,8 +43,8 @@ const BoundingBox cubeVertAttBoundingBox = {
         {1.0f, 1.0f, 1.0f}
 };
 
-VertexAtt* cubePosVertexAttBuffers(bool invertedWindingOrder = false, bool openNegYFace = false);
-VertexAtt* quadPosVertexAttBuffers(b32 textureAtt = false);
+void initCommonVertexAtt(CommonVertAtts* commonVertAtts);
+void deinitCommonVertexAtts(CommonVertAtts* commonVertAtts);
 
 void drawTriangles(const VertexAtt* vertexAtt, u32 count, u32 offset);
 void drawTriangles(const VertexAtt* vertexAtt);

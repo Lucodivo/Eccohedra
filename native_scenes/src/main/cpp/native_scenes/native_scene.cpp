@@ -4,7 +4,6 @@
  */
 
 #include "native_scene.h"
-#include <thread>
 
 typedef struct android_app android_app;
 typedef struct android_poll_source android_poll_source;
@@ -15,6 +14,7 @@ typedef struct android_poll_source android_poll_source;
 typedef struct SceneState {
   f32 inputX;
   f32 inputY;
+  World world;
 } SceneState;
 
 /**
@@ -38,7 +38,7 @@ void glDeinit(GLEnvironment *glEnv);
 void closeActivity(ANativeActivity* activity);
 
 void onTerminate(Engine *engine);
-void onResume(Engine *engine);
+void onResume(android_app* app, Engine *engine);
 void onPause(Engine *engine);
 
 // The VM calls JNI_OnLoad when the native library is loaded (ex: System.loadLibrary)
@@ -62,13 +62,6 @@ void android_main(android_app *app) {
   app->onAppCmd = handleAndroidCmd;
   app->onInputEvent = handleInput;
 
-  if (app->savedState != nullptr) {
-    // grab saved state if available
-    engine.state = *(SceneState *) app->savedState;
-    free(app->savedState);
-    app->savedState = nullptr;
-  }
-
   {
     TimeBlock("Acquire Android Resource Managers")
     assetManager_GLOBAL = app->activity->assetManager;
@@ -81,15 +74,12 @@ void android_main(android_app *app) {
 
   initGLEnvironment(&engine.glEnv);
   logDeviceGLEnvironment();
-//  std::thread setupThread = std::thread([&engine, &app]() {
 #ifndef NDEBUG
     logAllAssets(assetManager_GLOBAL, app);
 #endif
-    initPortalScene();
-//  });
+  initPortalScene(&engine.state.world);
 
   while (true) {
-
     // Read all pending events.
     int pollResult, fileDescriptor, events;
     android_poll_source *source;
@@ -134,7 +124,7 @@ static void drawFrame(Engine *engine) {
     glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   } else {
-    drawPortalScene();
+    drawPortalScene(&engine->state.world);
   }
 
   // "eglSwapBuffers performs an implicit flush operation on the context bound to surface before swapping"
@@ -184,6 +174,24 @@ static s32 handleInput(android_app *app, AInputEvent *event) {
 
 void closeActivity(ANativeActivity* activity) { ANativeActivity_finish(activity); }
 
+void onSavedState(android_app* app, Engine* engine) {
+  // TODO: Implement saved state functionality.
+  // TODO: Minor testing showed that when app->savedState is free'd is not straight forward...
+}
+
+void onWindowInit(android_app* app, Engine* engine) {
+  // The window is being shown, get it ready.
+  if (app->window != nullptr) {
+    {
+      TimeBlock("APP_CMD_INIT_WINDOW")
+      updateGLSurface(&engine->glEnv, app->window);
+      updateSceneWindow(&engine->state.world, engine->glEnv.surface.width, engine->glEnv.surface.height);
+      engine->initializing = false;
+    }
+    EndAndPrintProfile();
+  }
+}
+
 /**
  * This function is called from android_native_app_glue.c::process_cmd()
  * And that function is called when processing events (ex: source->process(app, source))
@@ -199,22 +207,11 @@ static void handleAndroidCmd(android_app *app, s32 cmd) {
       //  - after APP_CMD_RESUME
       //  - when the app is destroyed
       TimeBlock("APP_CMD_SAVE_STATE")
-      app->savedState = malloc(sizeof(SceneState));
-      *((SceneState *) app->savedState) = engine->state;
-      app->savedStateSize = sizeof(SceneState);
+      onSavedState(app, engine);
       break;
     }
     case APP_CMD_INIT_WINDOW: {
-      // The window is being shown, get it ready.
-      if (app->window != nullptr) {
-        {
-          TimeBlock("APP_CMD_INIT_WINDOW")
-          updateGLSurface(&engine->glEnv, app->window);
-          updateSceneWindow(engine->glEnv.surface.width, engine->glEnv.surface.height);
-          engine->initializing = false;
-        }
-        EndAndPrintProfile();
-      }
+      onWindowInit(app, engine);
       break;
     }
     case APP_CMD_TERM_WINDOW: { // The window is being hidden or closed. Clean up.
@@ -231,7 +228,7 @@ static void handleAndroidCmd(android_app *app, s32 cmd) {
       break;
     }
     case APP_CMD_RESUME: {
-      onResume(engine);
+      onResume(app, engine);
       break;
     }
     default:
@@ -239,7 +236,7 @@ static void handleAndroidCmd(android_app *app, s32 cmd) {
   }
 }
 
-void onResume(Engine *engine) {
+void onResume(android_app* app, Engine *engine) {
   if (engine->accelerometerSensor != nullptr) {
     ASensorEventQueue_enableSensor(engine->sensorEventQueue, engine->accelerometerSensor);
     const s32 microsecondsPerSecond = 1000000;
@@ -253,7 +250,7 @@ void onResume(Engine *engine) {
 
 void onTerminate(Engine *engine) {
   ASensorManager_destroyEventQueue(engine->sensorManager, engine->sensorEventQueue);
-  deinitPortalScene();
+  deinitPortalScene(&engine->state.world);
   glDeinit(&engine->glEnv);
 }
 

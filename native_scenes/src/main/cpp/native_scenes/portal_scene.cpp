@@ -79,15 +79,14 @@ struct World
   ShaderProgram singleColorShader;
   ShaderProgram skyboxShader;
   ShaderProgram stencilShader;
+  GLuint portalQueryObjects[MAX_PORTALS];
+  CommonVertAtts commonVertAtts;
   u32 shaderCount;
-} globalWorld{};
+};
 
 const vec3 defaultPlayerDimensionInMeters{0.5f, 0.25f, 1.75f}; // NOTE: ~1'7"w, 9"d, 6'h
 const f32 near = 0.1f;
 const f32 far = 200.0f;
-
-// TODO: Why is this global?
-global_variable GLuint portalQueryObjects_GLOBAL[MAX_PORTALS];
 
 void drawScene(World* world, const u32 sceneIndex, u32 stencilMask = 0x00);
 void drawPortals(World* world, const u32 sceneIndex);
@@ -208,7 +207,7 @@ mat4 calcBoxStencilModelMatFromPortalModelMat(const mat4& portalModelMat) {
   return portalModelMat * scale_mat4(vec3{1.0f, PORTAL_BACKING_BOX_DEPTH, 1.0f}) * translate_mat4(-cubeFaceNegativeYCenter);
 }
 
-void drawPortal(const World* world, Portal* portal) {
+void drawPortal(World* world, Portal* portal) {
   glUseProgram(world->stencilShader.id);
 
   // NOTE: Stencil function Example
@@ -222,10 +221,10 @@ void drawPortal(const World* world, Portal* portal) {
               GL_REPLACE); // action when both stencil and depth pass
 
   mat4 portalModelMat = quadModelMatrix(portal->centerPosition, portal->normal, portal->dimens.x, portal->dimens.y);
-  VertexAtt* portalVertexAtt = quadPosVertexAttBuffers(false);
+  VertexAtt* portalVertexAtt = world->commonVertAtts.quad(false);
   if(flagIsSet(portal->stateFlags, PortalState_InFocus)) {
     portalModelMat = calcBoxStencilModelMatFromPortalModelMat(portalModelMat);
-    portalVertexAtt = cubePosVertexAttBuffers(true, true);
+    portalVertexAtt = world->commonVertAtts.cube(true, true);
   }
 
   glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
@@ -247,7 +246,7 @@ void drawPortals(World* world, const u32 sceneIndex){
     if(!flagIsSet(portal->stateFlags, PortalState_FacingCamera)) { continue; }
 
     // begin occlusion query
-    glBeginQuery(GL_ANY_SAMPLES_PASSED, portalQueryObjects_GLOBAL[portalIndex]);
+    glBeginQuery(GL_ANY_SAMPLES_PASSED, world->portalQueryObjects[portalIndex]);
     drawPortal(world, portal);
     // end occlusion query
     glEndQuery(GL_ANY_SAMPLES_PASSED);
@@ -296,7 +295,7 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
     glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
     glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &identityMat4);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    drawTriangles(cubePosVertexAttBuffers(true));
+    drawTriangles(world->commonVertAtts.cube(true));
   }
 
   // update scene light uniform buffer object
@@ -466,13 +465,15 @@ void cleanupWorld(World* world) {
   deleteShaderPrograms(&world->stencilShader, 1);
   deleteShaderPrograms(&world->skyboxShader, 1);
 
+  glDeleteQueries(ArrayCount(world->portalQueryObjects), world->portalQueryObjects);
+
   *world = {0};
 }
 
 void initPlayer(Player* player) {
   player->boundingBox.diagonal = defaultPlayerDimensionInMeters;
-//  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f) - 2.8f, -3.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
-  player->boundingBox.min = {-(globalWorld.player.boundingBox.diagonal.x * 0.5f), -12.0f - (globalWorld.player.boundingBox.diagonal.y * 0.5f), 0.0f};
+//  player->boundingBox.min = {-(player->boundingBox.diagonal.x * 0.5f) - 2.8f, -3.0f - (player->boundingBox.diagonal.y * 0.5f), 0.0f};
+  player->boundingBox.min = {-(player->boundingBox.diagonal.x * 0.5f), -12.0f - (player->boundingBox.diagonal.y * 0.5f), 0.0f};
 }
 
 void initCamera(Camera* camera, const Player& player) {
@@ -588,23 +589,23 @@ void loadWorld(World* world) {
 }
 
 // TODO: Come up with better name
-void updateSceneWindow(u32 width, u32 height) {
-  globalWorld.fov = 45.f;
-  globalWorld.aspect = f32(width) / f32(height);
-  globalWorld.UBOs.projectionViewModelUbo.projection = perspective(globalWorld.fov, globalWorld.aspect, near, far);
-  glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.projectionViewModelUboId);
-  glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, projection), sizeof(mat4), &globalWorld.UBOs.projectionViewModelUbo.projection);
+void updateSceneWindow(World* world, u32 width, u32 height) {
+  world->fov = 45.f;
+  world->aspect = f32(width) / f32(height);
+  world->UBOs.projectionViewModelUbo.projection = perspective(world->fov, world->aspect, near, far);
+  glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
+  glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, projection), sizeof(mat4), &world->UBOs.projectionViewModelUbo.projection);
 }
 
-void initPortalScene() {
+void initPortalScene(World* world) {
   TimeFunction
 
-  glGenQueries(ArrayCount(portalQueryObjects_GLOBAL), portalQueryObjects_GLOBAL);
+  glGenQueries(ArrayCount(world->portalQueryObjects), world->portalQueryObjects);
 
-  initGlobalVertexAtts();
+  initCommonVertexAtt(&world->commonVertAtts);
 
-  initPlayer(&globalWorld.player);
-  initCamera(&globalWorld.camera, globalWorld.player);
+  initPlayer(&world->player);
+  initCamera(&world->camera, world->player);
 
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
   glEnable(GL_DEPTH_TEST);
@@ -617,42 +618,42 @@ void initPortalScene() {
 
   // Universal shaders
   {
-    globalWorld.singleColorShader = createShaderProgram(posVertexShaderFileLoc, singleColorFragmentShaderFileLoc);
-    globalWorld.stencilShader = createShaderProgram(posVertexShaderFileLoc, blackFragmentShaderFileLoc);
-    globalWorld.skyboxShader = createShaderProgram(skyboxVertexShaderFileLoc, skyboxFragmentShaderFileLoc);
+    world->singleColorShader = createShaderProgram(posVertexShaderFileLoc, singleColorFragmentShaderFileLoc);
+    world->stencilShader = createShaderProgram(posVertexShaderFileLoc, blackFragmentShaderFileLoc);
+    world->skyboxShader = createShaderProgram(skyboxVertexShaderFileLoc, skyboxFragmentShaderFileLoc);
   }
 
   // UBOs
   {
-    glGenBuffers(1, &globalWorld.UBOs.projectionViewModelUboId);
-    glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.projectionViewModelUboId);
+    glGenBuffers(1, &world->UBOs.projectionViewModelUboId);
+    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(ProjectionViewModelUBO), NULL, GL_STREAM_DRAW);
-    glBindBufferRange(GL_UNIFORM_BUFFER, projectionViewModelUBOBindingIndex, globalWorld.UBOs.projectionViewModelUboId, 0, sizeof(ProjectionViewModelUBO));
+    glBindBufferRange(GL_UNIFORM_BUFFER, projectionViewModelUBOBindingIndex, world->UBOs.projectionViewModelUboId, 0, sizeof(ProjectionViewModelUBO));
 
-    glGenBuffers(1, &globalWorld.UBOs.fragUboId);
-    glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.fragUboId);
+    glGenBuffers(1, &world->UBOs.fragUboId);
+    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.fragUboId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(FragUBO), NULL, GL_STREAM_DRAW);
-    glBindBufferRange(GL_UNIFORM_BUFFER, fragUBOBindingIndex, globalWorld.UBOs.fragUboId, 0, sizeof(FragUBO));
+    glBindBufferRange(GL_UNIFORM_BUFFER, fragUBOBindingIndex, world->UBOs.fragUboId, 0, sizeof(FragUBO));
 
-    glGenBuffers(1, &globalWorld.UBOs.lightUboId);
-    glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.lightUboId);
+    glGenBuffers(1, &world->UBOs.lightUboId);
+    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.lightUboId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(LightUBO), NULL, GL_DYNAMIC_DRAW);
-    glBindBufferRange(GL_UNIFORM_BUFFER, lightUBOBindingIndex, globalWorld.UBOs.lightUboId, 0, sizeof(LightUBO));
+    glBindBufferRange(GL_UNIFORM_BUFFER, lightUBOBindingIndex, world->UBOs.lightUboId, 0, sizeof(LightUBO));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
   }
 
-  globalWorld.stopWatch = StopWatch();
+  world->stopWatch = StopWatch();
 
-  loadWorld(&globalWorld);
+  loadWorld(world);
 }
 
-void drawPortalScene() {
+void drawPortalScene(World* world) {
   // NOTE: input should be handled through handleInput(android_app* app, AInputEvent* event)
-  globalWorld.stopWatch.lap();
-  globalWorld.UBOs.fragUbo.time = globalWorld.stopWatch.totalInSeconds;
+  world->stopWatch.lap();
+  world->UBOs.fragUbo.time = world->stopWatch.totalInSeconds;
 
   vec3 playerCenter;
-  vec3 playerViewPosition = calcPlayerViewingPosition(&globalWorld.player);
+  vec3 playerViewPosition = calcPlayerViewingPosition(&world->player);
 
   // gather input
   // TODO: get input for frame to determine boolean values
@@ -675,26 +676,26 @@ void drawPortalScene() {
     vec3 playerMovementDirection{};
     if (lateralMovement)
     {
-      playerMovementDirection += rightIsActive ? globalWorld.camera.right : -globalWorld.camera.right;
+      playerMovementDirection += rightIsActive ? world->camera.right : -world->camera.right;
     }
 
     if (forwardMovement)
     {
-      playerMovementDirection += forwardIsActive ? globalWorld.camera.forward : -globalWorld.camera.forward;
+      playerMovementDirection += forwardIsActive ? world->camera.forward : -world->camera.forward;
     }
 
     playerMovementDirection = normalize(playerMovementDirection.x, playerMovementDirection.y, 0.0);
-    playerDelta = playerMovementDirection * playerMovementSpeed * globalWorld.stopWatch.lapInSeconds;
+    playerDelta = playerMovementDirection * playerMovementSpeed * world->stopWatch.lapInSeconds;
   }
 
   // TODO: Do not apply immediately, check for collisions
-  globalWorld.player.boundingBox.min += playerDelta;
-  playerCenter = calcBoundingBoxCenterPosition(globalWorld.player.boundingBox);
+  world->player.boundingBox.min += playerDelta;
+  playerCenter = calcBoundingBoxCenterPosition(world->player.boundingBox);
 
   const f32 mouseDeltaMultConst = 0.0005f;
-  updateCamera_FirstPerson(&globalWorld.camera, playerDelta, f32(-viewAngleDelta.y * mouseDeltaMultConst), f32(-viewAngleDelta.x * mouseDeltaMultConst));
+  updateCamera_FirstPerson(&world->camera, playerDelta, f32(-viewAngleDelta.y * mouseDeltaMultConst), f32(-viewAngleDelta.x * mouseDeltaMultConst));
 
-  globalWorld.UBOs.projectionViewModelUbo.view = getViewMat(globalWorld.camera);
+  world->UBOs.projectionViewModelUbo.view = getViewMat(world->camera);
 
   // draw
   glStencilMask(0xFF);
@@ -704,19 +705,18 @@ void drawPortalScene() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
   // universal matrices in UBO
-  glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.projectionViewModelUboId);
-  glBufferSubData(GL_UNIFORM_BUFFER, 0, offsetof(ProjectionViewModelUBO, model), &globalWorld.UBOs.projectionViewModelUbo);
+  glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
+  glBufferSubData(GL_UNIFORM_BUFFER, 0, offsetof(ProjectionViewModelUBO, model), &world->UBOs.projectionViewModelUbo);
 
-  glBindBuffer(GL_UNIFORM_BUFFER, globalWorld.UBOs.fragUboId);
-  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(FragUBO), &globalWorld.UBOs.fragUbo);
+  glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.fragUboId);
+  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(FragUBO), &world->UBOs.fragUbo);
 
-  updateEntities(&globalWorld);
+  updateEntities(world);
 
-  drawSceneWithPortals(&globalWorld);
+  drawSceneWithPortals(world);
 }
 
-void deinitPortalScene() {
-  cleanupWorld(&globalWorld);
-  deinitGlobalVertexAtts();
-  glDeleteQueries(ArrayCount(portalQueryObjects_GLOBAL), portalQueryObjects_GLOBAL);
+void deinitPortalScene(World* world) {
+  cleanupWorld(world);
+  deinitCommonVertexAtts(&world->commonVertAtts);
 }
