@@ -1,5 +1,5 @@
-Improve iteration speed:
-- [Placeholder]
+Improve iterative process:
+- Asset-Baker should automatically run before running the application.
 
 Optimization ideas:
 - Calm Sea and Polluted Earth skybox textures can be downscaled to match
@@ -7,9 +7,16 @@ Optimization ideas:
     - Potentially use ASTC NxM compression for larger (or all) textures?
         - [Android developer guid says support is lower than ETC2 but I don't believe it affects](https://developer.android.com/guide/playcore/asset-delivery/texture-compression) but I don't believe that will affect anyone who might run this app.
         - Could always compress to ASTC and
+
 Modularization ideas:
 - matrices library (NoopMath.kt) could be set up to be pulled from a maven repository instead of manually embedded into the project
-- purge raw texture/model assets from the repo and store them somewhere else to be downloaded separately.
+- Use Asset-Baker to validate and bake shader files to strings
+    - Consider minifying glsl code in the baking process to reduce bytes going to the GPU
+        - https://github.com/laurentlb/Shader_Minifier
+    - Failed attempts to were attempted using glslang/glslangValidator/glslc and CMake
+- Shaders can be pre-compiled by the users device on the startup of the app (or first run) to the specifications of that device.
+    - This prevents the need for further compilation of GLSL
+    - search terms: GL_OES_get_program_binary
 
 Scene improvements:
 - Mandelbrot scene
@@ -17,6 +24,7 @@ Scene improvements:
         - Best potential solution seems to be utilizing Perturbation Theory.
         - Failed attempts were made at trying to emulate higher floating point precision in the fragment shader.
     - Let user choose two accent colors
+
 - Native scene
     - Loading animation? (Might be a worse experience if loading is fast enough...)
     - Gate casting shadow onto self?
@@ -24,6 +32,8 @@ Scene improvements:
 Refactoring:
 - Scenes save format was previously used for loading from JSON files. World information is now hardcoded
  to reduce asset reads. Refactor save format code as it contains much superfluous code.
+- purge raw texture/model assets from the repo and store them somewhere else to be downloaded separately.
+- Remove json from baked assets (does not *currently*
 
 Bugs(?):
 - Exiting a scene seems to sometimes show a frame or two of the users home screen wallpaper

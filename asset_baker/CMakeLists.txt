@@ -24,7 +24,7 @@ target_include_directories(asset_baker PUBLIC
         ${SHARED_CPP}/noop_math
         C:/Compressonator_4.4.19/include
 )
-target_link_libraries(asset_baker tinyobjloader stb_image tinygltf assetlib json lz4 noop_math debug "C:/Compressonator_4.4.19/lib/VS2019/x64/Compressonator_MDd.lib" optimized "C:/Compressonator_4.4.19/lib/VS2019/x64/Compressonator_MD.lib")
+target_link_libraries(asset_baker tinyobjloader stb_image tinygltf assetlib json lz4 noop_math debug "C:/developer/repos/compressonator/build/Debug_MD/x64/Compressonator_MDd.lib" optimized "C:/developer/repos/compressonator/build/Release_MD/x64/Compressonator_MD.lib")
 
 # stb
 add_library(stb_image INTERFACE)

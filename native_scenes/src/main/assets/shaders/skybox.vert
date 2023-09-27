@@ -1,4 +1,5 @@
 #version 320 es
+
 layout (location = 0) in vec3 inPos;
 
 layout (binding = 0, std140) uniform UBO {

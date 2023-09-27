@@ -1,3 +1,4 @@
+#include <cstdarg>
 #include <iostream>
 #include <unordered_set>
 #include <fstream>
@@ -5,7 +6,6 @@
 namespace fs = std::filesystem;
 
 #include "lz4/lz4.h"
-#include <chrono>
 #include "nlohmann/json.hpp"
 #include "compressonator.h"
 
@@ -84,22 +84,35 @@ void replace(std::string& str, const char* oldTokens, u32 oldTokensCount, char n
 bool compressImage(u8* uncompressedBytes, u32 width, u32 height, u32 numChannels, u8* compressedBytes);
 bool CompressionCallback(float fProgress, CMP_DWORD_PTR pUser1, CMP_DWORD_PTR pUser2);
 
+bool bakeFailed = false;
+
+void outputErrorMsg(const char* format, ...) {
+  va_list args;
+  va_start(args, format);
+  fprintf(stderr, format, args);
+  va_end(args);
+
+  bakeFailed = true;
+}
+
 int main(int argc, char* argv[]) {
   // NOTE: Count is often at least 1, as argv[0] is full path of the program being run
   if(argc < 4) {
-    char* arg1 = {argv[1]};
-    if(strcmp(arg1, "--clean") == 0) {
-      fs::path cacheFile{assetBakerCacheFileName};
-      if(fs::remove(cacheFile)) {
-        printf("Successfully deleted cache.");
-      } else {
-        printf("Attempted to clean but cache file was not found.");
+    if(argc >= 2) {
+      char* arg1 = {argv[1]};
+      if(strcmp(arg1, "--clean") == 0) {
+        fs::path cacheFile{assetBakerCacheFileName};
+        if(fs::remove(cacheFile)) {
+          printf("Successfully deleted cache.");
+        } else {
+          printf("Attempted to clean but cache file was not found.");
+        }
+        return 0;
       }
-      return 0;
     }
 
-    printf("Incorrect number of arguments.\n");
-    printf("Use ex: .\\assetbaker {raw assets dir} {baked asset output dir} {baked asset metadata output dir}\n");
+    outputErrorMsg("Incorrect number of arguments.\n");
+    outputErrorMsg("Use ex: .\\assetbaker {raw assets dir} {baked asset output dir} {baked asset metadata output dir}\n");
     return -1;
   }
 
@@ -144,7 +157,7 @@ int main(int argc, char* argv[]) {
       if(convertCubeMapTexture(skyboxDir, exportPath.string().c_str())) {
         converterState.bakedFilePaths.push_back(skyboxDir);
       } else {
-        printf("Failed to bake skybox asset: %s\n", skyboxDir.path().string().c_str());
+        outputErrorMsg("Failed to bake skybox asset: %s\n", skyboxDir.path().string().c_str());
       }
     }
   }
@@ -159,12 +172,12 @@ int main(int argc, char* argv[]) {
         if(convertTexture(textureFileEntry, exportPath.string().c_str())) {
           converterState.bakedFilePaths.push_back(textureFileEntry);
         } else {
-          printf("Failed to bake texture asset: %s\n", textureFileEntry.path().string().c_str());
+          outputErrorMsg("Failed to bake texture asset: %s\n", textureFileEntry.path().string().c_str());
         }
       }
     }
   } else {
-    printf("Could not find textures asset directory at: %s", asset_textures_dir.string().c_str());
+    outputErrorMsg("Could not find textures asset directory at: %s", asset_textures_dir.string().c_str());
   }
 
   if(exists(asset_models_dir)) {
@@ -177,12 +190,12 @@ int main(int argc, char* argv[]) {
         if(convertModel(modelFileEntry, exportPath.string().c_str())) {
           converterState.bakedFilePaths.push_back(modelFileEntry);
         } else {
-          printf("Failed to bake model asset: %s\n", modelFileEntry.path().string().c_str());
+          outputErrorMsg("Failed to bake model asset: %s\n", modelFileEntry.path().string().c_str());
         }
       }
     }
   } else {
-    printf("Could not find models asset directory at: %s", asset_models_dir.string().c_str());
+    outputErrorMsg("Could not find models asset directory at: %s", asset_models_dir.string().c_str());
   }
 
   // remember baked item
@@ -203,7 +216,7 @@ int main(int argc, char* argv[]) {
   writeOutputData(oldAssetBakeCache, converterState);
   saveCache(oldAssetBakeCache, newlyCachedItems);
 
-  return 0;
+  return bakeFailed ? -1 : 0;
 }
 
 /* Arguments
@@ -307,17 +320,13 @@ bool compressImage(u8* uncompressedBytes, u32 width, u32 height, u32 numChannels
 //    options.genGPUMipMaps = true;
 //    options.miplevels = 3;
 
-  auto compressionStart = std::chrono::high_resolution_clock::now();
   try {
     CMP_ERROR cmp_status = CMP_ConvertTexture(&srcTexture, &destTexture, &options, &CompressionCallback);
     if(cmp_status != CMP_OK) { return false; }
   } catch (const std::exception &ex) {
-    std::printf("Error: %s\n", ex.what());
+    outputErrorMsg("Error: %s\n", ex.what());
+    return false;
   }
-  auto compressionEnd = std::chrono::high_resolution_clock::now();
-  auto diff = compressionEnd - compressionStart;
-  std::cout << "compression took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0
-            << "ms" << std::endl;
 
   return true;
 }
@@ -579,7 +588,8 @@ bool convertCubeMapTexture(const fs::path& inputDir, const char* outputFilename)
   }
 
   if(ext.empty()) {
-    printf("Skybox directory (%s) was found empty.", inputDir.string().c_str());
+    outputErrorMsg("Skybox directory (%s) was found empty.", inputDir.string().c_str());
+    return false;
   }
 
   fs::path frontPath = (inputDir / "front").replace_extension(ext);
@@ -589,32 +599,27 @@ bool convertCubeMapTexture(const fs::path& inputDir, const char* outputFilename)
   fs::path leftPath = (inputDir / "left").replace_extension(ext);
   fs::path rightPath = (inputDir / "right").replace_extension(ext);
 
-  auto imageLoadStart = std::chrono::high_resolution_clock::now();
   stbi_uc* frontPixels = stbi_load(frontPath.u8string().c_str(), &frontWidth, &frontHeight, &frontChannels, STBI_rgb);
   stbi_uc* backPixels = stbi_load(backPath.u8string().c_str(), &backWidth, &backHeight, &backChannels, STBI_rgb);
   stbi_uc* topPixels = stbi_load(topPath.u8string().c_str(), &topWidth, &topHeight, &topChannels, STBI_rgb);
   stbi_uc* bottomPixels = stbi_load(bottomPath.u8string().c_str(), &bottomWidth, &bottomHeight, &bottomChannels, STBI_rgb);
   stbi_uc* rightPixels = stbi_load(rightPath.u8string().c_str(), &rightWidth, &rightHeight, &rightChannels, STBI_rgb);
   stbi_uc* leftPixels = stbi_load(leftPath.u8string().c_str(), &leftWidth, &leftHeight, &leftChannels, STBI_rgb);
-  auto imageLoadEnd = std::chrono::high_resolution_clock::now();
-
-  auto diff = imageLoadEnd - imageLoadStart;
-  std::cout << "srcTexture took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0 << "ms to load" << std::endl;
 
   if(!frontPixels || !backPixels || !topPixels || !bottomPixels || !leftPixels || !rightPixels) {
-    std::cout << "Failed to load CubeMap face file for directory " << inputDir << std::endl;
+    outputErrorMsg("Failed to load CubeMap face file for directory %s\n", inputDir.string().c_str());
     return false;
   }
 
   if(frontWidth != backWidth || frontWidth != topWidth || frontWidth != bottomWidth || frontWidth != leftWidth || frontWidth != rightWidth ||
       frontHeight != backHeight || frontHeight != topHeight || frontHeight != bottomHeight || frontHeight != leftHeight || frontHeight != rightHeight ||
       frontChannels != backChannels || frontChannels != topChannels || frontChannels != bottomChannels || frontChannels != leftChannels || frontChannels != rightChannels) {
-    std::cout << "One or more CubeMap faces do not match in either width, height, or number of channels for directory " << inputDir << std::endl;
+    outputErrorMsg("One or more CubeMap faces do not match in either width, height, or number of channels for directory %s\n", inputDir.string().c_str());
     return false;
   }
 
   if((frontWidth % 4) != 0 || (frontHeight % 4) != 0) {
-    std::cout << "CubeMap face widths and heights must be evenly divisible by 4." << inputDir << std::endl;
+    outputErrorMsg("CubeMap face widths and heights must be evenly divisible by 4: %s\n", inputDir.string().c_str());
     return false;
   }
 
@@ -642,7 +647,8 @@ bool convertCubeMapTexture(const fs::path& inputDir, const char* outputFilename)
   bool success = compressImage(cubeMapPixels_fbtbrl, topWidth, topHeight * 6, topChannels, &compressedBytes, &compressedSize, &compressedFormat);
 
   if(!success) {
-    std::printf("Error: Something went wrong with compressing %s\n", inputDir.string().c_str());
+    outputErrorMsg("Error: Something went wrong with compressing %s\n", inputDir.string().c_str());
+    return false;
   }
 
   CubeMapInfo info;
@@ -664,14 +670,10 @@ bool convertCubeMapTexture(const fs::path& inputDir, const char* outputFilename)
 bool convertTexture(const fs::path& inputPath, const char* outputFilename) {
   int texWidth, texHeight, texChannels;
 
-  auto imageLoadStart = std::chrono::high_resolution_clock::now();
   stbi_uc* pixels = stbi_load(inputPath.u8string().c_str(), &texWidth, &texHeight, &texChannels, STBI_default);
-  auto imageLoadEnd = std::chrono::high_resolution_clock::now();
-  auto diff = imageLoadEnd - imageLoadStart;
-  std::cout << "texture took " << std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count() / 1000000.0 << "ms to load" << std::endl;
 
   if(!pixels) {
-    std::cout << "Failed to load texture file " << inputPath << std::endl;
+    outputErrorMsg("Failed to load texture file %s\n", inputPath.string().c_str());
     return false;
   }
 
@@ -683,7 +685,8 @@ bool convertTexture(const fs::path& inputPath, const char* outputFilename) {
   bool success = compressImage(pixels, texWidth, texHeight, texChannels, &compressedBytes, &compressedSize, &compressedFormat);
 
   if(!success) {
-    std::printf("Error: Something went wrong with compressing %s\n", inputPath.string().c_str());
+    outputErrorMsg("Error: Something went wrong with compressing %s\n", inputPath.string().c_str());
+    return false;
   }
 
   TextureInfo texInfo;
@@ -709,7 +712,7 @@ f64 lastModifiedTimeStamp(const fs::path &file) {
 }
 
 bool CompressionCallback(float fProgress, CMP_DWORD_PTR pUser1, CMP_DWORD_PTR pUser2) {
-  std::printf("\rCompression progress = %3.0f  ", fProgress);
+  printf("\rCompression progress = %3.0f  ", fProgress);
   bool abortCompression = false;
   return abortCompression;
 }
@@ -863,7 +866,11 @@ void saveCache(const std::unordered_map<std::string, AssetBakeCachedItem> &oldCa
 void loadCache(std::unordered_map<std::string, AssetBakeCachedItem> &assetBakeCache) {
   std::vector<char> fileBytes;
 
-  if(!readFile(assetBakerCacheFileName, fileBytes)) {
+  if(readFile(assetBakerCacheFileName, fileBytes)) {
+    fs::path cacheFilePath = fs::absolute(fs::path(assetBakerCacheFileName));
+    printf("Found asset baker cache file at: (%s)", cacheFilePath.string().c_str());
+  } else {
+    printf("Could not find asset baker cache file. (%s)", assetBakerCacheFileName);
     return;
   }
 

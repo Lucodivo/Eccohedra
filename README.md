@@ -71,6 +71,7 @@ All the following information is under the assumption the project is being built
   - If you want to skip the validation of glsl shaders, removing any `add_dependencies({target-name} shaders-validation)` in CMakeLists.txt
     will do the trick.
 - Assets must be baked with the asset_baker before the project can properly be run.
+  - asset_baker source can be found in asset_baker/ in the root directory of the project.
   - (⚠IN PROGRESS⚠)
 
 ## Screenshots
