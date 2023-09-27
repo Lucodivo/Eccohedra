@@ -101,7 +101,7 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
     ##execute glslang command to compile that specific shader
     add_custom_command(
             OUTPUT ${GLSL_VALIDATION_TIMESTAMP}
-            COMMAND Vulkan::glslangValidator ${GLSL}
+            COMMAND Vulkan::glslangValidator --glsl-version 320es --enhanced-msgs ${GLSL}
             COMMAND ${CMAKE_COMMAND} -E touch ${GLSL_VALIDATION_TIMESTAMP}
             DEPENDS ${GLSL})
     list(APPEND GLSL_VALIDATION_STAMPS ${GLSL_VALIDATION_TIMESTAMP})

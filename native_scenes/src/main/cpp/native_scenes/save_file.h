@@ -90,8 +90,8 @@ SaveFormat originalWorld() {
   });
   shaders.push_back({
       2,
-      "pos_norm.vert",
-      "skybox_rhzup_to_lhyup.frag",
+      "reflect_skybox.vert",
+      "reflect_skybox.frag",
       ""
   });
 

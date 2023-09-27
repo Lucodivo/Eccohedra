@@ -8,19 +8,19 @@
 typedef struct android_app android_app;
 typedef struct android_poll_source android_poll_source;
 
-/**
- * TODO: Not used at all right now
- */
-typedef struct SceneState {
-  f32 inputX;
-  f32 inputY;
-  World world;
-} SceneState;
+struct InputState {
+  vec2 lastPos_screenRes;
 
-/**
- * Shared state for our app.
- */
-typedef struct Engine {
+  // Note: X is normalized to width and Y is normalized to height. That means, in portrait mode of a non-square
+  // display, a horizontal pan yields a larger X than a horizontal pan of the same real world length.
+  vec2 deltaPos_normalized;
+};
+
+struct SceneState {
+  World world;
+};
+
+struct Engine {
   ASensorManager *sensorManager;
   const ASensor *accelerometerSensor;
   ASensorEventQueue *sensorEventQueue;
@@ -28,8 +28,9 @@ typedef struct Engine {
   bool paused;
   bool initializing;
   GLEnvironment glEnv;
-  SceneState state;
-} Engine;
+  SceneState sceneState;
+  InputState inputState;
+};
 
 static void drawFrame(Engine* engine);
 static s32 handleInput(android_app *app, AInputEvent *event);
@@ -77,7 +78,7 @@ void android_main(android_app *app) {
 #ifndef NDEBUG
     logAllAssets(assetManager_GLOBAL, app);
 #endif
-  initPortalScene(&engine.state.world);
+  initPortalScene(&engine.sceneState.world);
 
   while (true) {
     // Read all pending events.
@@ -111,6 +112,10 @@ void android_main(android_app *app) {
     }
 
     if (!engine.paused) {
+      SceneInput sceneInput;
+      sceneInput.x = engine.inputState.deltaPos_normalized.x;
+      sceneInput.y = engine.inputState.deltaPos_normalized.y;
+      updatePortalScene(&engine.sceneState.world, sceneInput);
       drawFrame(&engine);
     }
   }
@@ -124,7 +129,7 @@ static void drawFrame(Engine *engine) {
     glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   } else {
-    drawPortalScene(&engine->state.world);
+    drawPortalScene(&engine->sceneState.world);
   }
 
   // "eglSwapBuffers performs an implicit flush operation on the context bound to surface before swapping"
@@ -140,19 +145,33 @@ static s32 handleInput(android_app *app, AInputEvent *event) {
       switch (eventSource) {
         case AINPUT_SOURCE_TOUCHSCREEN: {
           int action = AKeyEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK;
+          vec2 actionPos = vec2{ AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0) };
+
           switch (action) {
-            case AMOTION_EVENT_ACTION_DOWN:
+            case AMOTION_EVENT_ACTION_DOWN:{
+              engine->inputState.deltaPos_normalized = vec2{.0f, .0f};
               break;
-            case AMOTION_EVENT_ACTION_UP:
+            }
+            case AMOTION_EVENT_ACTION_UP: {
+              engine->inputState.lastPos_screenRes = vec2{.0f, .0f};
+              engine->inputState.deltaPos_normalized = vec2{.0f, .0f};
               break;
-            case AMOTION_EVENT_ACTION_MOVE:
+            }
+            case AMOTION_EVENT_ACTION_MOVE: {
+              vec2 deltaPan = actionPos - engine->inputState.lastPos_screenRes;
+              engine->inputState.deltaPos_normalized = vec2{
+                  deltaPan.x / (f32)engine->glEnv.surface.width,
+                  deltaPan.y / (f32)engine->glEnv.surface.height
+              };
+              LOGI("Normalized pan: (x, y) = (%.2f, %.2f)", engine->inputState.deltaPos_normalized.x, engine->inputState.deltaPos_normalized.y);
               break;
+            }
             default: {
               break;
             }
           }
-          engine->state.inputX = AMotionEvent_getX(event, 0);
-          engine->state.inputY = AMotionEvent_getY(event, 0);
+
+          engine->inputState.lastPos_screenRes = actionPos;
           return 1;
         }
         default: {
@@ -185,7 +204,7 @@ void onWindowInit(android_app* app, Engine* engine) {
     {
       TimeBlock("APP_CMD_INIT_WINDOW")
       updateGLSurface(&engine->glEnv, app->window);
-      updateSceneWindow(&engine->state.world, engine->glEnv.surface.width, engine->glEnv.surface.height);
+      updateSceneWindow(&engine->sceneState.world, engine->glEnv.surface.width, engine->glEnv.surface.height);
       engine->initializing = false;
     }
     EndAndPrintProfile();
@@ -250,7 +269,7 @@ void onResume(android_app* app, Engine *engine) {
 
 void onTerminate(Engine *engine) {
   ASensorManager_destroyEventQueue(engine->sensorManager, engine->sensorEventQueue);
-  deinitPortalScene(&engine->state.world);
+  deinitPortalScene(&engine->sceneState.world);
   glDeinit(&engine->glEnv);
 }
 

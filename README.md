@@ -72,6 +72,9 @@ All the following information is under the assumption the project is being built
     will do the trick.
 - Assets must be baked with the asset_baker before the project can properly be run.
   - asset_baker source can be found in asset_baker/ in the root directory of the project.
+  - asset_baker has hardcoded directories that will work smoothly as long as asset_baker is ran in the root
+  	directory of the entire Android project.
+  - asset_baker uses a cache system that will re-bake items that have been modified since last they were baked.
   - (⚠IN PROGRESS⚠)
 
 ## Screenshots

@@ -5,8 +5,7 @@
 const char* posVertexShaderFileLoc = "pos.vert";
 const char* skyboxVertexShaderFileLoc = "skybox.vert";
 const char* singleColorFragmentShaderFileLoc = "single_color.frag";
-const char* skyboxFragmentShaderFileLoc = "skybox_rhzup_to_lhyup.frag";
-const char* gateFragmentShaderFileLoc = "gat.frag";
+const char* skyboxFragmentShaderFileLoc = "skybox.frag";
 const char* blackFragmentShaderFileLoc = "black.frag";
 
 // Textures

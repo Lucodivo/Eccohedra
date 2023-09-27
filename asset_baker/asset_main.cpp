@@ -86,6 +86,10 @@ bool CompressionCallback(float fProgress, CMP_DWORD_PTR pUser1, CMP_DWORD_PTR pU
 
 bool bakeFailed = false;
 
+const char* rawAssetsDir = "native_scenes/src/main/assets_raw";
+const char* bakedAssetsDir = "native_scenes/src/main/assets";
+const char* metadataOutputDir = "native_scenes/src/main/cpp/assets_metadata";
+
 void outputErrorMsg(const char* format, ...) {
   va_list args;
   va_start(args, format);
@@ -97,22 +101,20 @@ void outputErrorMsg(const char* format, ...) {
 
 int main(int argc, char* argv[]) {
   // NOTE: Count is often at least 1, as argv[0] is full path of the program being run
-  if(argc < 4) {
-    if(argc >= 2) {
-      char* arg1 = {argv[1]};
-      if(strcmp(arg1, "--clean") == 0) {
-        fs::path cacheFile{assetBakerCacheFileName};
-        if(fs::remove(cacheFile)) {
-          printf("Successfully deleted cache.");
-        } else {
-          printf("Attempted to clean but cache file was not found.");
-        }
-        return 0;
+  if(argc > 1) {
+    char* arg1 = {argv[1]};
+    if(strcmp(arg1, "--clean") == 0) {
+      fs::path cacheFile{assetBakerCacheFileName};
+      if(fs::remove(cacheFile)) {
+        printf("Successfully deleted cache.");
+      } else {
+        printf("Attempted to clean but cache file was not found.");
       }
+      return 0;
     }
 
-    outputErrorMsg("Incorrect number of arguments.\n");
-    outputErrorMsg("Use ex: .\\assetbaker {raw assets dir} {baked asset output dir} {baked asset metadata output dir}\n");
+    outputErrorMsg("Unsupported options.\n");
+    outputErrorMsg("Use ex: .\\assetbaker {--clean}\n");
     return -1;
   }
 
@@ -122,9 +124,9 @@ int main(int argc, char* argv[]) {
   newlyCachedItems.reserve(50);
 
   ConverterState converterState;
-  converterState.assetsDir = {argv[1]};
-  converterState.bakedAssetDir = { argv[2] };
-  converterState.outputFileDir = { argv[3] };
+  converterState.assetsDir = rawAssetsDir;
+  converterState.bakedAssetDir = bakedAssetsDir;
+  converterState.outputFileDir = metadataOutputDir;
 
   if(!fs::is_directory(converterState.assetsDir)) {
     std::cout << "Could not find assets directory: " << argv[1];

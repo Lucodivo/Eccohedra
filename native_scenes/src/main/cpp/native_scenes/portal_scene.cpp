@@ -2,7 +2,19 @@
 #define MAX_PORTALS 4
 
 struct Player {
-  BoundingBox boundingBox;
+  struct {
+    f32 theta;
+    f32 radius;
+    vec3 xyz; // second class values, derived from polar coordinates
+  } pos;
+
+  void setPolarPos(f32 theta, f32 radius) {
+    pos.theta = theta;
+    pos.radius = radius;
+    float sinTheta = sin(pos.theta);
+    float cosTheta = cos(pos.theta);
+    pos.xyz = { cosTheta * pos.radius, sinTheta * pos.radius, 1.75f};
+  }
 };
 
 enum EntityType {
@@ -55,9 +67,13 @@ struct Scene {
   std::string skyboxFileName;
 };
 
+struct SceneInput {
+  f32 x;
+  f32 y;
+};
+
 struct World
 {
-  Camera camera;
   Player player;
   u32 currentSceneIndex;
   StopWatch stopWatch;
@@ -84,7 +100,6 @@ struct World
   u32 shaderCount;
 };
 
-const vec3 defaultPlayerDimensionInMeters{0.5f, 0.25f, 1.75f}; // NOTE: ~1'7"w, 9"d, 6'h
 const f32 near = 0.1f;
 const f32 far = 200.0f;
 
@@ -179,15 +194,6 @@ u32 addNewModel(World* world, const char* modelFileLoc) {
   u32 modelIndex = world->modelCount++;
   loadModelAsset(modelFileLoc, world->models + modelIndex);
   return modelIndex;
-}
-
-inline vec3 calcBoundingBoxCenterPosition(BoundingBox box) {
-  return box.min + (box.diagonal * 0.5f);
-}
-
-// assume "eyes" (FPS camera) is positioned on middle X, max Y, max Z
-inline vec3 calcPlayerViewingPosition(const Player* player) {
-  return player->boundingBox.min + hadamard(player->boundingBox.diagonal, {0.5f, 1.0f, 1.0f});
 }
 
 void drawTrianglesWireframe(World* world, const VertexAtt* vertexAtt) {
@@ -392,7 +398,7 @@ void updateEntities(World* world) {
   }
 
   Scene* currentScene = &world->scenes[world->currentSceneIndex];
-  vec3 playerViewPosition = calcPlayerViewingPosition(&world->player);
+  vec3 playerViewPosition = world->player.pos.xyz;
   b32 portalEntered = false;
   u32 portalSceneDestination;
   auto updatePortalsForScene = [playerViewPosition, &portalEntered, &portalSceneDestination](Scene* scene) {
@@ -470,16 +476,9 @@ void cleanupWorld(World* world) {
   *world = {0};
 }
 
-void initPlayer(Player* player) {
-  player->boundingBox.diagonal = defaultPlayerDimensionInMeters;
-//  player->boundingBox.min = {-(player->boundingBox.diagonal.x * 0.5f) - 2.8f, -3.0f - (player->boundingBox.diagonal.y * 0.5f), 0.0f};
-  player->boundingBox.min = {-(player->boundingBox.diagonal.x * 0.5f), -12.0f - (player->boundingBox.diagonal.y * 0.5f), 0.0f};
-}
-
 void initCamera(Camera* camera, const Player& player) {
-  vec3 firstPersonCameraInitPosition = calcPlayerViewingPosition(&player);
-  vec3 firstPersonCameraInitFocus{0, 0, firstPersonCameraInitPosition.z};
-  lookAt_FirstPerson(firstPersonCameraInitPosition, firstPersonCameraInitFocus, camera);
+  vec3 firstPersonCameraInitFocus{0, 0, player.pos.xyz.z};
+  lookAt_FirstPerson(player.pos.xyz, firstPersonCameraInitFocus, camera);
 }
 
 // TODO: Cleanup the way the save files are organized.
@@ -604,8 +603,7 @@ void initPortalScene(World* world) {
 
   initCommonVertexAtt(&world->commonVertAtts);
 
-  initPlayer(&world->player);
-  initCamera(&world->camera, world->player);
+  world->player.setPolarPos(-PiOverTwo32, 12.0f);
 
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
   glEnable(GL_DEPTH_TEST);
@@ -647,55 +645,21 @@ void initPortalScene(World* world) {
   loadWorld(world);
 }
 
-void drawPortalScene(World* world) {
+void updatePortalScene(World* world, SceneInput input) {
   // NOTE: input should be handled through handleInput(android_app* app, AInputEvent* event)
   world->stopWatch.lap();
   world->UBOs.fragUbo.time = world->stopWatch.totalInSeconds;
 
-  vec3 playerCenter;
-  vec3 playerViewPosition = calcPlayerViewingPosition(&world->player);
 
-  // gather input
-  // TODO: get input for frame to determine boolean values
-  b32 sprintIsActive = false;
-  b32 leftIsActive = false;
-  b32 rightIsActive = false;
-  b32 forwardIsActive = false;
-  b32 backwardIsActive = false;
-  vec2_f64 viewAngleDelta = {0.0, 0.0}; // TODO: Do we ever want to be able to change views?
+  world->player.setPolarPos(world->player.pos.theta - (2.0 * input.x), world->player.pos.radius - (10.0f * input.y));
 
-  // gather input for movement and camera changes
-  b32 lateralMovement = leftIsActive != rightIsActive;
-  b32 forwardMovement = forwardIsActive != backwardIsActive;
-  vec3 playerDelta{};
-  if (lateralMovement || forwardMovement)
-  {
-    f32 playerMovementSpeed = sprintIsActive ? 8.0f : 4.0f;
+  updateEntities(world);
+}
 
-    // Camera movement direction
-    vec3 playerMovementDirection{};
-    if (lateralMovement)
-    {
-      playerMovementDirection += rightIsActive ? world->camera.right : -world->camera.right;
-    }
-
-    if (forwardMovement)
-    {
-      playerMovementDirection += forwardIsActive ? world->camera.forward : -world->camera.forward;
-    }
-
-    playerMovementDirection = normalize(playerMovementDirection.x, playerMovementDirection.y, 0.0);
-    playerDelta = playerMovementDirection * playerMovementSpeed * world->stopWatch.lapInSeconds;
-  }
-
-  // TODO: Do not apply immediately, check for collisions
-  world->player.boundingBox.min += playerDelta;
-  playerCenter = calcBoundingBoxCenterPosition(world->player.boundingBox);
-
-  const f32 mouseDeltaMultConst = 0.0005f;
-  updateCamera_FirstPerson(&world->camera, playerDelta, f32(-viewAngleDelta.y * mouseDeltaMultConst), f32(-viewAngleDelta.x * mouseDeltaMultConst));
-
-  world->UBOs.projectionViewModelUbo.view = getViewMat(world->camera);
+void drawPortalScene(World* world) {
+  Camera frameCamera;
+  lookAt_FirstPerson(world->player.pos.xyz, vec3{0.0f, 0.0f, 1.75f}, &frameCamera);
+  world->UBOs.projectionViewModelUbo.view = getViewMat(frameCamera);
 
   // draw
   glStencilMask(0xFF);
@@ -710,8 +674,6 @@ void drawPortalScene(World* world) {
 
   glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.fragUboId);
   glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(FragUBO), &world->UBOs.fragUbo);
-
-  updateEntities(world);
 
   drawSceneWithPortals(world);
 }
