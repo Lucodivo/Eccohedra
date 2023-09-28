@@ -5,8 +5,8 @@ struct Player {
   struct {
     f32 theta;
     f32 radius;
-    vec3 xyz; // second class values, derived from polar coordinates
-  } pos;
+    vec3 xyz;
+  } pos; // use setters to ensure that these values are always in sync
 
   void setPolarPos(f32 theta, f32 radius) {
     pos.theta = theta;
@@ -14,6 +14,14 @@ struct Player {
     float sinTheta = sin(pos.theta);
     float cosTheta = cos(pos.theta);
     pos.xyz = { cosTheta * pos.radius, sinTheta * pos.radius, 1.75f};
+  }
+
+  void setXYZPos(vec3 xyz) {
+    pos.xyz = xyz;
+    f32 magnitudeXY = magnitude(xyz.xy);
+    pos.radius = magnitudeXY;
+    f32 theta = acos(pos.xyz.x / magnitudeXY);
+    pos.theta = xyz.y > 0 ? theta : Tau32 - theta;
   }
 };
 
@@ -645,14 +653,47 @@ void initPortalScene(World* world) {
   loadWorld(world);
 }
 
+void updatePlayerCollisions(World* world) {
+  Player& player = world->player;
+  // collision detection & resolution
+  if(world->currentSceneIndex == 0) { // if gate scene...
+    // TODO: check for collisions with the gate's columns
+    const vec2 quarterFoldedXY = vec2{abs(player.pos.xyz.x), abs(player.pos.xyz.y)};
+    const vec2 columnXY = vec2{1.768f, 1.768 };
+    const f32 columnRadius = 0.5f;
+    const f32 columnRadiusSq = columnRadius * columnRadius;
+
+    // intersecting column? Taking advantage of column symmetry.
+    const vec2 foldedXY_columnOrigin = quarterFoldedXY - columnXY;
+    if(magnitudeSquared(foldedXY_columnOrigin) < columnRadiusSq) { // intersecting with a column
+      vec2 foldedXY_dirFromColumn = normalize(foldedXY_columnOrigin);
+      vec2 foldedCorrection = (foldedXY_dirFromColumn * columnRadius) - foldedXY_columnOrigin;
+      vec2 unfoldedCorrection = vec2{
+          player.pos.xyz.x > 0 ? foldedCorrection.x : -foldedCorrection.x,
+          player.pos.xyz.y > 0 ? foldedCorrection.y : -foldedCorrection.y
+      };
+      player.setXYZPos(vec3{player.pos.xyz.x + unfoldedCorrection.x, player.pos.xyz.y + unfoldedCorrection.y, player.pos.xyz.z});
+    }
+  }
+}
+
 void updatePortalScene(World* world, SceneInput input) {
   // NOTE: input should be handled through handleInput(android_app* app, AInputEvent* event)
   world->stopWatch.lap();
   world->UBOs.fragUbo.time = world->stopWatch.totalInSeconds;
 
+  Player& player = world->player;
+  f32 thetaDelta = -(2.0 * input.x);
+  f32 newTheta = player.pos.theta + thetaDelta;
+  f32 radiusDelta = -(10.0f * input.y);
+  f32 newRadius = player.pos.radius + radiusDelta;
 
-  world->player.setPolarPos(world->player.pos.theta - (2.0 * input.x), world->player.pos.radius - (10.0f * input.y));
+  if(newTheta > Tau32) { newTheta -= Tau32; }
+  if(newTheta < 0) { newTheta += Tau32; }
+  newRadius = Max(newRadius, 1.5f);
+  player.setPolarPos(newTheta, newRadius);
 
+  updatePlayerCollisions(world);
   updateEntities(world);
 }
 

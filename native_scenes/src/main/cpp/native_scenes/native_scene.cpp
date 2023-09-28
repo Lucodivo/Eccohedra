@@ -163,7 +163,6 @@ static s32 handleInput(android_app *app, AInputEvent *event) {
                   deltaPan.x / (f32)engine->glEnv.surface.width,
                   deltaPan.y / (f32)engine->glEnv.surface.height
               };
-              LOGI("Normalized pan: (x, y) = (%.2f, %.2f)", engine->inputState.deltaPos_normalized.x, engine->inputState.deltaPos_normalized.y);
               break;
             }
             default: {
