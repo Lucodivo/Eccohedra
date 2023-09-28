@@ -119,8 +119,8 @@ SaveFormat originalWorld() {
   });
   models.push_back({
       4,
-      "mrsaturn",
-      vec4{.4, .4, 1, 1}
+      "torus",
+      vec4{.5, .5, 1, 1}
   });
   models.push_back({
       5,
