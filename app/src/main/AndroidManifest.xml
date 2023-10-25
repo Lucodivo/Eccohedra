@@ -33,6 +33,11 @@
             <!-- Tell NativeActivity the name of our .so -->
             <meta-data android:name="android.app.lib_name" android:value="gate-scene" />
         </activity>
+        <activity android:name=".graphics.TestNativeActivity"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+            <meta-data android:name="android.app.lib_name" android:value="test-native-activity" />
+        </activity>
         <meta-data android:name="firebase_analytics_collection_deactivated"
             android:value="@bool/FIREBASE_ANALYTICS_DEACTIVATED"/>
     </application>

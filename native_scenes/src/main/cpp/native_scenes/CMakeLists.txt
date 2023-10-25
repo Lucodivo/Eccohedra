@@ -1,18 +1,13 @@
 add_library(gate-scene SHARED)
-target_sources(gate-scene PRIVATE
-        gate_scene.cpp)
-target_include_directories(gate-scene PRIVATE
+target_sources(gate-scene PRIVATE gate_scene.cpp)
+set(COMMON_NATIVE_INCLUDE
         ${ANDROID_NATIVE_APP_GLUE_DIR}
         ${ANDROID_CPP}
-        ${EXT_DIR}
-        ${EXT_DIR}/stb
-        ${EXT_DIR}/nlohmann
-        ${EXT_DIR}/lz4
         ${SHARED_CPP}
         ${SHARED_CPP}/assetlib
         ${SHARED_CPP}/noop_math
 )
-target_link_libraries(gate-scene
+set(COMMON_NATIVE_LIBS
         native_app_glue
         EGL
         GLESv3
@@ -21,11 +16,22 @@ target_link_libraries(gate-scene
         noop_math
         assetlib
 )
+target_include_directories(gate-scene PRIVATE
+        ${COMMON_NATIVE_INCLUDE}
+        ${EXT_DIR}
+        ${EXT_DIR}/stb
+        ${EXT_DIR}/nlohmann
+        ${EXT_DIR}/lz4
+)
+target_link_libraries(gate-scene
+        ${COMMON_NATIVE_LIBS}
+)
 
 add_dependencies(gate-scene shaders-validation)
 
-#[[
-add_library(gate-scene-red SHARED red_scene.cpp)
-target_include_directories(gate-scene-red PRIVATE ${NATIVE_SCENE_INCL})
-target_link_libraries(gate-scene-red ${NATIVE_SCENE_LIBS})
-]]
+add_library(test-native-activity SHARED)
+target_sources(test-native-activity PRIVATE test_native_activity.cpp)
+target_include_directories(test-native-activity PRIVATE ${COMMON_NATIVE_INCLUDE})
+target_link_libraries(test-native-activity
+        ${COMMON_NATIVE_LIBS}
+)
