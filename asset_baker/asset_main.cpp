@@ -438,7 +438,7 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName) {
   u64 minOffset = Min(positionAttribute.bufferByteOffset, Min(texture0Attribute.bufferByteOffset, normalAttribute.bufferByteOffset));
   u8* vertexAttributeData = tinyGLTFModel.buffers[vertexAttBufferIndex].data.data();
 
-  modelInfo.indexCount = u32(gltfAccessors->at(indicesAccessorIndex).count);
+  modelInfo.indexCount = (u32)gltfAccessors->at(indicesAccessorIndex).count;
   modelInfo.indexTypeSize = tinygltf::GetComponentSizeInBytes(gltfAccessors->at(indicesAccessorIndex).componentType);
 
   // TODO: Handle the possibility of the three attributes not being side-by-side in the buffer

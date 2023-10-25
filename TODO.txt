@@ -31,6 +31,9 @@ Scene improvements:
     - Use gyro to control camera
     - collision detection for portals
 
+- Menger prison
+    - If user "crashes" reset scene
+
 Refactoring:
 - Scenes save format was previously used for loading from JSON files. World information is now hardcoded
  to reduce asset reads. Refactor save format code as it contains much superfluous code.

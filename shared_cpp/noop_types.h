@@ -36,8 +36,7 @@ typedef s32 b32;
 #include <cassert>
 #define InvalidCodePath assert(!"InvalidCodePath");
 
-typedef struct vec2_u32
-{
+typedef struct vec2_u32 {
     u32 width;
     u32 height;
 } vec2_u32;

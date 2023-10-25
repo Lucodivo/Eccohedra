@@ -3,16 +3,21 @@
  In other words, throttling the app from going beyond the refresh rate of the phone is handled in eglSwapBuffers alone
  */
 
-#include "native_scene.h"
+#include "gate_scene.h"
 
 typedef struct android_app android_app;
 typedef struct android_poll_source android_poll_source;
 
 struct InputState {
-  vec2 lastPos_screenRes;
+  // Rotation Sensor //
+  vec3 firstRotationVector = vec3{0, 0, 0};
+  vec3 lastRotationVector = vec3{0, 0, 0};
 
+  // Position //
+  vec2 lastPos_screenRes;
   // Note: X is normalized to width and Y is normalized to height. That means, in portrait mode of a non-square
   // display, a horizontal pan yields a larger X than a horizontal pan of the same real world length.
+  // Not the best way but the way for now
   vec2 deltaPos_normalized;
 };
 
@@ -22,9 +27,8 @@ struct SceneState {
 
 struct Engine {
   ASensorManager *sensorManager;
-  const ASensor *accelerometerSensor;
+  const ASensor *gameRotationSensor;
   ASensorEventQueue *sensorEventQueue;
-
   bool paused;
   bool initializing;
   GLEnvironment glEnv;
@@ -32,14 +36,22 @@ struct Engine {
   InputState inputState;
 };
 
-static void drawFrame(Engine* engine);
+static void update(Engine *engine);
+
+static void drawFrame(Engine *engine);
+
 static s32 handleInput(android_app *app, AInputEvent *event);
+
 static void handleAndroidCmd(android_app *app, s32 cmd);
+
 void glDeinit(GLEnvironment *glEnv);
-void closeActivity(ANativeActivity* activity);
+
+void closeActivity(ANativeActivity *activity);
 
 void onTerminate(Engine *engine);
-void onResume(android_app* app, Engine *engine);
+
+void onResume(android_app *app, Engine *engine);
+
 void onPause(Engine *engine);
 
 // The VM calls JNI_OnLoad when the native library is loaded (ex: System.loadLibrary)
@@ -66,9 +78,10 @@ void android_main(android_app *app) {
   {
     TimeBlock("Acquire Android Resource Managers")
     assetManager_GLOBAL = app->activity->assetManager;
+    // TODO: ASensorManager_getInstance() is deprecated. Use ASensorManager_getInstanceForPackage("foo.bar.baz");
     engine.sensorManager = ASensorManager_getInstance();
-    engine.accelerometerSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
-                                                                 ASENSOR_TYPE_ACCELEROMETER);
+    engine.gameRotationSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
+                                                                ASENSOR_TYPE_GAME_ROTATION_VECTOR);
     engine.sensorEventQueue = ASensorManager_createEventQueue(engine.sensorManager, app->looper,
                                                               LOOPER_ID_USER, nullptr, nullptr);
   }
@@ -76,7 +89,7 @@ void android_main(android_app *app) {
   initGLEnvironment(&engine.glEnv);
   logDeviceGLEnvironment();
 #ifndef NDEBUG
-    logAllAssets(assetManager_GLOBAL, app);
+  logAllAssets(assetManager_GLOBAL, app);
 #endif
   initPortalScene(&engine.sceneState.world);
 
@@ -97,9 +110,11 @@ void android_main(android_app *app) {
       }
 
       if (pollResult == LOOPER_ID_USER) {
-        if (engine.accelerometerSensor != nullptr && engine.sensorEventQueue != nullptr) {
+        if (engine.gameRotationSensor != nullptr && engine.sensorEventQueue != nullptr) {
           while (ASensorEventQueue_getEvents(engine.sensorEventQueue, &sensorEvent, 1) > 0) {
-//              LOGI("accelerometer: inputX=%f inputY=%f z=%f", sensorEvent.acceleration.x, sensorEvent.acceleration.y, sensorEvent.acceleration.z);
+            //LOGI("accelerometer: inputX=%f inputY=%f z=%f", sensorEvent.vector.x, sensorEvent.vector.y, sensorEvent.vector.z);
+            engine.inputState.lastRotationVector = vec3{sensorEvent.vector.x, sensorEvent.vector.y,
+                                                        sensorEvent.vector.z};
           }
         }
       }
@@ -112,13 +127,33 @@ void android_main(android_app *app) {
     }
 
     if (!engine.paused) {
-      SceneInput sceneInput;
-      sceneInput.x = engine.inputState.deltaPos_normalized.x;
-      sceneInput.y = engine.inputState.deltaPos_normalized.y;
-      updatePortalScene(&engine.sceneState.world, sceneInput);
+      update(&engine);
       drawFrame(&engine);
     }
   }
+}
+
+static void update(Engine *engine) {
+  InputState &inputState = engine->inputState;
+  SceneInput sceneInput;
+
+  sceneInput.x = inputState.deltaPos_normalized.x;
+  sceneInput.y = inputState.deltaPos_normalized.y;
+
+  if (inputState.lastRotationVector.x == 0 &&
+      inputState.lastRotationVector.y == 0 &&
+      inputState.lastRotationVector.z == 0) {
+    // If the sensor hasn't given us anything our rotation is an identity matrix
+    sceneInput.rotationMat = identity_mat3();
+  } else if (inputState.firstRotationVector.x == 0 &&
+             inputState.firstRotationVector.y == 0 &&
+             inputState.firstRotationVector.z == 0) {
+    // if this is our first time processing a rotation vector first rotation is last rotation
+    inputState.firstRotationVector = inputState.lastRotationVector;
+    sceneInput.rotationMat = identity_mat3();
+  }
+
+  updatePortalScene(&engine->sceneState.world, sceneInput);
 }
 
 static void drawFrame(Engine *engine) {
@@ -145,10 +180,10 @@ static s32 handleInput(android_app *app, AInputEvent *event) {
       switch (eventSource) {
         case AINPUT_SOURCE_TOUCHSCREEN: {
           int action = AKeyEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK;
-          vec2 actionPos = vec2{ AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0) };
+          vec2 actionPos = vec2{AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0)};
 
           switch (action) {
-            case AMOTION_EVENT_ACTION_DOWN:{
+            case AMOTION_EVENT_ACTION_DOWN: {
               engine->inputState.deltaPos_normalized = vec2{.0f, .0f};
               break;
             }
@@ -160,8 +195,8 @@ static s32 handleInput(android_app *app, AInputEvent *event) {
             case AMOTION_EVENT_ACTION_MOVE: {
               vec2 deltaPan = actionPos - engine->inputState.lastPos_screenRes;
               engine->inputState.deltaPos_normalized = vec2{
-                  deltaPan.x / (f32)engine->glEnv.surface.width,
-                  deltaPan.y / (f32)engine->glEnv.surface.height
+                  deltaPan.x / (f32) engine->glEnv.surface.width,
+                  deltaPan.y / (f32) engine->glEnv.surface.height
               };
               break;
             }
@@ -190,20 +225,21 @@ static s32 handleInput(android_app *app, AInputEvent *event) {
   return 0;
 }
 
-void closeActivity(ANativeActivity* activity) { ANativeActivity_finish(activity); }
+void closeActivity(ANativeActivity *activity) { ANativeActivity_finish(activity); }
 
-void onSavedState(android_app* app, Engine* engine) {
+void onSavedState(android_app *app, Engine *engine) {
   // TODO: Implement saved state functionality.
   // TODO: Minor testing showed that when app->savedState is free'd is not straight forward...
 }
 
-void onWindowInit(android_app* app, Engine* engine) {
+void onWindowInit(android_app *app, Engine *engine) {
   // The window is being shown, get it ready.
   if (app->window != nullptr) {
     {
       TimeBlock("APP_CMD_INIT_WINDOW")
       updateGLSurface(&engine->glEnv, app->window);
-      updateSceneWindow(&engine->sceneState.world, engine->glEnv.surface.width, engine->glEnv.surface.height);
+      updateSceneWindow(&engine->sceneState.world, engine->glEnv.surface.width,
+                        engine->glEnv.surface.height);
       engine->initializing = false;
     }
     EndAndPrintProfile();
@@ -254,19 +290,20 @@ static void handleAndroidCmd(android_app *app, s32 cmd) {
   }
 }
 
-void onResume(android_app* app, Engine *engine) {
-  if (engine->accelerometerSensor != nullptr) {
-    ASensorEventQueue_enableSensor(engine->sensorEventQueue, engine->accelerometerSensor);
+void onResume(android_app *app, Engine *engine) {
+  if (engine->gameRotationSensor != nullptr) {
+    ASensorEventQueue_enableSensor(engine->sensorEventQueue, engine->gameRotationSensor);
     const s32 microsecondsPerSecond = 1000000;
     const s32 samplesPerSecond = 60;
     const s32 microsecondsPerSample = microsecondsPerSecond / samplesPerSecond;
-    ASensorEventQueue_setEventRate(engine->sensorEventQueue, engine->accelerometerSensor,
+    ASensorEventQueue_setEventRate(engine->sensorEventQueue, engine->gameRotationSensor,
                                    microsecondsPerSample);
   }
   engine->paused = false;
 }
 
 void onTerminate(Engine *engine) {
+
   ASensorManager_destroyEventQueue(engine->sensorManager, engine->sensorEventQueue);
   deinitPortalScene(&engine->sceneState.world);
   glDeinit(&engine->glEnv);
@@ -274,8 +311,8 @@ void onTerminate(Engine *engine) {
 
 void onPause(Engine *engine) {
   // Stop monitoring the accelerometer to avoid consuming battery while not being used.
-  if (engine->accelerometerSensor != nullptr) {
-    ASensorEventQueue_disableSensor(engine->sensorEventQueue, engine->accelerometerSensor);
+  if (engine->gameRotationSensor != nullptr) {
+    ASensorEventQueue_disableSensor(engine->sensorEventQueue, engine->gameRotationSensor);
   }
   engine->paused = true;
 }

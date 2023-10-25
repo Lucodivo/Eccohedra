@@ -78,6 +78,7 @@ struct Scene {
 struct SceneInput {
   f32 x;
   f32 y;
+  mat3 rotationMat;
 };
 
 struct World
@@ -409,7 +410,7 @@ void updateEntities(World* world) {
   vec3 playerViewPosition = world->player.pos.xyz;
   b32 portalEntered = false;
   u32 portalSceneDestination;
-  auto updatePortalsForScene = [playerViewPosition, &portalEntered, &portalSceneDestination](Scene* scene) {
+  auto updatePortalsForScene = [playerViewPosition, &portalEntered, &portalSceneDestination, &world, &currentScene](Scene* scene) {
     for(u32 portalIndex = 0; portalIndex < scene->portalCount; ++portalIndex) {
       Portal* portal = scene->portals + portalIndex;
 
@@ -482,11 +483,6 @@ void cleanupWorld(World* world) {
   glDeleteQueries(ArrayCount(world->portalQueryObjects), world->portalQueryObjects);
 
   *world = {0};
-}
-
-void initCamera(Camera* camera, const Player& player) {
-  vec3 firstPersonCameraInitFocus{0, 0, player.pos.xyz.z};
-  lookAt_FirstPerson(player.pos.xyz, firstPersonCameraInitFocus, camera);
 }
 
 // TODO: Cleanup the way the save files are organized.

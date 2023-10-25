@@ -31,7 +31,7 @@
             android:exported="true"
             android:configChanges="orientation|keyboardHidden|screenSize">
             <!-- Tell NativeActivity the name of our .so -->
-            <meta-data android:name="android.app.lib_name" android:value="native-scene" />
+            <meta-data android:name="android.app.lib_name" android:value="gate-scene" />
         </activity>
         <meta-data android:name="firebase_analytics_collection_deactivated"
             android:value="@bool/FIREBASE_ANALYTICS_DEACTIVATED"/>

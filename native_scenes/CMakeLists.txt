@@ -4,7 +4,7 @@ project ("native_scenes")
 set(CMAKE_CXX_STANDARD 17)
 
 set(${CMAKE_C_FLAGS}, "${CMAKE_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17 -Wall -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-format -Wno-null-dereference -Wno-missing-braces -Wno-sometimes-uninitialized -Werror -Wno-uninitialized")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17 -Wall -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-format -Wno-null-dereference -Wno-missing-braces -Wno-sometimes-uninitialized -Werror -Wno-uninitialized -Wno-unused-lambda-capture")
 
 get_filename_component(ANDROID_ROOT "../" ABSOLUTE)
 get_filename_component(ANDROID_CPP "src/main/cpp/" ABSOLUTE)

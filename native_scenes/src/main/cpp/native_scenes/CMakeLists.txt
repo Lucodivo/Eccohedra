@@ -1,7 +1,7 @@
-add_library(native-scene SHARED)
-target_sources(native-scene PRIVATE
-        native_scene.cpp)
-target_include_directories(native-scene PRIVATE
+add_library(gate-scene SHARED)
+target_sources(gate-scene PRIVATE
+        gate_scene.cpp)
+target_include_directories(gate-scene PRIVATE
         ${ANDROID_NATIVE_APP_GLUE_DIR}
         ${ANDROID_CPP}
         ${EXT_DIR}
@@ -12,7 +12,7 @@ target_include_directories(native-scene PRIVATE
         ${SHARED_CPP}/assetlib
         ${SHARED_CPP}/noop_math
 )
-target_link_libraries(native-scene
+target_link_libraries(gate-scene
         native_app_glue
         EGL
         GLESv3
@@ -22,10 +22,10 @@ target_link_libraries(native-scene
         assetlib
 )
 
-add_dependencies(native-scene shaders-validation)
+add_dependencies(gate-scene shaders-validation)
 
 #[[
-add_library(native-scene-red SHARED red_scene.cpp)
-target_include_directories(native-scene-red PRIVATE ${NATIVE_SCENE_INCL})
-target_link_libraries(native-scene-red ${NATIVE_SCENE_LIBS})
+add_library(gate-scene-red SHARED red_scene.cpp)
+target_include_directories(gate-scene-red PRIVATE ${NATIVE_SCENE_INCL})
+target_link_libraries(gate-scene-red ${NATIVE_SCENE_LIBS})
 ]]
