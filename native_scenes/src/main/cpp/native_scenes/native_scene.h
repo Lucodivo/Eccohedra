@@ -48,5 +48,4 @@ using namespace noop;
 #include "gl_util.cpp"
 
 #include "vertex_attributes.cpp"
-#include "rotation_sensor_helper.cpp"
 #include "portal_scene.cpp"

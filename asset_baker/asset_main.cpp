@@ -870,9 +870,9 @@ void loadCache(std::unordered_map<std::string, AssetBakeCachedItem> &assetBakeCa
 
   if(readFile(assetBakerCacheFileName, fileBytes)) {
     fs::path cacheFilePath = fs::absolute(fs::path(assetBakerCacheFileName));
-    printf("Found asset baker cache file at: (%s)", cacheFilePath.string().c_str());
+    printf("Found asset baker cache file at: (%s)\n", cacheFilePath.string().c_str());
   } else {
-    printf("Could not find asset baker cache file. (%s)", assetBakerCacheFileName);
+    printf("Could not find asset baker cache file. (%s)\n", assetBakerCacheFileName);
     return;
   }
 

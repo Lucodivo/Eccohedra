@@ -20,8 +20,8 @@ struct Player {
     pos.xyz = xyz;
     f32 magnitudeXY = magnitude(xyz.xy);
     pos.radius = magnitudeXY;
-    f32 theta = acos(pos.xyz.x / magnitudeXY);
-    pos.theta = xyz.y > 0 ? theta : Tau32 - theta;
+    f32 theta = acos(pos.xyz[0]/ magnitudeXY);
+    pos.theta = xyz[1]> 0 ? theta : Tau32 - theta;
   }
 };
 
@@ -100,6 +100,9 @@ struct World
     LightUBO lightUbo;
     GLuint lightUboId;
   } UBOs;
+  struct {
+    mat3 rotationMat;
+  } frame;
   ShaderProgram shaders[16];
   ShaderProgram singleColorShader;
   ShaderProgram skyboxShader;
@@ -176,8 +179,7 @@ u32 addNewDirectionalLight(World* world, u32 sceneIndex, vec3 lightColor, f32 li
   Scene* scene = world->scenes + sceneIndex;
   assert(scene->posLightCount + scene->dirLightCount < ArrayCount(scene->dirPosLightStack));
   u32 newLightIndex = scene->dirLightCount++;
-  scene->dirPosLightStack[newLightIndex].color.rgb = lightColor;
-  scene->dirPosLightStack[newLightIndex].color.a = lightPower;
+  scene->dirPosLightStack[newLightIndex].color = { lightColor[0], lightColor[1], lightColor[2], lightPower};
   scene->dirPosLightStack[newLightIndex].pos = normalize(lightToSource);
   return newLightIndex;
 }
@@ -187,16 +189,14 @@ u32 addNewPositionalLight(World* world, u32 sceneIndex, vec3 lightColor, f32 lig
   const u32 maxLights = ArrayCount(scene->dirPosLightStack);
   assert(scene->posLightCount + scene->dirLightCount < maxLights);
   u32 newLightIndex = maxLights - 1 - scene->posLightCount++;
-  scene->dirPosLightStack[newLightIndex].color.rgb = lightColor;
-  scene->dirPosLightStack[newLightIndex].color.a = lightPower;
+  scene->dirPosLightStack[newLightIndex].color = { lightColor[0], lightColor[1], lightColor[2], lightPower};
   scene->dirPosLightStack[newLightIndex].pos = lightPos;
   return newLightIndex;
 }
 
 void adjustAmbientLight(World* world, u32 sceneIndex, vec3 lightColor, f32 lightPower) {
   Scene* scene = world->scenes + sceneIndex;
-  scene->ambientLight.rgb = lightColor;
-  scene->ambientLight.a = lightPower;
+  scene->ambientLight = { lightColor[0], lightColor[1], lightColor[2], lightPower};
 }
 
 u32 addNewModel(World* world, const char* modelFileLoc) {
@@ -235,7 +235,7 @@ void drawPortal(World* world, Portal* portal) {
               GL_KEEP, // action when stencil passes but depth fails
               GL_REPLACE); // action when both stencil and depth pass
 
-  mat4 portalModelMat = quadModelMatrix(portal->centerPosition, portal->normal, portal->dimens.x, portal->dimens.y);
+  mat4 portalModelMat = quadModelMatrix(portal->centerPosition, portal->normal, portal->dimens[0], portal->dimens[1]);
   VertexAtt* portalVertexAtt = world->commonVertAtts.quad(false);
   if(flagIsSet(portal->stateFlags, PortalState_InFocus)) {
     portalModelMat = calcBoxStencilModelMatFromPortalModelMat(portalModelMat);
@@ -360,8 +360,8 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
     // TODO: Should some of this logic be moved to drawModel()?
     for(u32 meshIndex = 0; meshIndex < model.meshCount; ++meshIndex) {
       Mesh* mesh = model.meshes + meshIndex;
-      if(mesh->textureData.baseColor.a != 0.0f) {
-        setUniform(shader.id, baseColorUniformName, mesh->textureData.baseColor.rgb);
+      if(mesh->textureData.baseColor[3] != 0.0f) {
+        setUniform(shader.id, baseColorUniformName, mesh->textureData.baseColor.xyz);
       }
       if(mesh->textureData.albedoTextureId != TEXTURE_ID_NO_TEXTURE) {
         bindActiveTextureSampler2d(albedoActiveTextureIndex, mesh->textureData.albedoTextureId);
@@ -420,8 +420,8 @@ void updateEntities(World* world) {
       b32 portalWasInFocus = flagIsSet(portal->stateFlags, PortalState_InFocus);
       vec3 viewPositionPerpendicularToPortal = perpendicularTo(portalCenterToPlayerView, portal->normal);
       f32 widthDistFromCenter = magnitude(viewPositionPerpendicularToPortal.xy);
-      f32 heightDistFromCenter = viewPositionPerpendicularToPortal.z;
-      b32 viewerInsideDimens = widthDistFromCenter < (portal->dimens.x * 0.5f) && heightDistFromCenter < (portal->dimens.y * 0.5f);
+      f32 heightDistFromCenter = viewPositionPerpendicularToPortal[2];
+      b32 viewerInsideDimens = widthDistFromCenter < (portal->dimens[0]* 0.5f) && heightDistFromCenter < (portal->dimens[1]* 0.5f);
 
       b32 portalInFocus = (portalFacingCamera && viewerInsideDimens) ? PortalState_InFocus : false;
       b32 insidePortal = portalWasInFocus && !portalFacingCamera; // portal was in focus and now we're on the other side
@@ -654,7 +654,7 @@ void updatePlayerCollisions(World* world) {
   // collision detection & resolution
   if(world->currentSceneIndex == 0) { // if gate scene...
     // TODO: check for collisions with the gate's columns
-    const vec2 quarterFoldedXY = vec2{abs(player.pos.xyz.x), abs(player.pos.xyz.y)};
+    const vec2 quarterFoldedXY = vec2{abs(player.pos.xyz[0]), abs(player.pos.xyz[1])};
     const vec2 columnXY = vec2{1.768f, 1.768 };
     const f32 columnRadius = 0.5f;
     const f32 columnRadiusSq = columnRadius * columnRadius;
@@ -665,10 +665,10 @@ void updatePlayerCollisions(World* world) {
       vec2 foldedXY_dirFromColumn = normalize(foldedXY_columnOrigin);
       vec2 foldedCorrection = (foldedXY_dirFromColumn * columnRadius) - foldedXY_columnOrigin;
       vec2 unfoldedCorrection = vec2{
-          player.pos.xyz.x > 0 ? foldedCorrection.x : -foldedCorrection.x,
-          player.pos.xyz.y > 0 ? foldedCorrection.y : -foldedCorrection.y
+          player.pos.xyz[0] > 0 ? foldedCorrection[0]: -foldedCorrection[0],
+          player.pos.xyz[1] > 0 ? foldedCorrection[1]: -foldedCorrection[1]
       };
-      player.setXYZPos(vec3{player.pos.xyz.x + unfoldedCorrection.x, player.pos.xyz.y + unfoldedCorrection.y, player.pos.xyz.z});
+      player.setXYZPos(vec3{player.pos.xyz[0] + unfoldedCorrection[0], player.pos.xyz[1] + unfoldedCorrection[1], player.pos.xyz[2]});
     }
   }
 }
@@ -677,6 +677,8 @@ void updatePortalScene(World* world, SceneInput input) {
   // NOTE: input should be handled through handleInput(android_app* app, AInputEvent* event)
   world->stopWatch.lap();
   world->UBOs.fragUbo.time = world->stopWatch.totalInSeconds;
+
+  world->frame.rotationMat = input.rotationMat;
 
   Player& player = world->player;
   f32 thetaDelta = -(2.0 * input.x);
@@ -695,7 +697,11 @@ void updatePortalScene(World* world, SceneInput input) {
 
 void drawPortalScene(World* world) {
   Camera frameCamera;
-  lookAt_FirstPerson(world->player.pos.xyz, vec3{0.0f, 0.0f, 1.75f}, &frameCamera);
+  vec3 focusPoint = vec3{0.0f, 0.0f, 1.0f};
+
+//  focusPoint = focusPoint * world->frame.rotationMat;
+
+  lookAt_FirstPerson(world->player.pos.xyz, focusPoint, &frameCamera);
   world->UBOs.projectionViewModelUbo.view = getViewMat(frameCamera);
 
   // draw

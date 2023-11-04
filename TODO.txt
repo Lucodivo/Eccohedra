@@ -2,11 +2,13 @@ Improve iterative process:
 - Asset-Baker should automatically run before running the application.
 
 Optimization ideas:
-- Calm Sea and Polluted Earth skybox textures can be downscaled to match
-    - Tried downscaling and didn't look great...
-    - Potentially use ASTC NxM compression for larger (or all) textures?
-        - [Android developer guid says support is lower than ETC2 but I don't believe it affects](https://developer.android.com/guide/playcore/asset-delivery/texture-compression) but I don't believe that will affect anyone who might run this app.
-        - Could always compress to ASTC and
+- Gate scene
+    - Calm Sea and Polluted Earth skybox textures can be downscaled to match
+        - Tried downscaling and didn't look great...
+        - Potentially use ASTC NxM compression for larger (or all) textures?
+            - [Android developer guid says support is lower than ETC2 but I don't believe it affects](https://developer.android.com/guide/playcore/asset-delivery/texture-compression) but I don't believe that will affect anyone who might run this app.
+            - Could always compress to ASTC and
+    - No need to load all textures/models at once. Can load just the Gate scene textures and only other scene(s) visible. Then load others in background.
 
 Modularization ideas:
 - matrices library (NoopMath.kt) could be set up to be pulled from a maven repository instead of manually embedded into the project
@@ -25,7 +27,7 @@ Scene improvements:
         - Failed attempts were made at trying to emulate higher floating point precision in the fragment shader.
     - Let user choose two accent colors
 
-- Native scene
+- Gate scene
     - Loading animation? (Might be a worse experience if loading is fast enough...)
     - Gate casting shadow onto self?
     - Use gyro to control camera
@@ -39,7 +41,8 @@ Refactoring:
  to reduce asset reads. Refactor save format code as it contains much superfluous code.
 - purge raw texture/model assets from the repo and store them somewhere else to be downloaded separately.
 - Remove json from baked assets (does not *currently*
+- noop_math is awful. Entirely refactor the way matrices and vectors are structured. The less options the better.
 
 Bugs(?):
 - Exiting a scene seems to sometimes show a frame or two of the users home screen wallpaper
-- Lock the native scene in it's orientation (portrait/landscape). Right now it is buggy.
+- Lock the gate scene in it's orientation (portrait/landscape). Right now it is buggy.

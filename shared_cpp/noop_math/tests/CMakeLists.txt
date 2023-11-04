@@ -9,14 +9,14 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing() #Enables testing for this directory and below.
 
-set(LIBS noop_math gtest_main)
+set(NOOP_MATH_LIBS noop_math gtest_main)
 
 # noop_math_test
 add_executable(
         noop_math_test
         noop_math_test.cpp
 )
-target_link_libraries(noop_math_test ${LIBS})
+target_link_libraries(noop_math_test ${NOOP_MATH_LIBS})
 target_include_directories(noop_math_test PRIVATE ${SHARED_CPP} ${SHARED_CPP}/noop_math)
 
 include(GoogleTest)

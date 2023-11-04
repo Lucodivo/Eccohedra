@@ -104,7 +104,7 @@ inline void setUniform(GLuint shaderId, const std::string& name, const mat4* mat
   glUniformMatrix4fv(glGetUniformLocation(shaderId, name.c_str()),
                      1, // count
                      GL_FALSE, // transpose: swap columns and rows (true or false)
-                     mat->val); // pointer to float values
+                     mat->values); // pointer to float values
 }
 
 inline void setUniform(GLuint shaderId, const std::string& name, const mat4* matArray, const u32 arraySize)
@@ -112,7 +112,7 @@ inline void setUniform(GLuint shaderId, const std::string& name, const mat4* mat
   glUniformMatrix4fv(glGetUniformLocation(shaderId, name.c_str()),
                      arraySize, // count
                      GL_FALSE, // transpose: swap columns and rows (true or false)
-                     matArray->val); // pointer to float values
+                     matArray->values); // pointer to float values
 }
 
 inline void setUniform(GLuint shaderId, const std::string& name, const float* floatArray, const u32 arraySize)
@@ -122,17 +122,17 @@ inline void setUniform(GLuint shaderId, const std::string& name, const float* fl
 
 inline void setUniform(GLuint shaderId, const std::string& name, const vec2& vector2)
 {
-  setUniform(shaderId, name, vector2.x, vector2.y);
+  setUniform(shaderId, name, vector2[0], vector2[1]);
 }
 
 inline void setUniform(GLuint shaderId, const std::string& name, const vec3& vector3)
 {
-  setUniform(shaderId, name, vector3.x, vector3.y, vector3.z);
+  setUniform(shaderId, name, vector3[0], vector3[1], vector3[2]);
 }
 
 inline void setUniform(GLuint shaderId, const std::string& name, const vec4& vector4)
 {
-  setUniform(shaderId, name, vector4.x, vector4.y, vector4.z, vector4.w);
+  setUniform(shaderId, name, vector4[0], vector4[1], vector4[2], vector4[3]);
 }
 
 inline void bindBlockIndex(GLuint shaderId, const std::string& name, u32 index)

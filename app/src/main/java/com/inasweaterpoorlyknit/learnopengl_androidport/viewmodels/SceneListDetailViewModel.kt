@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.GateNativeActivity
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Scene
+import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.TestNativeActivity
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.InfiniteCapsulesScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.InfiniteCubeScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MandelbrotScene
@@ -90,7 +91,12 @@ class SceneListDetailViewModel : ViewModel() {
                 imageResId = R.drawable.blue_debug,
                 displayTextResId = R.string.debug_string_id,
                 descTextResId = R.string.debug_string_id),
-                nativeActivity = GateNativeActivity::class.java)
+                nativeActivity = GateNativeActivity::class.java),
+            NativeProgramListItemData(ListItemData(
+                imageResId = R.drawable.red_debug,
+                displayTextResId = R.string.debug_string_id,
+                descTextResId = R.string.debug_string_id),
+                nativeActivity = TestNativeActivity::class.java)
         )
 
         val listItemDataForComposePreview: List<ListItemDataI>

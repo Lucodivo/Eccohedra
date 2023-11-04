@@ -30,14 +30,14 @@ void lookAt_FirstPerson(vec3 origin, vec3 focus, Camera* camera) {
   if (forwardDotUp > forwardDotUpThresholdMax || forwardDotUp < forwardDotUpThresholdMin)
   {
     LOGE("Look At Camera Failed");
-    camera->forward = normalize(camera->forward.x, camera->forward.y + 0.01f, 0.0f);
+    camera->forward = normalize(camera->forward[0], camera->forward[1] + 0.01f, 0.0f);
   }
 
-  camera->pitch = asin(camera->forward.z);
+  camera->pitch = asin(camera->forward[2]);
 
-  vec2 cameraForwardXYPlane = normalize(camera->forward.x, camera->forward.y);
-  camera->yaw = acos(cameraForwardXYPlane.x);
-  if(cameraForwardXYPlane.y < 0) {
+  vec2 cameraForwardXYPlane = normalize(camera->forward[0], camera->forward[1]);
+  camera->yaw = acos(cameraForwardXYPlane[0]);
+  if(cameraForwardXYPlane[1] < 0) {
     camera->yaw = -camera->yaw;
   }
 
@@ -68,9 +68,9 @@ void updateCamera_FirstPerson(Camera* camera, vec3 posOffset, f32 pitchOffset, f
   // Calculate the new Front vector
   vec3 forward;
   f32 cosPitch = cos(camera->pitch);
-  forward.x = cos(camera->yaw) * cosPitch;
-  forward.y = sin(camera->yaw) * cosPitch;
-  forward.z = sin(camera->pitch);
+  forward[0] = cos(camera->yaw) * cosPitch;
+  forward[1] = sin(camera->yaw) * cosPitch;
+  forward[2] = sin(camera->pitch);
 
   camera->forward = normalize(forward);
   // Also re-calculate the Right and Up vector
@@ -85,13 +85,13 @@ void lookAt_ThirdPerson(vec3 pivot, vec3 forward, Camera* camera) {
   // Viewing angle measured between vector from pivot to camera and the xy plane
   const f32 startingPitch = 33.0f * RadiansPerDegree;
 
-  vec2 xyForward = normalize(forward.x, forward.y);
+  vec2 xyForward = normalize(forward[0], forward[1]);
   vec2 xyPivotToCamera = -xyForward;
 
   camera->thirdPerson = true;
   camera->pitch = startingPitch;
-  camera->yaw = acos(xyPivotToCamera.x);
-  if(xyPivotToCamera.y < 0) {
+  camera->yaw = acos(xyPivotToCamera[0]);
+  if(xyPivotToCamera[1] < 0) {
     camera->yaw = -camera->yaw;
   }
 
@@ -139,15 +139,15 @@ mat4 getViewMat(const Camera& camera) {
                     1.0f,             0.0f,       0.0f,       0.0f,
                     0.0f,             1.0f,       0.0f,       0.0f,
                     0.0f,             0.0f,       1.0f,       0.0f,
-        -camera.origin.x, -camera.origin.y, -camera.origin.z, 1.0f
+        -camera.origin[0], -camera.origin[1], -camera.origin[2], 1.0f
   };
 
   // The camera matrix "measures" the world against it's axes
   // OpenGL clips down the negative z-axis so we negate our forward to effectively cancel out that negation
   mat4 measure{
-          camera.right.x, camera.up.x, -camera.forward.x, 0.0f,
-          camera.right.y, camera.up.y, -camera.forward.y, 0.0f,
-          camera.right.z, camera.up.z, -camera.forward.z, 0.0f,
+          camera.right[0], camera.up[0], -camera.forward[0], 0.0f,
+          camera.right[1], camera.up[1], -camera.forward[1], 0.0f,
+          camera.right[2], camera.up[2], -camera.forward[2], 0.0f,
                     0.0f,        0.0f,              0.0f, 1.0f
   };
 

@@ -2,22 +2,23 @@
 
 TEST(NoopMath, translateTest) {
   vec3 translation{12.8f, 25.6f, 51.2f};
-  mat4 expectedResult = identity_mat4();
-  expectedResult.xTransform = {1.0f, 0.0f, 0.0f, 0.0f};
-  expectedResult.yTransform = {0.0f, 1.0f, 0.0f, 0.0f};
-  expectedResult.zTransform = {0.0f, 0.0f, 1.0f, 0.0f};
-  expectedResult.translation = {translation.x, translation.y, translation.z, 1.0f};
-
+  mat4 expectedResult{
+          1.0f, 0.0f, 0.0f, 0.0f,
+          0.0f, 1.0f, 0.0f, 0.0f,
+          0.0f, 0.0f, 1.0f, 0.0f,
+          translation[0], translation[1], translation[2], 1.0f
+  };
   mat4 translatedMat = translate_mat4(translation);
 
   ASSERT_TRUE(printIfNotEqual(expectedResult, translatedMat));
 }
 
 TEST(NoopMath, mat4Vec4MultTest) {
-  vec3 translation{7.0f, 8.0f, 9.0f};
   vec4 point{1, 2, 3, 1};
-  vec4 expectedPoint{point.x + translation.x, point.y + translation.y, point.z + translation.z, point.w};
   vec4 vector{1, 2, 3, 0};
+  vec3 translation{7.0f, 8.0f, 9.0f};
+
+  vec4 expectedPoint{point[0] + translation[0], point[1] + translation[1], point[2] + translation[2], point[3]};
   vec4 expectedVector = vector;
   mat4 M = translate_mat4(translation);
 
@@ -29,25 +30,27 @@ TEST(NoopMath, mat4Vec4MultTest) {
 }
 
 TEST(NoopMath, mat4MultTest) {
-  vec3 scale{1.0f, 2.0f, 3.0f};
-  mat4 scaleMat4 = scale_mat4(scale);
-  vec3 translation{7.0f, 8.0f, 9.0f};
-  mat4 translateMat4 = translate_mat4(translation);
   vec4 startingPos{1.0f, 10.0f, 100.0f, 1.0f};
-  vec4 expectedPosTransThenScale{scale.x * (startingPos.x + translation.x),
-                                 scale.y * (startingPos.y + translation.y),
-                                 scale.z * (startingPos.z + translation.z),
+  vec3 scale{1.0f, 2.0f, 3.0f};
+  vec3 translation{7.0f, 8.0f, 9.0f};
+  mat4 scaleMat4 = scale_mat4(scale);
+  mat4 translateMat4 = translate_mat4(translation);
+
+  vec4 expectedPosTransThenScale{scale[0] * (startingPos[0] + translation[0]),
+                                 scale[1] * (startingPos[1] + translation[1]),
+                                 scale[2] * (startingPos[2] + translation[2]),
                                  1.0f};
-  vec4 expectedPosScaleThenTrans{(scale.x * startingPos.x) + translation.x,
-                                 (scale.y * startingPos.y) + translation.y,
-                                 (scale.z * startingPos.z) + translation.z,
+
+  vec4 expectedPosScaleThenTrans{(scale[0] * startingPos[0]) + translation[0],
+                                 (scale[1] * startingPos[1]) + translation[1],
+                                 (scale[2] * startingPos[2]) + translation[2],
                                  1.0f};
 
   vec4 transformedPosTransThenScale = scaleMat4 * translateMat4 * startingPos;
   vec4 transformedPosScaleThenTrans = translateMat4 * scaleMat4 * startingPos;
 
-  ASSERT_TRUE(printIfNotEqual(expectedPosTransThenScale, transformedPosTransThenScale));
-  ASSERT_TRUE(printIfNotEqual(expectedPosScaleThenTrans, transformedPosScaleThenTrans));
+  ASSERT_TRUE(printIfNotEqual(transformedPosScaleThenTrans, expectedPosScaleThenTrans));
+  ASSERT_TRUE(printIfNotEqual(transformedPosTransThenScale, expectedPosTransThenScale));
 }
 
 TEST(NoopMath, mat4RotateTest) {
@@ -62,7 +65,7 @@ TEST(NoopMath, mat4RotateTest) {
   vec4 rotatedX = rotationMat * x;
   vec4 rotatedY = rotationMat * y;
   vec4 rotatedZ = rotationMat * z;
-  vec4 rotatedAxis = rotationMat * vec4{rotationAxis.x, rotationAxis.y, rotationAxis.y, 1.0f};
+  vec4 rotatedAxis = rotationMat * vec4{rotationAxis[0], rotationAxis[1], rotationAxis[2], 1.0f};
 
   ASSERT_EQ(rotatedX, y);
   ASSERT_EQ(rotatedY, z);
@@ -215,11 +218,11 @@ TEST(NoopMath, orthographicTest) {
   f32 n = 230.0f;
   f32 f = 500.0f;
   vec4 expectedCanonicalViewPoint{
-          (point.x - ((r + l) / 2.0f)) // move origin to center
+          (point[0] - ((r + l) / 2.0f)) // move origin to center
           * (2.0f / (r - l)), // dimens desired dimens between -1 and 1
-          (point.y - ((t + b) / 2.0f)) // move origin to center
+          (point[1] - ((t + b) / 2.0f)) // move origin to center
           * (2.0f / (t - b)), // dimens desired dimens between -1 and 1
-          (point.z - ((f + n) / 2.0f)) // move origin to center
+          (point[2] - ((f + n) / 2.0f)) // move origin to center
           * (2.0f / (f - n)), // dimens desired dimens between -1 and 1
           1.0f
   };
@@ -238,24 +241,18 @@ TEST(NoopMath, bracketAssignmentOperatorsSanityCheck) {
   vec4 v4{};
   mat3 m3{};
   mat4 m4{};
-  quaternion q{};
-  complex c{};
 
-  v2.val[indexOfInterest] = zanyWhackyNum;
-  v3.val[indexOfInterest] = zanyWhackyNum;
-  v4.val[indexOfInterest] = zanyWhackyNum;
-  m3.val2d[indexOfInterest][indexOfInterest] = zanyWhackyNum;
-  m4.val2d[indexOfInterest][indexOfInterest] = zanyWhackyNum;
-  q.val[indexOfInterest] = zanyWhackyNum;
-  c.val[indexOfInterest] = zanyWhackyNum;
+  v2[indexOfInterest] = zanyWhackyNum;
+  v3[indexOfInterest] = zanyWhackyNum;
+  v4[indexOfInterest] = zanyWhackyNum;
+  m3[indexOfInterest] = zanyWhackyNum;
+  m4[indexOfInterest] = zanyWhackyNum;
 
-  ASSERT_EQ(v2.val[indexOfInterest], zanyWhackyNum);
-  ASSERT_EQ(v3.val[indexOfInterest], zanyWhackyNum);
-  ASSERT_EQ(v4.val[indexOfInterest], zanyWhackyNum);
-  ASSERT_EQ(m3.val2d[indexOfInterest][indexOfInterest], zanyWhackyNum);
-  ASSERT_EQ(m4.val2d[indexOfInterest][indexOfInterest], zanyWhackyNum);
-  ASSERT_EQ(q.val[indexOfInterest], zanyWhackyNum);
-  ASSERT_EQ(c.val[indexOfInterest], zanyWhackyNum);
+  ASSERT_EQ(v2[indexOfInterest], zanyWhackyNum);
+  ASSERT_EQ(v3[indexOfInterest], zanyWhackyNum);
+  ASSERT_EQ(v4[indexOfInterest], zanyWhackyNum);
+  ASSERT_EQ(m3[indexOfInterest], zanyWhackyNum);
+  ASSERT_EQ(m4[indexOfInterest], zanyWhackyNum);
 }
 
 TEST(NoopMath, quaternionOrientTest) {
