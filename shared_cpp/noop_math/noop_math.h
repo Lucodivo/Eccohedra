@@ -76,7 +76,16 @@ namespace noop {
           values[0], values[1], values[2],
           values[4], values[5], values[6],
           values[8], values[9], values[10]
-      };}
+      };
+    }
+    inline static mat4 fromMat3(const mat3& M) {
+      return mat4{
+        M[0], M[1], M[2], 0.0f,
+        M[3], M[4], M[5], 0.0f,
+        M[6], M[7], M[8], 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+      };
+    }
   };
 
   struct quaternion {

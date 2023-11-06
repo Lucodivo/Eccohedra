@@ -10,7 +10,7 @@ typedef struct android_poll_source android_poll_source;
 
 struct InputState {
   // Rotation Sensor //
-  mat3 firstRotationMat = identity_mat3();
+  mat3 firstRotationMat_Inverse = identity_mat3();
   vec4 lastRotationVector = vec4{0, 0, 0, 0};
 
   // Position //
@@ -139,28 +139,17 @@ static void update(Engine *engine) {
       inputState.lastRotationVector[2] == 0 &&
       inputState.lastRotationVector[3] == 0) {
     // If the sensor hasn't given us anything our rotation is an identity matrix
-    sceneInput.rotationMat = identity_mat3();
-  } else if (inputState.firstRotationMat[0] == 1.0f &&
-             inputState.firstRotationMat[3] == 1.0f &&
-             inputState.firstRotationMat[6] == 1.0f) {
+   sceneInput.rotationMat = identity_mat3();
+  } else if (inputState.firstRotationMat_Inverse[0] == 1.0f &&
+             inputState.firstRotationMat_Inverse[4] == 1.0f &&
+             inputState.firstRotationMat_Inverse[8] == 1.0f) {
     mat3 firstRotationMat = getRotationMatrixFromVector(inputState.lastRotationVector);
     // inverse is transpose for rotational matrices
-    inputState.firstRotationMat = firstRotationMat;
+    inputState.firstRotationMat_Inverse = firstRotationMat;
     sceneInput.rotationMat = identity_mat3();
   } else {
     mat3 lastRotationMat = getRotationMatrixFromVector(inputState.lastRotationVector);
-
-    // Problem: Rotation values are right-handed coordinate system with Z pointing out of the screen
-    // Problem: This causes rotation around the Z-axis to occur in the opposite direction
-    // Solution: Flip rotation along the X-axis and Y-axis by negating the Z values in the rotation matrix
-    // Solution: Our desired rotation matrix is now the inverse of the matrix we have
-    mat3 lastRotationMat_FlippedZ_Inverse = mat3{lastRotationMat[0], lastRotationMat[3], lastRotationMat[6], // transpose is inverse for pure rotation matrix
-                                                inputState.firstRotationMat[1], inputState.firstRotationMat[4], inputState.firstRotationMat[7],
-                                                -inputState.firstRotationMat[2], -inputState.firstRotationMat[5], -inputState.firstRotationMat[8]};
-    mat3 firstRotationMat_ZNegated = mat3{inputState.firstRotationMat[0], inputState.firstRotationMat[1], -inputState.firstRotationMat[2],
-                                         inputState.firstRotationMat[3], inputState.firstRotationMat[4], -inputState.firstRotationMat[5],
-                                         inputState.firstRotationMat[6], inputState.firstRotationMat[7], -inputState.firstRotationMat[8]};
-    sceneInput.rotationMat = (firstRotationMat_ZNegated * lastRotationMat_FlippedZ_Inverse); // transpose is inverse for pure rotation matrix
+    sceneInput.rotationMat = transpose(lastRotationMat) * inputState.firstRotationMat_Inverse; // transpose is inverse for pure rotation matrix
   }
 
   updatePortalScene(&engine->sceneState.world, sceneInput);

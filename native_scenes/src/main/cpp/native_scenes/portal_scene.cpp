@@ -697,12 +697,10 @@ void updatePortalScene(World* world, SceneInput input) {
 
 void drawPortalScene(World* world) {
   Camera frameCamera;
-  vec3 focusPoint = vec3{0.0f, 0.0f, 1.0f};
-
-//  focusPoint = focusPoint * world->frame.rotationMat;
-
+  vec3 focusPoint = vec3{0.0f, 0.0f, 1.75f};
   lookAt_FirstPerson(world->player.pos.xyz, focusPoint, &frameCamera);
-  world->UBOs.projectionViewModelUbo.view = getViewMat(frameCamera);
+  mat4 cameraMat = getViewMat(frameCamera);
+  world->UBOs.projectionViewModelUbo.view = mat4::fromMat3(world->frame.rotationMat) * cameraMat;
 
   // draw
   glStencilMask(0xFF);
