@@ -9,10 +9,6 @@ typedef struct android_app android_app;
 typedef struct android_poll_source android_poll_source;
 
 struct InputState {
-  // Rotation Sensor //
-  mat3 firstRotationMat_Inverse = identity_mat3();
-  vec4 lastRotationVector = vec4{0, 0, 0, 0};
-
   // Position //
   vec2 lastPos_screenRes;
   // Note: X is normalized to width and Y is normalized to height. That means, in portrait mode of a non-square
@@ -27,7 +23,6 @@ struct SceneState {
 
 struct Engine {
   ASensorManager *sensorManager;
-  const ASensor *gameRotationSensor;
   ASensorEventQueue *sensorEventQueue;
   bool paused;
   bool initializing;
@@ -68,13 +63,12 @@ void android_main(android_app *app) {
   app->onAppCmd = handleAndroidCmd;
   app->onInputEvent = handleInput;
 
+
   {
     TimeBlock("Acquire Android Resource Managers")
     assetManager_GLOBAL = app->activity->assetManager;
     // TODO: ASensorManager_getInstance() is deprecated. Use ASensorManager_getInstanceForPackage("foo.bar.baz");
     engine.sensorManager = ASensorManager_getInstance();
-    engine.gameRotationSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
-                                                                ASENSOR_TYPE_GAME_ROTATION_VECTOR);
     engine.sensorEventQueue = ASensorManager_createEventQueue(engine.sensorManager, app->looper,
                                                               LOOPER_ID_USER, nullptr, nullptr);
   }
@@ -103,12 +97,9 @@ void android_main(android_app *app) {
       }
 
       if (pollResult == LOOPER_ID_USER) {
-        if (engine.gameRotationSensor != nullptr && engine.sensorEventQueue != nullptr) {
+        if (engine.sensorEventQueue != nullptr) {
           while (ASensorEventQueue_getEvents(engine.sensorEventQueue, &sensorEvent, 1) > 0) {
-            if(sensorEvent.type == ASENSOR_TYPE_GAME_ROTATION_VECTOR && sensorEvent.data[3] != 1.0) {
-              LOGI("game rotation vector: inputX=%f inputY=%f z=%f", sensorEvent.data[0], sensorEvent.data[1], sensorEvent.data[2]);
-              engine.inputState.lastRotationVector = vec4{sensorEvent.data[0], sensorEvent.data[1], sensorEvent.data[2], sensorEvent.data[3]};
-            }
+            // send events to sensor handler
           }
         }
       }
@@ -133,24 +124,6 @@ static void update(Engine *engine) {
 
   sceneInput.x = inputState.deltaPos_normalized[0];
   sceneInput.y = inputState.deltaPos_normalized[1];
-
-  if (inputState.lastRotationVector[0] == 0 &&
-      inputState.lastRotationVector[1] == 0 &&
-      inputState.lastRotationVector[2] == 0 &&
-      inputState.lastRotationVector[3] == 0) {
-    // If the sensor hasn't given us anything our rotation is an identity matrix
-   sceneInput.rotationMat = identity_mat3();
-  } else if (inputState.firstRotationMat_Inverse[0] == 1.0f &&
-             inputState.firstRotationMat_Inverse[4] == 1.0f &&
-             inputState.firstRotationMat_Inverse[8] == 1.0f) {
-    mat3 firstRotationMat = getRotationMatrixFromVector(inputState.lastRotationVector);
-    // inverse is transpose for rotational matrices
-    inputState.firstRotationMat_Inverse = firstRotationMat;
-    sceneInput.rotationMat = identity_mat3();
-  } else {
-    mat3 lastRotationMat = getRotationMatrixFromVector(inputState.lastRotationVector);
-    sceneInput.rotationMat = transpose(lastRotationMat) * inputState.firstRotationMat_Inverse; // transpose is inverse for pure rotation matrix
-  }
 
   updatePortalScene(&engine->sceneState.world, sceneInput);
 }
@@ -290,28 +263,15 @@ static void handleAndroidCmd(android_app *app, s32 cmd) {
 }
 
 void onResume(android_app *app, Engine *engine) {
-  if (engine->gameRotationSensor != nullptr) {
-    ASensorEventQueue_enableSensor(engine->sensorEventQueue, engine->gameRotationSensor);
-    const s32 microsecondsPerSecond = 1000000;
-    const s32 samplesPerSecond = 60;
-    const s32 microsecondsPerSample = microsecondsPerSecond / samplesPerSecond;
-    ASensorEventQueue_setEventRate(engine->sensorEventQueue, engine->gameRotationSensor,
-                                   microsecondsPerSample);
-  }
   engine->paused = false;
 }
 
 void onTerminate(Engine *engine) {
-
   ASensorManager_destroyEventQueue(engine->sensorManager, engine->sensorEventQueue);
   deinitPortalScene(&engine->sceneState.world);
   glDeinit(&engine->glEnv);
 }
 
 void onPause(Engine *engine) {
-  // Stop monitoring the accelerometer to avoid consuming battery while not being used.
-  if (engine->gameRotationSensor != nullptr) {
-    ASensorEventQueue_disableSensor(engine->sensorEventQueue, engine->gameRotationSensor);
-  }
   engine->paused = true;
 }

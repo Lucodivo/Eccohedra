@@ -2,7 +2,6 @@
 
 struct Engine {
   ASensorManager *sensorManager;
-  const ASensor *gameRotationSensor;
   ASensorEventQueue *sensorEventQueue;
   GLEnvironment glEnv;
 };
@@ -28,8 +27,6 @@ void android_main(android_app *app) {
     assetManager_GLOBAL = app->activity->assetManager;
     // TODO: ASensorManager_getInstance() is deprecated. Use ASensorManager_getInstanceForPackage("foo.bar.baz");
     engine.sensorManager = ASensorManager_getInstance();
-    engine.gameRotationSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
-                                                                ASENSOR_TYPE_GAME_ROTATION_VECTOR);
     engine.sensorEventQueue = ASensorManager_createEventQueue(engine.sensorManager, app->looper,
                                                               LOOPER_ID_USER, nullptr, nullptr);
   }
@@ -56,7 +53,7 @@ void android_main(android_app *app) {
       }
 
       if (pollResult == LOOPER_ID_USER) {
-        if (engine.gameRotationSensor != nullptr && engine.sensorEventQueue != nullptr) {
+        if (engine.sensorEventQueue != nullptr) {
           while (ASensorEventQueue_getEvents(engine.sensorEventQueue, &sensorEvent, 1) > 0) {
             //LOGI("accelerometer: inputX=%f inputY=%f z=%f", sensorEvent.vector.x, sensorEvent.vector.y, sensorEvent.vector.z);
           }

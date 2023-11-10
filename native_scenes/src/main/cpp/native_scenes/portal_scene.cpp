@@ -78,7 +78,6 @@ struct Scene {
 struct SceneInput {
   f32 x;
   f32 y;
-  mat3 rotationMat;
 };
 
 struct World
@@ -100,9 +99,6 @@ struct World
     LightUBO lightUbo;
     GLuint lightUboId;
   } UBOs;
-  struct {
-    mat3 rotationMat;
-  } frame;
   ShaderProgram shaders[16];
   ShaderProgram singleColorShader;
   ShaderProgram skyboxShader;
@@ -678,8 +674,6 @@ void updatePortalScene(World* world, SceneInput input) {
   world->stopWatch.lap();
   world->UBOs.fragUbo.time = world->stopWatch.totalInSeconds;
 
-  world->frame.rotationMat = input.rotationMat;
-
   Player& player = world->player;
   f32 thetaDelta = -(2.0 * input.x);
   f32 newTheta = player.pos.theta + thetaDelta;
@@ -700,7 +694,7 @@ void drawPortalScene(World* world) {
   vec3 focusPoint = vec3{0.0f, 0.0f, 1.75f};
   lookAt_FirstPerson(world->player.pos.xyz, focusPoint, &frameCamera);
   mat4 cameraMat = getViewMat(frameCamera);
-  world->UBOs.projectionViewModelUbo.view = mat4::fromMat3(world->frame.rotationMat) * cameraMat;
+  world->UBOs.projectionViewModelUbo.view = cameraMat;
 
   // draw
   glStencilMask(0xFF);
