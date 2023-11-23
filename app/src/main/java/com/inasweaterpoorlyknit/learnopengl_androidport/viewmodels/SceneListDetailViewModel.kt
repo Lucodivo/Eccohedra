@@ -92,11 +92,6 @@ class SceneListDetailViewModel : ViewModel() {
                 displayTextResId = R.string.debug_string_id,
                 descTextResId = R.string.debug_string_id),
                 nativeActivity = GateNativeActivity::class.java),
-            NativeProgramListItemData(ListItemData(
-                imageResId = R.drawable.red_debug,
-                displayTextResId = R.string.debug_string_id,
-                descTextResId = R.string.debug_string_id),
-                nativeActivity = TestNativeActivity::class.java)
         )
 
         val listItemDataForComposePreview: List<ListItemDataI>

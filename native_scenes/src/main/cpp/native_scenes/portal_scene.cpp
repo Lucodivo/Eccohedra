@@ -1,12 +1,28 @@
 #define PORTAL_BACKING_BOX_DEPTH 0.5f
 #define MAX_PORTALS 4
 
-struct Player {
+struct PlayerPosition {
   struct {
     f32 theta;
     f32 radius;
     vec3 xyz;
   } pos; // use setters to ensure that these values are always in sync
+
+  static PlayerPosition fromPolar(f32 theta, f32 radius) {
+    PlayerPosition pp;
+    pp.setPolarPos(theta, radius);
+    return pp;
+  }
+
+  static PlayerPosition fromXYZ(f32 x, f32 y, f32 z){
+    PlayerPosition pp;
+    pp.setXYZPos(vec3{x, y, z});
+    return pp;
+  }
+
+  static PlayerPosition fromXYZ(vec3 xyz){
+    return fromXYZ(xyz[0], xyz[1], xyz[2]);
+  }
 
   void setPolarPos(f32 theta, f32 radius) {
     pos.theta = theta;
@@ -82,7 +98,7 @@ struct SceneInput {
 
 struct World
 {
-  Player player;
+  PlayerPosition player;
   u32 currentSceneIndex;
   StopWatch stopWatch;
   Scene scenes[16];
@@ -645,12 +661,18 @@ void initPortalScene(World* world) {
   loadWorld(world);
 }
 
-void updatePlayerCollisions(World* world) {
-  Player& player = world->player;
-  // collision detection & resolution
+/*
+  NOTE: Although the scenes visual representation is all neatly stored in a structure that can be edited by the developer willy nilly
+    And rendering things will work just as anticipated. That is currently not true for any sort of collision detection and resolution.
+    This collision detection is hard baked for the current state of the worlds as of it's creation.
+
+*/
+PlayerPosition collisionDetectionAndCorrection(World* world, PlayerPosition desiredPosition) {
+  PlayerPosition& startingPlayerPos = world->player;
+  PlayerPosition correctedPlayerPos = desiredPosition;
   if(world->currentSceneIndex == 0) { // if gate scene...
     // TODO: check for collisions with the gate's columns
-    const vec2 quarterFoldedXY = vec2{abs(player.pos.xyz[0]), abs(player.pos.xyz[1])};
+    const vec2 quarterFoldedXY = vec2{abs(desiredPosition.pos.xyz[0]), abs(desiredPosition.pos.xyz[1])};
     const vec2 columnXY = vec2{1.768f, 1.768 };
     const f32 columnRadius = 0.5f;
     const f32 columnRadiusSq = columnRadius * columnRadius;
@@ -661,12 +683,56 @@ void updatePlayerCollisions(World* world) {
       vec2 foldedXY_dirFromColumn = normalize(foldedXY_columnOrigin);
       vec2 foldedCorrection = (foldedXY_dirFromColumn * columnRadius) - foldedXY_columnOrigin;
       vec2 unfoldedCorrection = vec2{
-          player.pos.xyz[0] > 0 ? foldedCorrection[0]: -foldedCorrection[0],
-          player.pos.xyz[1] > 0 ? foldedCorrection[1]: -foldedCorrection[1]
+          desiredPosition.pos.xyz[0] > 0 ? foldedCorrection[0]: -foldedCorrection[0],
+          desiredPosition.pos.xyz[1] > 0 ? foldedCorrection[1]: -foldedCorrection[1]
       };
-      player.setXYZPos(vec3{player.pos.xyz[0] + unfoldedCorrection[0], player.pos.xyz[1] + unfoldedCorrection[1], player.pos.xyz[2]});
+      correctedPlayerPos = PlayerPosition::fromXYZ(desiredPosition.pos.xyz[0] + unfoldedCorrection[0], desiredPosition.pos.xyz[1] + unfoldedCorrection[1], desiredPosition.pos.xyz[2]);
+    }
+  } else { // a "shape" scene
+    // correct potential collision with "shape"
+    const f32 shapeBoundingSphereRadius = 1.5f;
+    f32 newRadius = Max(desiredPosition.pos.radius, 1.5f);
+    correctedPlayerPos = PlayerPosition::fromPolar(desiredPosition.pos.theta, newRadius);
+
+    // prevent collision with portal backings
+    Scene& scene = world->scenes[world->currentSceneIndex];
+    for(u32 i = 0; i < scene.portalCount; i++) {
+      Portal& portal = scene.portals[i];
+      // this logic assumes the portals normal never points even partially in the z dimension
+      vec3 portalForward = portal.normal; // forward == opening
+      vec3 portalRight = cross(portalForward, vec3{0.f, 0.f, 1.f});
+      vec3 deltaFromCenterLeftRight = (0.5f * portalWidth * portalRight);
+      // check if the old position was not in front of the portal
+      f32 maxPortalForwardDirection = dot(portal.centerPosition, portalForward);
+      f32 startingPlayerInForwardDirection = dot(startingPlayerPos.pos.xyz, portalForward);
+      bool playerWasInFrontOfPortal = startingPlayerInForwardDirection >= maxPortalForwardDirection;
+      if(!playerWasInFrontOfPortal) { // only check collision detection if player was not in front of the portal.
+        f32 portalBufferDepth = 0.5f;
+        f32 minPortalForwardDirection = maxPortalForwardDirection - portalDepth - portalBufferDepth;
+        f32 maxPortalRightDirection = dot(portal.centerPosition + deltaFromCenterLeftRight, portalRight) + portalBufferDepth;
+        f32 minPortalRightDirection = maxPortalRightDirection - portalWidth - (2.0f * portalBufferDepth);
+        f32 desiredPosInForwardDir = dot(desiredPosition.pos.xyz, portalForward);
+        f32 desiredPosInRightDir = dot(desiredPosition.pos.xyz, portalRight);
+        if(desiredPosInForwardDir > minPortalForwardDirection && desiredPosInForwardDir < maxPortalForwardDirection &&
+          desiredPosInRightDir > minPortalRightDirection && desiredPosInRightDir < maxPortalRightDirection) {
+          // desired position will cause a collision and is in need of correction
+          // either push it out the back or out the side
+          f32 correctionDeltaForward = minPortalForwardDirection - desiredPosInForwardDir;
+          f32 correctionDeltaLeft = minPortalRightDirection - desiredPosInRightDir;
+          f32 correctionDeltaRight = maxPortalRightDirection - desiredPosInRightDir;
+          correctionDeltaRight = abs(correctionDeltaLeft) < abs(correctionDeltaRight) ? correctionDeltaLeft : correctionDeltaRight;
+          if(abs(correctionDeltaForward) < abs(correctionDeltaRight)) {
+            // push out the bottom
+            correctedPlayerPos = PlayerPosition::fromXYZ(desiredPosition.pos.xyz + (correctionDeltaForward * portalForward));
+          } else {
+            // push out the side
+            correctedPlayerPos = PlayerPosition::fromXYZ(desiredPosition.pos.xyz + (correctionDeltaRight * portalRight));
+          }
+        }
+      }
     }
   }
+  return correctedPlayerPos;
 }
 
 void updatePortalScene(World* world, SceneInput input) {
@@ -674,7 +740,7 @@ void updatePortalScene(World* world, SceneInput input) {
   world->stopWatch.lap();
   world->UBOs.fragUbo.time = world->stopWatch.totalInSeconds;
 
-  Player& player = world->player;
+  PlayerPosition& player = world->player;
   f32 thetaDelta = -(2.0 * input.x);
   f32 newTheta = player.pos.theta + thetaDelta;
   f32 radiusDelta = -(10.0f * input.y);
@@ -682,10 +748,11 @@ void updatePortalScene(World* world, SceneInput input) {
 
   if(newTheta > Tau32) { newTheta -= Tau32; }
   if(newTheta < 0) { newTheta += Tau32; }
-  newRadius = Max(newRadius, 1.5f);
-  player.setPolarPos(newTheta, newRadius);
 
-  updatePlayerCollisions(world);
+  PlayerPosition desiredPosition = PlayerPosition::fromPolar(newTheta, newRadius);
+  PlayerPosition correctedPosition = collisionDetectionAndCorrection(world, desiredPosition);
+  world->player = correctedPosition;
+
   updateEntities(world);
 }
 

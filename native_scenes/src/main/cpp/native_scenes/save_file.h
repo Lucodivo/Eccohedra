@@ -1,6 +1,12 @@
 #pragma once
 
-const char *saveFileExt = ".json";
+/*
+ TODO: Files are actually no longer "saved"
+   Most of this file should be drastically restructured
+*/
+
+const f32 portalDepth = 0.5f;
+const f32 portalWidth = 3.0f;
 
 struct EntitySaveFormat {
   u32 modelIndex;
@@ -197,7 +203,7 @@ SaveFormat originalWorld() {
       5,
       2,
       vec3{0, -1.75, 1.5},
-      vec3{3, 0.5, 3},
+      vec3{portalWidth, portalDepth, 3},
       Pi32,
       0
   });
@@ -229,7 +235,7 @@ SaveFormat originalWorld() {
       5,
       2,
       vec3{1.75, 0, 1.5},
-      vec3{3, 0.5, 3},
+      vec3{portalWidth, portalDepth, 3},
       -(Pi32 * 0.5f),
       0
   });
@@ -261,7 +267,7 @@ SaveFormat originalWorld() {
       5,
       2,
       vec3{-1.75, 0, 1.5},
-      vec3{3, 0.5, 3},
+      vec3{portalWidth, portalDepth, 3},
       Pi32 * 0.5f,
       0
   });
@@ -293,7 +299,7 @@ SaveFormat originalWorld() {
       5,
       2,
       vec3{0, 1.75, 1.5},
-      vec3{3, 0.5, 3},
+      vec3{portalWidth, portalDepth, 3},
       0,
       0
   });
