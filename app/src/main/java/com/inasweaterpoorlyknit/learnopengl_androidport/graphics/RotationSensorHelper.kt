@@ -7,9 +7,13 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.util.Log
 import android.widget.Toast
+import com.inasweaterpoorlyknit.Mat3
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
-import glm_.mat3x3.Mat3
 
+/*
+ TODO: This helper never acknowledges that we are translating from Android supplied column-major matrices
+    into custom row-major matrices. Potential bugs/optimizations to be fixed/had.
+*/
 class RotationSensorHelper: SensorEventListener {
 
     private var firstSensorVals_rotationVector: FloatArray? = null

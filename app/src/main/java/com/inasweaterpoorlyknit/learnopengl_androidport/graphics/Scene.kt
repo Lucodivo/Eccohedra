@@ -1,7 +1,7 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.graphics
 
 import android.content.Context
-import android.opengl.GLES20
+import android.opengl.GLES32.*
 import android.opengl.GLSurfaceView
 import android.view.MotionEvent
 import javax.microedition.khronos.opengles.GL10
@@ -16,8 +16,8 @@ interface ExternalInputListener {
 abstract class Scene(protected val context: Context) : GLSurfaceView.Renderer, ExternalInputListener {
     protected var windowHeight: Int = -1
     protected var windowWidth: Int = -1
-    protected val aspectRatio: Float
-        get() = windowWidth.toFloat()/windowHeight
+    protected val aspectRatio: Double
+        get() = windowWidth.toDouble()/windowHeight.toDouble()
 
     protected val sceneOrientation: Orientation = context.orientation
 
@@ -25,6 +25,6 @@ abstract class Scene(protected val context: Context) : GLSurfaceView.Renderer, E
         windowWidth = width
         windowHeight = height
 
-        GLES20.glViewport(0, 0, windowWidth, windowHeight)
+        glViewport(0, 0, windowWidth, windowHeight)
     }
 }

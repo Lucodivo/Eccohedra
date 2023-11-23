@@ -77,7 +77,8 @@ class InfoActivity : AppCompatActivity() {
                 // Author Contact
                 item {
                     ScenesListItem {
-                        ListItemTextWithLeftIcon("Connor Alexander Haskins", icon = ScenesIcons.ContactPage,
+                        ListItemTextWithLeftIcon(
+                            "Connor Alexander Haskins", icon = ScenesIcons.ContactPage,
                             modifier = Modifier.clickable { viewModel.onContactPress() })
                     }
                 }

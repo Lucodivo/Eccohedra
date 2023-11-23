@@ -2,10 +2,10 @@ package com.inasweaterpoorlyknit.learnopengl_androidport.graphics
 
 import android.content.Context
 import android.graphics.BitmapFactory
-import android.opengl.GLES20.*
+import android.opengl.GLES32.*
 import android.util.Log
 import androidx.annotation.RawRes
-import glm_.vec3.Vec3
+import com.inasweaterpoorlyknit.Vec3
 import java.nio.IntBuffer
 
 // NOTE: OpenGL ES does not support geometry shaders

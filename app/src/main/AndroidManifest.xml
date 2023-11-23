@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <!-- Tell the system this app requires OpenGL ES 3.0 -->
     <application
         android:name=".OpenGLScenesApplication"
         android:allowBackup="true"
@@ -25,14 +24,27 @@
             android:theme="@style/Theme.LearnOpenGLScenes.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".graphics.GateNativeActivity"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+            <!-- Tell NativeActivity the name of our .so -->
+            <meta-data android:name="android.app.lib_name" android:value="gate-scene" />
+        </activity>
+        <activity android:name=".graphics.TestNativeActivity"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+            <meta-data android:name="android.app.lib_name" android:value="test-native-activity" />
+        </activity>
+        <meta-data android:name="firebase_analytics_collection_deactivated"
+            android:value="@bool/FIREBASE_ANALYTICS_DEACTIVATED"/>
     </application>
 
+    <!-- Tell the system this app requires OpenGL ES 3.2 -->
     <uses-feature
-        android:glEsVersion="0x00030000"
+        android:glEsVersion="0x00030002"
         android:required="true" />
 
 </manifest>

@@ -1,0 +1,243 @@
+=== PROFILER RESULTS (commit 9f51b1a103261cf639988aaca0149cb7b7496d3c) ===
+Total time: 1866.8358ms (CPU freq 1000005730)
+  Asset[49]: 17592188 (0.94%)
+  acquireASensorManagerInstance[1]: 4046562 (0.22%)
+  load2DTexture[1]: 106190000 (5.69%, 5.69% w/children)
+  loadCubeMapTexture[5]: 69898 (0.00%, 64.80% w/children)
+  Load CubeMap Face[30]: 1208585935 (64.74%, 64.79% w/children)
+  createShaderProgram[6]: 51346510 (2.75%, 9.97% w/children)
+  loadShader[12]: 27795519 (1.49%, 1.53% w/children)
+  initializeModelVertexData[6]: 12073907 (0.65%)
+  loadModel[6]: 1231823 (0.07%, 23.36% w/children)
+  GLTF Loader[6]: 406940521 (21.80%)
+  tinyGLTF destructors[6]: 21354 (0.00%)
+  loadWorld[1]: 183959 (0.01%, 95.74% w/children)
+  initPortalScene[1]: 1316094 (0.07%, 98.21% w/children)
+  Acquire Android Resource Managers[1]: 821980 (0.04%, 0.26% w/children)
+
+=== PROFILER RESULTS (baked RGB8) ===
+Total time: 1452.1585ms (CPU freq 999998960)
+  Asset[19]: 18148018 (1.25%)
+  acquireASensorManagerInstance[1]: 5734896 (0.39%)
+  load2DTexture[1]: 103302657 (7.11%, 7.12% w/children)
+  loadCubeMapTexture[5]: 15181924 (1.05%, 56.75% w/children)
+  assets::loadAssetFile[5]: 624283179 (42.99%)
+  assets::readCubeMapInfo[5]: 143750 (0.01%)
+  loadCubeMapTexture - malloc cubemap texture[5]: 95365 (0.01%)
+  assets::unpackCubeMap[5]: 71117395 (4.90%)
+  loadCubeMapTexture - glTexImage2D[5]: 101374063 (6.98%)
+  loadCubeMapTexture - free cubemap texture[5]: 11948283 (0.82%)
+  createShaderProgram[6]: 36166875 (2.49%, 10.99% w/children)
+  loadShader[12]: 19400992 (1.34%, 1.39% w/children)
+  initializeModelVertexData[6]: 13459583 (0.93%)
+  loadModel[6]: 949898 (0.07%, 30.22% w/children)
+  GLTF Loader[6]: 407080572 (28.03%)
+  tinyGLTF destructors[6]: 20989 (0.00%)
+  loadWorld[1]: 111508 (0.01%, 96.36% w/children)
+  initPortalScene[1]: 151303 (0.01%, 97.99% w/children)
+  Acquire Android Resource Managers[1]: 991198 (0.07%, 0.46% w/children)
+
+=== PROFILER RESULTS (baked ETC2 RGB8 CubeMaps) ===
+Total time: 802.8929ms (CPU freq 1000007290)
+  Asset[19]: 22406562 (2.79%)
+  acquireASensorManagerInstance[1]: 6533281 (0.81%)
+  load2DTexture[1]: 109932448 (13.69%, 13.94% w/children)
+  loadCubeMapTexture[5]: 60575 (0.01%, 19.07% w/children)
+  assets::loadAssetFile[5]: 143173229 (17.83%)
+  assets::readCubeMapInfo[5]: 118855 (0.01%)
+  loadCubeMapTexture - glTexImage2D[5]: 9735728 (1.21%)
+  createShaderProgram[6]: 38926824 (4.85%, 22.09% w/children)
+  loadShader[12]: 24427811 (3.04%, 3.30% w/children)
+  initializeModelVertexData[6]: 16488334 (2.05%)
+  loadModel[6]: 1421196 (0.18%, 55.16% w/children)
+  GLTF Loader[6]: 406597189 (50.64%)
+  tinyGLTF destructors[6]: 22708 (0.00%)
+  loadWorld[1]: 241822 (0.03%, 93.32% w/children)
+  initPortalScene[1]: 148749 (0.02%, 96.36% w/children)
+  Acquire Android Resource Managers[1]: 1585260 (0.20%, 1.01% w/children)
+
+NOTE: Loading the actual asset file through AssetManager is now taking up a majority of the time when loading CubeMap textures
+
+=== PROFILER RESULTS (baked ETC2 RGB8 Textures) ===
+Total time: 748.7262ms (CPU freq 1000004680)
+  Asset[18]: 19683437 (2.63%)
+  acquireASensorManagerInstance[1]: 3054167 (0.41%)
+  load2DTexture[1]: 745625 (0.10%, 1.10% w/children)
+  assets::loadAssetFile[1]: 7475625 (1.00%)
+  loadCubeMapTexture[5]: 167657 (0.02%, 20.49% w/children)
+  assets::loadAssetFile[5]: 134805885 (18.00%)
+  loadCubeMapTexture - glTexImage2D[5]: 18462032 (2.47%)
+  createShaderProgram[6]: 44532868 (5.95%, 12.22% w/children)
+  loadShader[12]: 36782604 (4.91%, 5.18% w/children)
+  initializeModelVertexData[6]: 16197188 (2.16%)
+  loadModel[6]: 1242077 (0.17%, 62.43% w/children)
+  GLTF Loader[6]: 432240365 (57.73%)
+  tinyGLTF destructors[6]: 23491 (0.00%)
+  loadWorld[1]: 106408 (0.01%, 88.95% w/children)
+  initPortalScene[1]: 151352 (0.02%, 95.18% w/children)
+  Acquire Android Resource Managers[1]: 790937 (0.11%, 0.51% w/children)
+
+=== PROFILER RESULTS (baked models) ===
+Total time: 291.3487ms (CPU freq 1000005730)
+  Asset[12]: 778021 (0.27%)
+  load2DTexture[1]: 575521 (0.20%, 2.40% w/children)
+  assets::loadAssetFile[1]: 6406250 (2.20%)
+  loadCubeMapTexture[5]: 171199 (0.06%, 55.07% w/children)
+  assets::loadAssetFile[5]: 138590521 (47.57%)
+  loadCubeMapTexture - glTexImage2D[5]: 21683281 (7.44%)
+  createShaderProgram[6]: 42184011 (14.48%, 24.77% w/children)
+  loadShader[12]: 22216563 (7.63%, 7.89% w/children)
+  loadModelAsset[6]: 28702813 (9.85%)
+  loadWorld[1]: 107550 (0.04%, 79.96% w/children)
+  initPortalScene[1]: 639426 (0.22%, 89.95% w/children)
+  Acquire Android Resource Managers[1]: 5660208 (1.94%)
+
+=== PROFILER RESULTS (gradle set to no_compress asset files) ===
+Total time: 114.1895ms (CPU freq 1000005210)
+  Asset[12]: 437135 (0.38%)
+  load2DTexture[1]: 526510 (0.46%, 1.09% w/children)
+  load2DTexture - assets::loadAssetFile[1]: 666198 (0.58%)
+  load2DTexture - assets::readTextureInfo[1]: 51302 (0.04%)
+  loadCubeMapTexture[5]: 56096 (0.05%, 23.53% w/children)
+  loadCubeMapTexture - assets::loadAssetFile[5]: 15493697 (13.57%)
+  loadCubeMapTexture - assets::readCubeMapInfo[5]: 103176 (0.09%)
+  loadCubeMapTexture - glTexImage2D[5]: 11216092 (9.82%)
+  createShaderProgram[6]: 36858906 (32.28%, 51.95% w/children)
+  loadShader[12]: 20778543 (18.20%, 18.58% w/children)
+  loadModelAsset[6]: 3179117 (2.78%, 6.49% w/children)
+  loadModelAsset - assets::loadAssetFile[6]: 4045312 (3.54%)
+  loadModelAsset - assets::readModelInfo[6]: 184999 (0.16%)
+  initGLEnvironment[1]: 987500 (0.86%)
+  logDeviceGLEnvironment[1]: 358802 (0.31%)
+  loadWorld[1]: 108333 (0.09%, 60.76% w/children)
+  initPortalScene[1]: 173438 (0.15%, 82.21% w/children)
+  Acquire Android Resource Managers[1]: 2554896 (2.24%)
+  APP_CMD_INIT_WINDOW[1]: 393854 (0.34%)
+  onResume[1]: 1878073 (1.64%)
+
+=== PROFILER RESULTS (no_compress asset files + asset files are cached [ran scene twice]) ===
+Total time: 66.1871ms (CPU freq 1000007810)
+  Asset[12]: 224737 (0.34%)
+  load2DTexture[1]: 626197 (0.95%, 2.13% w/children)
+  load2DTexture - assets::loadAssetFile[1]: 754115 (1.14%)
+  load2DTexture - assets::readTextureInfo[1]: 32083 (0.05%)
+  loadCubeMapTexture[5]: 66510 (0.10%, 41.99% w/children)
+  loadCubeMapTexture - assets::loadAssetFile[5]: 16817241 (25.41%)
+  loadCubeMapTexture - assets::readCubeMapInfo[5]: 121198 (0.18%)
+  loadCubeMapTexture - glTexImage2D[5]: 10789374 (16.30%)
+  createShaderProgram[6]: 2893280 (4.37%, 8.20% w/children)
+  loadShader[12]: 894014 (1.35%, 1.69% w/children)
+  loadModelAsset[6]: 3472291 (5.25%, 12.34% w/children)
+  loadModelAsset - assets::loadAssetFile[6]: 4483699 (6.77%)
+  loadModelAsset - assets::readModelInfo[6]: 209740 (0.32%)
+  initGLEnvironment[1]: 895312 (1.35%)
+  logDeviceGLEnvironment[1]: 322031 (0.49%)
+  loadWorld[1]: 97238 (0.15%, 59.97% w/children)
+  initPortalScene[1]: 181773 (0.27%, 62.95% w/children)
+  Acquire Android Resource Managers[1]: 1398177 (2.11%)
+  APP_CMD_INIT_WINDOW[1]: 419011 (0.63%)
+  onResume[1]: 2088073 (3.15%)
+  onTerminate[1]: 19749323 (29.84%)
+  onPause[1]: 1321719 (2.00%)
+
+  === OpenGL Extensions ===
+  OpenGL Info: Extensions
+  		GL_OES_EGL_image
+  		GL_OES_EGL_image_external
+  		GL_OES_EGL_sync
+  		GL_OES_vertex_half_float
+  		GL_OES_framebuffer_object
+  		GL_OES_rgb8_rgba8
+  		GL_OES_compressed_ETC1_RGB8_texture
+  		GL_AMD_compressed_ATC_texture
+  		GL_KHR_texture_compression_astc_ldr
+  		GL_KHR_texture_compression_astc_hdr
+  		GL_OES_texture_compression_astc
+  		GL_OES_texture_npot
+  		GL_EXT_texture_filter_anisotropic
+  		GL_EXT_texture_format_BGRA8888
+  		GL_EXT_read_format_bgra
+  		GL_OES_texture_3D
+  		GL_EXT_color_buffer_float
+  		GL_EXT_color_buffer_half_float
+  		GL_QCOM_alpha_test
+  		GL_OES_depth24
+  		GL_OES_packed_depth_stencil
+  		GL_OES_depth_texture
+  		GL_OES_depth_texture_cube_map
+  		GL_EXT_sRGB
+  		GL_OES_texture_float
+  		GL_OES_texture_float_linear
+  		GL_OES_texture_half_float
+  		GL_OES_texture_half_float_linear
+  		GL_EXT_texture_type_2_10_10_10_REV
+  		GL_EXT_texture_sRGB_decode
+  		GL_EXT_texture_format_sRGB_override
+  		GL_OES_element_index_uint
+  		GL_EXT_copy_image
+  		GL_EXT_geometry_shader
+  		GL_EXT_tessellation_shader
+  		GL_OES_texture_stencil8
+  		GL_EXT_shader_io_blocks
+  		GL_OES_shader_image_atomic
+  		GL_OES_sample_variables
+  		GL_EXT_texture_border_clamp
+  		GL_EXT_EGL_image_external_wrap_modes
+  		GL_EXT_multisampled_render_to_texture
+  		GL_EXT_multisampled_render_to_texture2
+  		GL_OES_shader_multisample_interpolation
+  		GL_EXT_texture_cube_map_array
+  		GL_EXT_draw_buffers_indexed
+  		GL_EXT_gpu_shader5
+  		GL_EXT_robustness
+  		GL_EXT_texture_buffer
+  		GL_EXT_shader_framebuffer_fetch
+  		GL_ARM_shader_framebuffer_fetch_depth_stenc
+  		GL_OES_texture_storage_multisample_2d_array
+  		GL_OES_sample_shading
+  		GL_OES_get_program_binary
+  		GL_EXT_debug_label
+  		GL_KHR_blend_equation_advanced
+  		GL_KHR_blend_equation_advanced_coherent
+  		GL_QCOM_tiled_rendering
+  		GL_ANDROID_extension_pack_es31a
+  		GL_EXT_primitive_bounding_box
+  		GL_OES_standard_derivatives
+  		GL_OES_vertex_array_object
+  		GL_EXT_disjoint_timer_query
+  		GL_KHR_debug
+  		GL_EXT_YUV_target
+  		GL_EXT_sRGB_write_control
+  		GL_EXT_texture_norm16
+  		GL_EXT_discard_framebuffer
+  		GL_OES_surfaceless_context
+  		GL_OVR_multiview
+  		GL_OVR_multiview2
+  		GL_EXT_texture_sRGB_R8
+  		GL_KHR_no_error
+  		GL_EXT_debug_marker
+  		GL_OES_EGL_image_external_essl3
+  		GL_OVR_multiview_multisampled_render_to_tex
+  		GL_EXT_buffer_storage
+  		GL_EXT_external_buffer
+  		GL_EXT_blit_framebuffer_params
+  		GL_EXT_clip_cull_distance
+  		GL_EXT_protected_textures
+  		GL_EXT_shader_non_constant_global_initializ
+  		GL_QCOM_texture_foveated
+  		GL_QCOM_texture_foveated_subsampled_layout
+  		GL_QCOM_shader_framebuffer_fetch_noncoheren
+  		GL_QCOM_shader_framebuffer_fetch_rate
+  		GL_EXT_memory_object
+  		GL_EXT_memory_object_fd
+  		GL_EXT_EGL_image_array
+  		GL_NV_shader_noperspective_interpolation
+  		GL_KHR_robust_buffer_access_behavior
+  		GL_EXT_EGL_image_storage
+  		GL_EXT_blend_func_extended
+  		GL_EXT_clip_control
+  		GL_OES_texture_view
+  		GL_EXT_fragment_invocation_density
+  		GL_QCOM_motion_estimation
+  		GL_QCOM_validate_shader_binary
+  		GL_QCOM_YUV_texture_gather

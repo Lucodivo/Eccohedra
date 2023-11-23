@@ -2,11 +2,12 @@ package com.inasweaterpoorlyknit.learnopengl_androidport.graphics
 
 import android.content.Context
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
+import android.util.Log
 import android.view.Surface
 import android.view.WindowManager
 import androidx.annotation.RawRes
-import glm_.mat2x2.Mat2
-import glm_.vec2.Vec2
+import com.inasweaterpoorlyknit.Mat2
+import com.inasweaterpoorlyknit.Vec2
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
@@ -39,18 +40,28 @@ fun Orientation.isLandscape(): Boolean = this == Orientation.Landscape || this =
 
 val Context.orientation: Orientation
   get() {
-    val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-    val rotation = windowManager.defaultDisplay.rotation
-    return if(resources.configuration.orientation == ORIENTATION_LANDSCAPE) {
-      if(rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_0) {
-        Orientation.Landscape
+    val rotation = if (android.os.Build.VERSION.SDK_INT >= 30) {
+      display?.rotation
+    } else { // TODO: WindowManager.defaultDisplay is deprecated, remove when minSDK is 30+
+      val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager?
+      windowManager?.defaultDisplay?.rotation
+    }
+
+    return if (rotation != null) {
+      if (resources.configuration.orientation == ORIENTATION_LANDSCAPE) {
+        if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_0) {
+          Orientation.Landscape
+        } else {
+          Orientation.LandscapeReverse
+        }
+      } else if (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_270) {
+        Orientation.Portrait
       } else {
-        Orientation.LandscapeReverse
+        Orientation.PortraitReverse
       }
-    } else if(rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_270) {
-      Orientation.Portrait
     } else {
-      Orientation.PortraitReverse
+      Log.e("Orientation Error", "This context does not have access to the display.")
+      Orientation.Portrait
     }
   }
 

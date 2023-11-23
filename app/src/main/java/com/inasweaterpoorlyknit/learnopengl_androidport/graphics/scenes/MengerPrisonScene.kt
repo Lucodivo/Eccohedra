@@ -2,14 +2,12 @@ package com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.opengl.GLES20.GL_UNSIGNED_INT
-import android.opengl.GLES20.glClear
-import android.opengl.GLES30.*
+import android.opengl.GLES32.*
 import android.view.MotionEvent
+import com.inasweaterpoorlyknit.Vec2
+import com.inasweaterpoorlyknit.Vec3
 import com.inasweaterpoorlyknit.learnopengl_androidport.*
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
-import glm_.vec2.Vec2
-import glm_.vec3.Vec3
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -57,7 +55,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
     private var prevFrameResolutionIndex: Int // informs us of a resolution change within onDrawFrame()
     private val resolution get() = resolutions[currentResolutionIndex]
 
-    private val cameraPos = Vec3(0.0f, 0.0f, 0.0f)
+    private var cameraPos = Vec3(0.0f, 0.0f, 0.0f)
     private var cameraForward = defaultCameraForward
 
     private var elapsedTime : Double = 0.0
@@ -102,7 +100,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         offscreenFramebuffer = initializeFrameBuffer(resolution.width, resolution.height)
 
         mengerPrisonProgram.use()
-        mengerPrisonProgram.setUniform(uniform.viewPortResolution, Vec2(resolution.width, resolution.height))
+        mengerPrisonProgram.setUniform(uniform.viewPortResolution, resolution.width.toFloat(), resolution.height.toFloat())
     }
 
     private fun initResolutions(width: Int, height: Int) {
@@ -123,18 +121,16 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         val rotationMat = rotationSensorHelper.getRotationMatrix(sceneOrientation)
         cameraForward = rotationMat * defaultCameraForward
         val cameraSpeed = if(actionDown) cameraFastSpeed else cameraNormalSpeed
-        cameraPos.plusAssign(cameraForward * cameraSpeed * deltaTime)
+        cameraPos += cameraForward * cameraSpeed * deltaTime.toFloat()
         // prevent floating point values from growing to unreasonable values
-        cameraPos.x = cameraPos.x % repeatedContainerDimen
-        cameraPos.y = cameraPos.y % repeatedContainerDimen
-        cameraPos.z = cameraPos.z % repeatedContainerDimen
+        cameraPos %= repeatedContainerDimen
 
         if(prevFrameResolutionIndex != currentResolutionIndex) {
             // new resolution index changed by user, adjust accordingly
             offscreenFramebuffer.delete()
             offscreenFramebuffer = initializeFrameBuffer(resolution.width, resolution.height)
             prevFrameResolutionIndex = currentResolutionIndex
-            mengerPrisonProgram.setUniform(uniform.viewPortResolution, Vec2(resolution.width, resolution.height))
+            mengerPrisonProgram.setUniform(uniform.viewPortResolution, resolution.width.toFloat(), resolution.height.toFloat())
         }
 
         // draw to offscreen framebuffer
@@ -178,7 +174,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         }
     }
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
         // NOTE: This could become costly if SharedPreferences are being edited all the time
         if(key == SharedPrefKeys.mengerPrisonResolutionIndex) {
             currentResolutionIndex = resolveResolutionIndex(sharedPreferences)

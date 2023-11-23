@@ -1,8 +1,7 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.graphics
 
-import glm_.glm
-import glm_.mat4x4.Mat4
-import glm_.vec3.Vec3
+import com.inasweaterpoorlyknit.Mat4
+import com.inasweaterpoorlyknit.Vec3
 
 // Note: Currently the camera faces (+Z) and can move forward or back. Anything else hasn't been needed.
 class Camera(position: Vec3 = Vec3(0.0f, 0.0f, 0.0f)) {
@@ -21,11 +20,11 @@ class Camera(position: Vec3 = Vec3(0.0f, 0.0f, 0.0f)) {
         val target = position + front
 
         // Calculate cameraDirection
-        val zAxis = glm.normalize(position - target)
+        val zAxis = (position - target).normalized
         // Get positive right axis vector
-        val xAxis = glm.normalize(glm.cross(glm.normalize(up), zAxis))
+        val xAxis = up.normalized.cross(zAxis).normalized
         // Calculate camera up vector
-        val yAxis = glm.cross(zAxis, xAxis)
+        val yAxis = zAxis.cross(xAxis)
 
         // In glm we access elements as mat[col][row] due to column-major layout
         val translation = Mat4(
@@ -45,5 +44,7 @@ class Camera(position: Vec3 = Vec3(0.0f, 0.0f, 0.0f)) {
         return rotation * translation
     }
 
-    fun moveForward(unitsForward: Float) = position.plusAssign(front * unitsForward)
+    fun moveForward(unitsForward: Float) {
+        position += front * unitsForward
+    }
 }

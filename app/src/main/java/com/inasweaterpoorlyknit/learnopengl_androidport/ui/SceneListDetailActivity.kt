@@ -68,16 +68,16 @@ class SceneListDetailActivity : AppCompatActivity() {
         }
 
         viewModel.finishTrigger.observe(this) {
-            super.onBackPressed()
+            super.onBackPressedDispatcher.onBackPressed()
         }
 
         viewModel.startActivityRequest.observe(this) {
-            val startActivityIntent = Intent(this, InfoActivity::class.java)
+            val startActivityIntent = Intent(this, it)
             startActivity(startActivityIntent)
         }
 
         window.apply {
-            statusBarColor = resources.getColor(R.color.Grayscale0) // set
+            statusBarColor = getColor(R.color.Grayscale0) // set
         }
     }
 
