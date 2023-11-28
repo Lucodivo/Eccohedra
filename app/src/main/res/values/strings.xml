@@ -39,8 +39,14 @@
     <string name="menger_sponge_resolution">Menger Sponge Resolution</string>
     <string name="mandelbrot_color">Mandelbrot Color</string>
 
+    <!-- Shortcuts-->
+    <string name="gate_shortcut_short">Gate</string>
+    <string name="gate_shortcut_long">Gate Scene</string>
+
     <!-- Errors -->
     <string name="no_rotation_sensor">No rotation sensor found on device</string>
 
     <string name="debug_string_id">This is debug text. If you\'re reading this, the developer made a mistake.</string>
+    <string name="info_shortcut_short">Info</string>
+    <string name="info_shortcut_long">Developer Info</string>
 </resources>

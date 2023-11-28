@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         applicationId = "com.inasweaterpoorlyknit.learnopengl_androidport"
-        minSdk = 24
+        minSdk = 25
         targetSdk = 33
         versionCode = 12
         versionName = "1.1.0"

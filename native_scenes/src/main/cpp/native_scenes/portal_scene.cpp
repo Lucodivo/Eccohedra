@@ -29,7 +29,7 @@ struct PlayerPosition {
     pos.radius = radius;
     float sinTheta = sin(pos.theta);
     float cosTheta = cos(pos.theta);
-    pos.xyz = { cosTheta * pos.radius, sinTheta * pos.radius, 1.75f};
+    pos.xyz = { cosTheta * pos.radius, sinTheta * pos.radius, 1.5f };
   }
 
   void setXYZPos(vec3 xyz) {
@@ -758,7 +758,7 @@ void updatePortalScene(World* world, SceneInput input) {
 
 void drawPortalScene(World* world) {
   Camera frameCamera;
-  vec3 focusPoint = vec3{0.0f, 0.0f, 1.75f};
+  vec3 focusPoint = vec3{0.0f, 0.0f, 1.5f};
   lookAt_FirstPerson(world->player.pos.xyz, focusPoint, &frameCamera);
   mat4 cameraMat = getViewMat(frameCamera);
   world->UBOs.projectionViewModelUbo.view = cameraMat;

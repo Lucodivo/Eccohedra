@@ -1,5 +1,4 @@
 Improve iterative process:
-- Asset-Baker should automatically run before running the application.
 
 Optimization ideas:
 - Gate scene
@@ -28,23 +27,20 @@ Scene improvements:
     - Let user choose two accent colors
 
 - Gate scene
-    - Loading animation? (Might be a worse experience if loading is fast enough...)
     - Gate casting shadow onto self?
-    - Use gyro to control camera
-    - collision detection for portals
 
 - Menger prison
     - If user "crashes" reset scene
 
 Overall Improvements:
 - Tap hold app icon options (specific scenes, about?)
+    - dubbed "App Shortcuts"
 
 Refactoring:
 - Scenes save format was previously used for loading from JSON files. World information is now hardcoded
  to reduce asset reads. Refactor save format code as it contains much superfluous code.
 - purge raw texture/model assets from the repo and store them somewhere else to be downloaded separately.
 - Remove json from baked assets (does not *currently*
-- noop_math is awful. Entirely refactor the way matrices and vectors are structured. The less options the better.
 
 Bugs(?):
 - Exiting a scene seems to sometimes show a frame or two of the users home screen wallpaper
