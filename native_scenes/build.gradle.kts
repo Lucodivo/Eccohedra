@@ -7,7 +7,7 @@ android {
     compileSdk = 33
 
     defaultConfig {
-        minSdk = 25
+        minSdk = 24
         consumerProguardFiles("consumer-rules.pro")
         externalNativeBuild {
             cmake {

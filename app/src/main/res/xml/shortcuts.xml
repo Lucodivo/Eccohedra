@@ -1,27 +1,2 @@
-<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
-    <shortcut
-        android:shortcutId="gate"
-        android:enabled="true"
-        android:icon="@drawable/app_shortcut"
-        android:shortcutShortLabel="@string/gate_shortcut_short"
-        android:shortcutLongLabel="@string/gate_shortcut_long">
-        <intent
-            android:action="android.intent.action.VIEW"
-            android:targetPackage="com.inasweaterpoorlyknit.learnopengl_androidport"
-            android:targetClass="com.inasweaterpoorlyknit.learnopengl_androidport.graphics.GateNativeActivity">
-            <!-- <extra android:name="extraID" android:value="extravalue" /> -->
-        </intent>
-    </shortcut>
-    <shortcut
-        android:shortcutId="info"
-        android:enabled="true"
-        android:icon="@drawable/info_page"
-        android:shortcutShortLabel="@string/info_shortcut_short"
-        android:shortcutLongLabel="@string/info_shortcut_long">
-        <intent
-            android:action="android.intent.action.VIEW"
-            android:targetPackage="com.inasweaterpoorlyknit.learnopengl_androidport"
-            android:targetClass="com.inasweaterpoorlyknit.learnopengl_androidport.ui.InfoActivity">
-        </intent>
-    </shortcut>
-</shortcuts>
+<!-- no shortcuts before API 25 -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android"> </shortcuts>
