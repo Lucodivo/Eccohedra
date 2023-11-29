@@ -105,8 +105,12 @@ struct World
   u32 sceneCount;
   Model models[128];
   u32 modelCount;
-  f32 fov;
-  f32 aspect;
+  struct {
+    f32 fov;
+    f32 aspect;
+    u32 width;
+    u32 height;
+  } display;
   struct {
     ProjectionViewModelUBO projectionViewModelUbo;
     GLuint projectionViewModelUboId;
@@ -295,7 +299,9 @@ void drawPortals(World* world, const u32 sceneIndex){
 
     vec3 portalNormal_viewSpace = (world->UBOs.projectionViewModelUbo.view * Vec4(-portal.normal, 0.0f)).xyz;
     vec3 portalCenterPos_viewSpace = (world->UBOs.projectionViewModelUbo.view * Vec4(portal.centerPosition, 1.0f)).xyz;
-    mat4 portalProjectionMat = obliquePerspective(world->fov, world->aspect, near, far, portalNormal_viewSpace, portalCenterPos_viewSpace);
+    mat4 portalProjectionMat = world->display.width > world->display.height ?
+                               obliquePerspective_fovHorz(world->display.fov, world->display.aspect, near, far, portalNormal_viewSpace, portalCenterPos_viewSpace) :
+                               obliquePerspective(world->display.fov, world->display.aspect, near, far, portalNormal_viewSpace, portalCenterPos_viewSpace);
 
     glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
     glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, projection), sizeof(mat4), &portalProjectionMat);
@@ -605,9 +611,13 @@ void loadWorld(World* world) {
 
 // TODO: Come up with better name
 void updateSceneWindow(World* world, u32 width, u32 height) {
-  world->fov = 45.f;
-  world->aspect = f32(width) / f32(height);
-  world->UBOs.projectionViewModelUbo.projection = perspective(world->fov, world->aspect, near, far);
+  world->display.fov = 45.f;
+  world->display.width = width;
+  world->display.height = height;
+  world->display.aspect = f32(width) / f32(height);
+  world->UBOs.projectionViewModelUbo.projection = width > height ?
+      perspective_fovHorz(world->display.fov, world->display.aspect, near, far) :
+      perspective(world->display.fov, world->display.aspect, near, far);
   glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
   glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, projection), sizeof(mat4), &world->UBOs.projectionViewModelUbo.projection);
 }

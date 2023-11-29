@@ -1032,6 +1032,17 @@ namespace noop {
     };
   }
 
+  mat4 perspective_fovHorz(f32 fovHorz, f32 aspect, f32 n, f32 f) {
+    const f32 c = 1.0f / tanf(fovHorz / 2.0f);
+    return mat4{
+        c, 0.0f, 0.0f, 0.0f,
+        0.0f, (c / (1.0f / aspect)), 0.0f, 0.0f,
+        0.0f, 0.0f, -(f + n) / (f - n), -1.0f,
+        0.0f, 0.0f, -(2.0f * f * n) / (f - n), 0.0f,
+    };
+  }
+
+
   mat4 perspectiveInverse(f32 fovVert, f32 aspect, f32 n, f32 f) {
     const f32 c = 1.0f / tanf(fovVert / 2.0f);
     return mat4{
@@ -1103,6 +1114,31 @@ namespace noop {
     return resultMat;
   }
 
+  mat4 obliquePerspective_fovHorz(f32 fovHorz, f32 aspect, f32 nearPlane, f32 farPlane, vec3 planeNormal_viewSpace, vec3 planePos_viewSpace) {
+    const f32 c = 1.0f / tanf(fovHorz / 2.0f);
+
+    // plane = {normal[0], normal[1], normal[2], dist}
+    vec4 plane_viewSpace = Vec4(planeNormal_viewSpace, dot(-planeNormal_viewSpace, planePos_viewSpace));
+
+    // clip space plane
+    vec4 oppositeFrustumCorner_viewSpace = {
+        sign(plane_viewSpace[0]) * (aspect / c),
+        sign(plane_viewSpace[1]) * (1.0f / c),
+        -1.0f,
+        1.0f / farPlane
+    };
+
+    vec4 scaledPlane_viewSpace = ((-2.0f * oppositeFrustumCorner_viewSpace[2]) / dot(plane_viewSpace, oppositeFrustumCorner_viewSpace)) * plane_viewSpace;
+
+    mat4 resultMat = {
+        c, 0.0f, scaledPlane_viewSpace[0], 0.0f,
+        0.0f, (c / (1.0f / aspect)), scaledPlane_viewSpace[1], 0.0f,
+        0.0f, 0.0f, scaledPlane_viewSpace[2] + 1.0f, -1.0f,
+        0.0f, 0.0f, scaledPlane_viewSpace[3], 0.0f
+    };
+
+    return resultMat;
+  }
 
   void adjustAspectPerspProj(mat4* projectionMatrix, f32 fovVert, f32 aspect) {
     const f32 c = 1.0f / tanf(fovVert / 2.0f);

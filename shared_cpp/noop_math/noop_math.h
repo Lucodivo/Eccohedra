@@ -406,6 +406,7 @@ namespace noop {
 // real-time rendering 4.7.2
 // aspect ratio is equivalent to width / height
   mat4 perspective(f32 fovVert, f32 aspect, f32 n, f32 f);
+  mat4 perspective_fovHorz(f32 fovHorz, f32 aspect, f32 n, f32 f);
 
   mat4 perspectiveInverse(f32 fovVert, f32 aspect, f32 n, f32 f);
 
@@ -418,6 +419,7 @@ namespace noop {
  */
   mat4 obliquePerspective(const mat4 &perspectiveMat, vec3 planeNormal_viewSpace,
                           vec3 planePos_viewSpace, f32 farPlane);
+  mat4 obliquePerspective_fovHorz(f32 fovHorz, f32 aspect, f32 nearPlane, f32 farPlane, vec3 planeNormal_viewSpace, vec3 planePos_viewSpace);
 
 /*
  * // NOTE: Oblique View Frustum Depth Projection and Clipping by Eric Lengyel (Terathon Software)
