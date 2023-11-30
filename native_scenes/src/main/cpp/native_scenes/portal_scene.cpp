@@ -746,15 +746,57 @@ PlayerPosition collisionDetectionAndCorrection(World* world, PlayerPosition desi
 }
 
 void updatePortalScene(World* world, SceneInput input) {
+  const f32 thetaMultiplier = 2.0f;
+  const f32 radiusMultiplier = 10.0f;
+  const f32 flingDragX = .98f;
+  const f32 flingMinVelocityX = 0.0003f;
+  const f32 flingThresholdX = 0.02f;
+  const f32 flingDragY = .92f;
+  const f32 flingMinVelocityY = 0.001f;
+  const f32 flingThresholdY = 0.001f;
+
   // NOTE: input should be handled through handleInput(android_app* app, AInputEvent* event)
   world->stopWatch.lap();
   world->UBOs.fragUbo.time = world->stopWatch.totalInSeconds;
 
+  func_persist SceneInput previousInputs[32];
+  func_persist size_t previousInputIndex = ArrayCount(previousInputs) - 1;
+  func_persist f32 flingVelocityX = 0.0f;
+  func_persist f32 flingVelocityY = 0.0f;
+
   PlayerPosition& player = world->player;
-  f32 thetaDelta = -(2.0 * input.x);
-  f32 newTheta = player.pos.theta + thetaDelta;
-  f32 radiusDelta = -(10.0f * input.y);
-  f32 newRadius = player.pos.radius + radiusDelta;
+  f32 thetaDelta, newTheta, radiusDelta, newRadius;
+  if(input.x != 0.0f || input.y != 0.0f) {
+    thetaDelta = -(thetaMultiplier * input.x);
+    newTheta = player.pos.theta + thetaDelta;
+    radiusDelta = -(radiusMultiplier * input.y);
+    newRadius = player.pos.radius + radiusDelta;
+    flingVelocityX = 0.0f;
+    flingVelocityY = 0.0f;
+  } else {
+    const SceneInput& previousInput = previousInputs[previousInputIndex];
+    if(previousInput.x != 0.0f || previousInput.y != 0.0f) {
+      // if last frame contained a movement, consider using highest X value as a fling
+      f32 potentialFlingX = 0.0f;
+      f32 potentialFlingY = 0.0f;
+      for(size_t i = 0; i < ArrayCount(previousInputs); i++) {
+        potentialFlingX = (previousInputs[i].x * previousInputs[i].x) > (potentialFlingX * potentialFlingX) ? previousInputs[i].x : potentialFlingX;
+        potentialFlingY = (previousInputs[i].y * previousInputs[i].y) > (potentialFlingY * potentialFlingY) ? previousInputs[i].y : potentialFlingY;
+      }
+      if((potentialFlingX * potentialFlingX) > (flingThresholdX * flingThresholdX)) { flingVelocityX = potentialFlingX; }
+      if((potentialFlingY * potentialFlingY) > (flingThresholdY * flingThresholdY)) { flingVelocityY = potentialFlingY; }
+    }
+    thetaDelta = -(thetaMultiplier * flingVelocityX);
+    newTheta = player.pos.theta + thetaDelta;
+    radiusDelta = -(radiusMultiplier * flingVelocityY);
+    newRadius = player.pos.radius + radiusDelta;
+    flingVelocityX *= flingDragX;
+    flingVelocityY *= flingDragY;
+    if(abs(flingVelocityX) < flingMinVelocityX) { flingVelocityX = 0.0f; }
+    if(abs(flingVelocityY) < flingMinVelocityY) { flingVelocityY = 0.0f; }
+  }
+  previousInputIndex = (previousInputIndex + 1) % ArrayCount(previousInputs);
+  previousInputs[previousInputIndex] = input;
 
   if(newTheta > Tau32) { newTheta -= Tau32; }
   if(newTheta < 0) { newTheta += Tau32; }

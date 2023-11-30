@@ -98,9 +98,9 @@ class SceneListDetailViewModel : ViewModel() {
     }
 
     fun itemSelected(item: ListItemDataI) {
-        // NOTE: Scene creator is a regular value, make sure to set it before any sort of LiveData to avoid any type of race conditions
         when(item) {
             is KotlinProgramListItemData -> {
+                // NOTE: Scene creator is a regular value, make sure to set it before any sort of LiveData to avoid any type of race conditions
                 _sceneCreator = item.sceneCreator
                 _presentationMode.value = ListDetailPresentationMode.DETAIL
             }
