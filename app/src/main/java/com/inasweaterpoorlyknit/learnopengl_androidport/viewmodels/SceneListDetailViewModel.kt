@@ -86,11 +86,10 @@ class SceneListDetailViewModel : ViewModel() {
                 displayTextResId = R.string.menger_prison_scene_title,
                 descTextResId = R.string.menger_prison_thumbnail_description),
                 sceneCreator = ::MengerPrisonScene),
-            // TODO: Update image and text
             NativeProgramListItemData(ListItemData(
-                imageResId = R.drawable.blue_debug,
-                displayTextResId = R.string.debug_string_id,
-                descTextResId = R.string.debug_string_id),
+                imageResId = R.drawable.gate_2720_1440,
+                displayTextResId = R.string.gate_scene_title,
+                descTextResId = R.string.gate_thumbnail_description),
                 nativeActivity = GateNativeActivity::class.java),
         )
 

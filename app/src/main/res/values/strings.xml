@@ -30,6 +30,14 @@
         A rosy accented fractal pattern from the famous Mandelbrot set.
     </string>
 
+    <!-- Gate Scene -->
+    <string name="gate_scene_title">Gate Scene</string>
+    <string name="gate_thumbnail_description">
+        Screen shot of Gate scene.
+        Amongst the clouds with a bright green octohedron in front of a square shaped portal.
+        Portal leads to dark cave and is inset inside of a chrome exterior.
+    </string>
+
     <!-- Info Screen -->
     <string name="info">Info</string>
     <string name="scenes">Scenes</string>
