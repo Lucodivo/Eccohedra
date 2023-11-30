@@ -41,21 +41,6 @@ struct PlayerPosition {
   }
 };
 
-enum EntityType {
-  EntityType_Rotating = 1 << 0,
-  EntityType_Wireframe = 1 << 1
-};
-
-struct Entity {
-  BoundingBox boundingBox;
-  u32 modelIndex;
-  u32 shaderIndex;
-  b32 typeFlags; // EntityType flags
-  vec3 position;
-  vec3 scale;
-  f32 yaw; // NOTE: Radians. 0 rads starts at {0, -1} and goes around the xy-plane in a CCW as seen from above
-};
-
 enum PortalState {
   PortalState_FacingCamera = 1 << 0,
   PortalState_InFocus = 1 << 1
@@ -70,12 +55,6 @@ struct Portal {
   u32 sceneDestination;
 };
 
-struct Light {
-  vec4 color;
-  // NOTE: For directional lights, this is the direction to the source
-  vec3 pos;
-};
-
 struct Scene {
   // TODO: should the scene keep track of its own index in the worlds?
   Entity entities[16];
@@ -85,7 +64,7 @@ struct Scene {
   Light dirPosLightStack[8];
   u32 dirLightCount;
   u32 posLightCount;
-  vec4 ambientLight;
+  vec4 ambientLightColorAndPower;
   GLuint skyboxTexture;
   std::string title;
   std::string skyboxFileName;
@@ -179,40 +158,36 @@ u32 addNewEntity(World* world, u32 sceneIndex, u32 modelIndex,
   Entity* entity = scene->entities + sceneEntityIndex;
   *entity = {};
   entity->modelIndex = modelIndex;
-  entity->boundingBox = world->models[modelIndex].boundingBox;
-  entity->boundingBox.min = hadamard(entity->boundingBox.min, scale);
-  entity->boundingBox.min += pos;
-  entity->boundingBox.diagonal = hadamard(entity->boundingBox.diagonal, scale);
-  entity->position = pos;
-  entity->scale = scale;
+  entity->posXYZ = pos;
+  entity->scaleXYZ = scale;
   entity->yaw = yaw;
   entity->shaderIndex = shaderIndex;
-  entity->typeFlags = entityTypeFlags;
+  entity->flags = entityTypeFlags;
   return sceneEntityIndex;
 }
 
-u32 addNewDirectionalLight(World* world, u32 sceneIndex, vec3 lightColor, f32 lightPower, vec3 lightToSource) {
+u32 addNewDirectionalLight(World* world, u32 sceneIndex, vec4 colorAndPower, vec3 lightToSource) {
   Scene* scene = world->scenes + sceneIndex;
   assert(scene->posLightCount + scene->dirLightCount < ArrayCount(scene->dirPosLightStack));
   u32 newLightIndex = scene->dirLightCount++;
-  scene->dirPosLightStack[newLightIndex].color = { lightColor[0], lightColor[1], lightColor[2], lightPower};
+  scene->dirPosLightStack[newLightIndex].colorAndPower = colorAndPower;
   scene->dirPosLightStack[newLightIndex].pos = normalize(lightToSource);
   return newLightIndex;
 }
 
-u32 addNewPositionalLight(World* world, u32 sceneIndex, vec3 lightColor, f32 lightPower, vec3 lightPos) {
+u32 addNewPositionalLight(World* world, u32 sceneIndex, vec4 colorAndPower, vec3 lightPos) {
   Scene* scene = world->scenes + sceneIndex;
   const u32 maxLights = ArrayCount(scene->dirPosLightStack);
   assert(scene->posLightCount + scene->dirLightCount < maxLights);
   u32 newLightIndex = maxLights - 1 - scene->posLightCount++;
-  scene->dirPosLightStack[newLightIndex].color = { lightColor[0], lightColor[1], lightColor[2], lightPower};
+  scene->dirPosLightStack[newLightIndex].colorAndPower = colorAndPower;
   scene->dirPosLightStack[newLightIndex].pos = lightPos;
   return newLightIndex;
 }
 
-void adjustAmbientLight(World* world, u32 sceneIndex, vec3 lightColor, f32 lightPower) {
+void adjustAmbientLight(World* world, u32 sceneIndex, vec4 lightColorAndPower) {
   Scene* scene = world->scenes + sceneIndex;
-  scene->ambientLight = { lightColor[0], lightColor[1], lightColor[2], lightPower};
+  scene->ambientLightColorAndPower = {lightColorAndPower[0], lightColorAndPower[1], lightColorAndPower[2], lightColorAndPower[3]};
 }
 
 u32 addNewModel(World* world, const char* modelFileLoc) {
@@ -241,9 +216,8 @@ mat4 calcBoxStencilModelMatFromPortalModelMat(const mat4& portalModelMat) {
 void drawPortal(World* world, Portal* portal) {
   glUseProgram(world->stencilShader.id);
 
-  // NOTE: Stencil function Example
-  // GL_LEQUAL
-  // Passes if ( ref & mask ) <= ( stencil & mask )
+  // Stencil function example
+  // GL_LEQUAL: Passes if ( ref & mask ) <= ( stencil & mask )
   glStencilFunc(GL_EQUAL, // func
                 0xFF, // ref
                 0x00); // mask // Only draw portals where the stencil is cleared
@@ -341,19 +315,19 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
     // TODO: If LightUniform and Light struct for class were the same we could do a simple memcpy
     world->UBOs.lightUbo.dirLightCount = scene->dirLightCount;
     for(u32 i = 0; i < scene->dirLightCount; ++i) {
-      world->UBOs.lightUbo.dirPosLightStack[i].color = scene->dirPosLightStack[i].color;
+      world->UBOs.lightUbo.dirPosLightStack[i].colorAndPower = scene->dirPosLightStack[i].colorAndPower;
       world->UBOs.lightUbo.dirPosLightStack[i].pos.xyz = scene->dirPosLightStack[i].pos;
-      // TODO: Z component of pos currently undefined and potentially dangerous. Determine if it can be used.
+      // TODO: W component of pos currently undefined and potentially dangerous. Determine if it can be used.
     }
 
     world->UBOs.lightUbo.posLightCount = scene->posLightCount;
     for(u32 i = 0; i < scene->posLightCount; ++i) {
-      world->UBOs.lightUbo.dirPosLightStack[maxLights - i].color = scene->dirPosLightStack[maxLights - i].color;
+      world->UBOs.lightUbo.dirPosLightStack[maxLights - i].colorAndPower = scene->dirPosLightStack[maxLights - i].colorAndPower;
       world->UBOs.lightUbo.dirPosLightStack[maxLights - i].pos.xyz = scene->dirPosLightStack[maxLights - i].pos;
-      // TODO: Z component of pos currently undefined and potentially dangerous. Determine if it can be used.
+      // TODO: W component of pos currently undefined and potentially dangerous. Determine if it can be used.
     }
 
-    world->UBOs.lightUbo.ambientLight = scene->ambientLight;
+    world->UBOs.lightUbo.ambientLight = scene->ambientLightColorAndPower;
 
     glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.lightUboId);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(LightUBO), &world->UBOs.lightUbo);
@@ -363,7 +337,7 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
     Entity* entity = &scene->entities[sceneEntityIndex];
     ShaderProgram shader = world->shaders[entity->shaderIndex];
 
-    mat4 modelMatrix = scaleRotTrans_mat4(entity->scale, vec3{0.0f, 0.0f, 1.0f}, entity->yaw, entity->position);
+    mat4 modelMatrix = scaleRotTrans_mat4(entity->scaleXYZ, vec3{0.0f, 0.0f, 1.0f}, entity->yaw, entity->posXYZ);
 
     glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
     glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &modelMatrix);
@@ -393,7 +367,7 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
       drawTriangles(&mesh->vertexAtt);
     }
 
-    if(entity->typeFlags & EntityType_Wireframe) { // wireframes should be drawn on top default mesh
+    if(entity->flags & EntityType_Wireframe) { // wireframes should be drawn on top default mesh
       for(u32 meshIndex = 0; meshIndex < model.meshCount; ++meshIndex) {
         Mesh* mesh = model.meshes + meshIndex;
         drawTrianglesWireframe(world, &mesh->vertexAtt);
@@ -415,7 +389,7 @@ void updateEntities(World* world) {
     Scene* scene = world->scenes + sceneIndex;
     for(u32 entityIndex = 0; entityIndex < scene->entityCount; ++entityIndex) {
       Entity* entity = scene->entities + entityIndex;
-      if(entity->typeFlags & EntityType_Rotating) {
+      if(entity->flags & EntityType_Rotating) {
         entity->yaw += 30.0f * RadiansPerDegree * world->stopWatch.lapInSeconds;
         if(entity->yaw > Tau32) {
           entity->yaw -= Tau32;
@@ -428,7 +402,7 @@ void updateEntities(World* world) {
   vec3 playerViewPosition = world->player.pos.xyz;
   b32 portalEntered = false;
   u32 portalSceneDestination;
-  auto updatePortalsForScene = [playerViewPosition, &portalEntered, &portalSceneDestination, &world, &currentScene](Scene* scene) {
+  auto updatePortalsForScene = [playerViewPosition, &portalEntered, &portalSceneDestination](Scene* scene) {
     for(u32 portalIndex = 0; portalIndex < scene->portalCount; ++portalIndex) {
       Portal* portal = scene->portals + portalIndex;
 
@@ -509,7 +483,7 @@ void loadWorld(World* world) {
 
   LOGI("Loading native Portal Scene...");
 
-  SaveFormat saveFormat = originalWorld();
+  WorldInfo saveFormat = originalWorld();
 
   size_t sceneCount = saveFormat.scenes.size();
   size_t modelCount = saveFormat.models.size();
@@ -518,7 +492,7 @@ void loadWorld(World* world) {
   u32 worldShaderIndices[ArrayCount(world->shaders)] = {};
   { // shaders
     for(u32 shaderIndex = 0; shaderIndex < shaderCount; shaderIndex++) {
-      ShaderSaveFormat shaderSaveFormat = saveFormat.shaders[shaderIndex];
+      ShaderInfo shaderSaveFormat = saveFormat.shaders[shaderIndex];
       assert(shaderSaveFormat.index < shaderCount);
 
       const char* noiseTexture = shaderSaveFormat.noiseTextureName.empty() ? nullptr : shaderSaveFormat.noiseTextureName.c_str();
@@ -529,7 +503,7 @@ void loadWorld(World* world) {
   u32 worldModelIndices[ArrayCount(world->models)] = {};
   { // models
     for(u32 modelIndex = 0; modelIndex < modelCount; modelIndex++) {
-      ModelSaveFormat modelSaveFormat = saveFormat.models[modelIndex];
+      ModelInfo modelSaveFormat = saveFormat.models[modelIndex];
       assert(modelSaveFormat.index < modelCount);
       worldModelIndices[modelSaveFormat.index] = addNewModel(world, modelSaveFormat.fileName.c_str());
 
@@ -544,7 +518,7 @@ void loadWorld(World* world) {
   u32 worldSceneIndices[ArrayCount(world->scenes)] = {};
   { // scenes
     for(u32 sceneIndex = 0; sceneIndex < sceneCount; sceneIndex++) {
-      SceneSaveFormat sceneSaveFormat = saveFormat.scenes[sceneIndex];
+      SceneInfo sceneSaveFormat = saveFormat.scenes[sceneIndex];
       size_t entityCount = sceneSaveFormat.entities.size();
 
       assert(sceneSaveFormat.index < sceneCount);
@@ -560,7 +534,7 @@ void loadWorld(World* world) {
       }
 
       for(u32 entityIndex = 0; entityIndex < entityCount; entityIndex++) {
-        EntitySaveFormat entitySaveFormat = sceneSaveFormat.entities[entityIndex];
+        Entity entitySaveFormat = sceneSaveFormat.entities[entityIndex];
         addNewEntity(world, worldSceneIndices[sceneSaveFormat.index], worldModelIndices[entitySaveFormat.modelIndex],
                      entitySaveFormat.posXYZ, entitySaveFormat.scaleXYZ, entitySaveFormat.yaw,
                      worldShaderIndices[entitySaveFormat.shaderIndex], entitySaveFormat.flags);
@@ -568,22 +542,19 @@ void loadWorld(World* world) {
 
       size_t dirLightCount = sceneSaveFormat.directionalLights.size();
       for(u32 dirLightIndex = 0; dirLightIndex < dirLightCount; dirLightIndex++) {
-        DirectionalLightSaveFormat dirLightSaveFormat = sceneSaveFormat.directionalLights[dirLightIndex];
-        addNewDirectionalLight(world, worldSceneIndices[sceneSaveFormat.index], dirLightSaveFormat.color,
-                               dirLightSaveFormat.power, dirLightSaveFormat.dirToSource);
+        Light dirLightSaveFormat = sceneSaveFormat.directionalLights[dirLightIndex];
+        addNewDirectionalLight(world, worldSceneIndices[sceneSaveFormat.index], dirLightSaveFormat.colorAndPower, dirLightSaveFormat.dirToSource);
       }
 
       size_t posLightCount = sceneSaveFormat.positionalLights.size();
       for(u32 posLightIndex = 0; posLightIndex < posLightCount; posLightIndex++) {
-        PositionalLightSaveFormat posLightSaveFormat = sceneSaveFormat.positionalLights[posLightIndex];
-        addNewPositionalLight(world, worldSceneIndices[sceneSaveFormat.index], posLightSaveFormat.color,
-                               posLightSaveFormat.power, posLightSaveFormat.pos);
+        Light posLightSaveFormat = sceneSaveFormat.positionalLights[posLightIndex];
+        addNewPositionalLight(world, worldSceneIndices[sceneSaveFormat.index], posLightSaveFormat.colorAndPower, posLightSaveFormat.pos);
       }
 
-      if(sceneSaveFormat.ambientLightSaveFormat.power != 0.0f) {
+      if(sceneSaveFormat.ambientLightColorAndPower[3] != 0.0f) {
         adjustAmbientLight(world, worldSceneIndices[sceneSaveFormat.index],
-                           sceneSaveFormat.ambientLightSaveFormat.color,
-                           sceneSaveFormat.ambientLightSaveFormat.power);
+                           sceneSaveFormat.ambientLightColorAndPower);
       }
     }
 
@@ -591,12 +562,12 @@ void loadWorld(World* world) {
     // the other worlds to have been initialized
     for(u32 sceneIndex = 0; sceneIndex < sceneCount; sceneIndex++)
     {
-      SceneSaveFormat sceneSaveFormat = saveFormat.scenes[sceneIndex];
+      SceneInfo sceneSaveFormat = saveFormat.scenes[sceneIndex];
       size_t portalCount = sceneSaveFormat.portals.size();
       assert(portalCount <= MAX_PORTALS);
       for (u32 portalIndex = 0; portalIndex < portalCount; portalIndex++)
       {
-        PortalSaveFormat portalSaveFormat = sceneSaveFormat.portals[portalIndex];
+        PortalInfo portalSaveFormat = sceneSaveFormat.portals[portalIndex];
         addPortal(world, worldSceneIndices[sceneSaveFormat.index], portalSaveFormat.centerXYZ, portalSaveFormat.normalXYZ, portalSaveFormat.dimensXY,
                   portalIndex + 1, worldSceneIndices[portalSaveFormat.destination]);
       }
@@ -701,7 +672,7 @@ PlayerPosition collisionDetectionAndCorrection(World* world, PlayerPosition desi
   } else { // a "shape" scene
     // correct potential collision with "shape"
     const f32 shapeBoundingSphereRadius = 1.5f;
-    f32 newRadius = Max(desiredPosition.pos.radius, 1.5f);
+    f32 newRadius = Max(desiredPosition.pos.radius, shapeBoundingSphereRadius);
     correctedPlayerPos = PlayerPosition::fromPolar(desiredPosition.pos.theta, newRadius);
 
     // prevent collision with portal backings
@@ -748,7 +719,7 @@ PlayerPosition collisionDetectionAndCorrection(World* world, PlayerPosition desi
 void updatePortalScene(World* world, SceneInput input) {
   const f32 thetaMultiplier = 2.0f;
   const f32 radiusMultiplier = 10.0f;
-  const f32 flingDragX = .98f;
+  const f32 flingDragX = .92f;
   const f32 flingMinVelocityX = 0.0003f;
   const f32 flingThresholdX = 0.02f;
   const f32 flingDragY = .92f;

@@ -6,9 +6,7 @@ Optimization ideas:
         - Tried downscaling and didn't look great...
         - Potentially use ASTC NxM compression for larger (or all) textures?
             - [Android developer guid says support is lower than ETC2 but I don't believe it affects](https://developer.android.com/guide/playcore/asset-delivery/texture-compression) but I don't believe that will affect anyone who might run this app.
-            - Could always compress to ASTC and
     - No need to load all textures/models at once. Can load just the Gate scene textures and only other scene(s) visible. Then load others in background.
-    - input sensitivity is different when changing theta/radius depending on whether the app is running in portrait mode or landscape (maybe desired? requires testing.)
 
 Modularization ideas:
 - matrices library (NoopMath.kt) could be set up to be pulled from a maven repository instead of manually embedded into the project
@@ -29,13 +27,13 @@ Scene improvements:
 
 - Gate scene
     - Gate casting shadow onto self?
+    - input sensitivity is different when changing theta/radius depending on whether the app is running in portrait mode or landscape (maybe desired? requires testing.)
 
 - Menger prison
     - If user "crashes" reset scene
 
 Overall Improvements:
-- Tap hold app icon options (specific scenes, about?)
-    - dubbed "App Shortcuts"
+
 
 Refactoring:
 - Scenes save format was previously used for loading from JSON files. World information is now hardcoded
@@ -45,4 +43,3 @@ Refactoring:
 
 Bugs(?):
 - Exiting a scene seems to sometimes show a frame or two of the users home screen wallpaper
-- Lock the gate scene in it's orientation (portrait/landscape). Right now it is buggy.
