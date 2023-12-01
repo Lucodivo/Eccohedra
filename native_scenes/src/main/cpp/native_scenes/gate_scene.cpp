@@ -15,6 +15,7 @@ struct InputState {
   // display, a horizontal pan yields a larger X than a horizontal pan of the same real world length.
   // Not the best way but the way for now
   vec2 deltaPos_normalized;
+  bool motionInProgress;
 };
 
 struct SceneState {
@@ -54,8 +55,6 @@ void onPause(Engine *engine);
  * It runs in its own thread, with its own event loop for receiving input events and doing other things.
  */
 void android_main(android_app *app) {
-  BeginProfile();
-
   Engine engine{0};
   engine.initializing = true;
 
@@ -65,7 +64,6 @@ void android_main(android_app *app) {
 
 
   {
-    TimeBlock("Acquire Android Resource Managers")
     assetManager_GLOBAL = app->activity->assetManager;
     // TODO: ASensorManager_getInstance() is deprecated. Use ASensorManager_getInstanceForPackage("foo.bar.baz");
     engine.sensorManager = ASensorManager_getInstance();
@@ -124,6 +122,7 @@ static void update(Engine *engine) {
 
   sceneInput.x = inputState.deltaPos_normalized[0];
   sceneInput.y = inputState.deltaPos_normalized[1];
+  sceneInput.activeMotion = inputState.motionInProgress;
 
   updatePortalScene(&engine->sceneState.world, sceneInput);
 }
@@ -157,11 +156,13 @@ static s32 handleInput(android_app *app, AInputEvent *event) {
           switch (action) {
             case AMOTION_EVENT_ACTION_DOWN: {
               engine->inputState.deltaPos_normalized = vec2{.0f, .0f};
+              engine->inputState.motionInProgress = true;
               break;
             }
             case AMOTION_EVENT_ACTION_UP: {
               engine->inputState.lastPos_screenRes = vec2{.0f, .0f};
               engine->inputState.deltaPos_normalized = vec2{.0f, .0f};
+              engine->inputState.motionInProgress = false;
               break;
             }
             case AMOTION_EVENT_ACTION_MOVE: {
@@ -208,13 +209,11 @@ void onWindowInit(android_app *app, Engine *engine) {
   // The window is being shown, get it ready.
   if (app->window != nullptr) {
     {
-      TimeBlock("APP_CMD_INIT_WINDOW")
       updateGLSurface(&engine->glEnv, app->window);
       updateSceneWindow(&engine->sceneState.world, engine->glEnv.surface.width,
                         engine->glEnv.surface.height);
       engine->initializing = false;
     }
-    EndAndPrintProfile();
   }
 }
 
@@ -232,7 +231,6 @@ static void handleAndroidCmd(android_app *app, s32 cmd) {
       //  - before APP_CMD_SAVE_STATE
       //  - after APP_CMD_RESUME
       //  - when the app is destroyed
-      TimeBlock("APP_CMD_SAVE_STATE")
       onSavedState(app, engine);
       break;
     }

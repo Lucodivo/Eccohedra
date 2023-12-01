@@ -10,8 +10,6 @@ struct GLEnvironment {
 };
 
 void initGLEnvironment(GLEnvironment *glEnv) {
-  TimeFunction
-
   EGLint format;
 
   glEnv->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -113,8 +111,6 @@ void glDeinit(GLEnvironment *glEnv) {
 }
 
 void logDeviceGLEnvironment() {
-  TimeFunction
-
   auto info = glGetString(GL_VENDOR);
   LOGI("OpenGL Info: Vendor\t- %s", info);
 

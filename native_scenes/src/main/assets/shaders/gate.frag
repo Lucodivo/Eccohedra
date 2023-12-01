@@ -16,7 +16,7 @@ struct InLight {
   vec4 pos;
 };
 
-layout (binding = 2, std140) uniform LightInfoUBO {
+layout (binding = 2, std140) uniform MultiLightInfoUBO {
   vec4 ambientLightColor;
   InLight dirPosLightStack[8];
   uint dirLightCount;

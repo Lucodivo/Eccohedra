@@ -21,8 +21,6 @@ struct Model {
 };
 
 void loadModelAsset(const char* filePath, Model* returnModel) {
-  TimeFunction
-
   const u32 positionAttributeIndex = 0;
   const u32 normalAttributeIndex = 1;
   const u32 texture0AttributeIndex = 2;
@@ -35,13 +33,11 @@ void loadModelAsset(const char* filePath, Model* returnModel) {
 
   assets::AssetFile modelAssetFile;
   {
-    TimeBlock("loadModelAsset - assets::loadAssetFile");
     assets::loadAssetFile(assetManager_GLOBAL, assetPath.c_str(), &modelAssetFile);
   }
 
   assets::ModelInfo modelInfo;
   {
-    TimeBlock("loadModelAsset - assets::readModelInfo");
     assets::readModelInfo(modelAssetFile, &modelInfo);
   }
 

@@ -5,7 +5,6 @@ const f32 portalWidth = 3.0f;
 
 enum EntityFlags {
   EntityType_Rotating = 1 << 0,
-  EntityType_Wireframe = 1 << 1,
 };
 
 struct Entity {
@@ -26,7 +25,7 @@ struct PortalInfo {
 
 struct ModelInfo {
   u32 index;
-  std::string fileName; // NOTE: currently assumed to be in "src/data/models/"
+  std::string fileName;
   vec4 baseColor; // optional, alpha 0 means no value
 };
 
@@ -49,7 +48,7 @@ struct Light {
 struct SceneInfo {
   u32 index;
   std::string title;
-  std::string skyboxFileName; // optional, empty string means no value
+  std::string skyboxFileName;
   std::vector<Entity> entities;
   std::vector<PortalInfo> portals;
   std::vector<Light> directionalLights;
@@ -82,7 +81,7 @@ WorldInfo originalWorld() {
   });
   shaders.push_back({
       1,
-      "pos.vert",
+      "pos_norm.vert",
       "single_color.frag",
       ""
   });
@@ -117,7 +116,7 @@ WorldInfo originalWorld() {
   });
   models.push_back({
       4,
-      "torus",
+      "dodecahedron",
       vec4{.5, .5, 1, 1}
   });
   models.push_back({
@@ -178,7 +177,7 @@ WorldInfo originalWorld() {
   tetrahedronScene.index = 1;
   tetrahedronScene.title = "Tetrahedron";
   tetrahedronScene.skyboxFileName = "yellow_cloud";
-  tetrahedronScene.ambientLightColorAndPower = vec4{0, 0, 0, 0.0f};
+  tetrahedronScene.ambientLightColorAndPower = vec4{1, 1, 1, 0.85};
   tetrahedronScene.entities.reserve(2);
   tetrahedronScene.entities.push_back({
       1,
@@ -186,7 +185,7 @@ WorldInfo originalWorld() {
       vec3{0, 0, 1.5},
       vec3{1, 1, 1},
       3.35,
-      EntityType_Wireframe | EntityType_Rotating
+      EntityType_Rotating
   });
   tetrahedronScene.entities.push_back({
       5,
@@ -203,13 +202,17 @@ WorldInfo originalWorld() {
       vec3{0, -1.5, 1.5},
       vec2{3, 3}
   });
+  tetrahedronScene.directionalLights.push_back({
+                                            vec4{1, 1, 1, 0.15f},
+                                            vec3{-1.0, -1.0, 1.0}
+                                        });
   scenes.push_back(tetrahedronScene);
 
   SceneInfo octahedronScene;
   octahedronScene.index = 2;
   octahedronScene.title = "Octahedron";
   octahedronScene.skyboxFileName = "interstellar";
-  octahedronScene.ambientLightColorAndPower = vec4{0, 0, 0, 0};
+  octahedronScene.ambientLightColorAndPower = vec4{1, 1, 1, 0.8f};
   octahedronScene.entities.reserve(2);
   octahedronScene.entities.push_back({
       2,
@@ -217,7 +220,7 @@ WorldInfo originalWorld() {
       vec3{0, 0, 1.5},
       vec3{1, 1, 1},
       3.35,
-      EntityType_Wireframe | EntityType_Rotating
+      EntityType_Rotating
   });
   octahedronScene.entities.push_back({
       5,
@@ -234,23 +237,27 @@ WorldInfo originalWorld() {
       vec3{1.5, 0, 1.5},
       vec2{3, 3}
   });
+  octahedronScene.directionalLights.push_back({
+                                                   vec4{1, 1, 1, 0.2f},
+                                                   vec3{-1.0, -1.0, 1.0}
+                                               });
   scenes.push_back(octahedronScene);
 
-  SceneInfo paperScene;
-  paperScene.index = 3;
-  paperScene.title = "Paper";
-  paperScene.skyboxFileName = "calm_sea";
-  paperScene.ambientLightColorAndPower = vec4{0, 0, 0, 0};
-  paperScene.entities.reserve(2);
-  paperScene.entities.push_back({
+  SceneInfo dodecahedronScene;
+  dodecahedronScene.index = 3;
+  dodecahedronScene.title = "Dodecahedron";
+  dodecahedronScene.skyboxFileName = "calm_sea";
+  dodecahedronScene.ambientLightColorAndPower = vec4{1, 1, 1, 0.7f};
+  dodecahedronScene.entities.reserve(2);
+  dodecahedronScene.entities.push_back({
       4,
       1,
       vec3{0, 0, 1.5},
       vec3{1, 1, 1},
       3.35,
-      EntityType_Wireframe | EntityType_Rotating
+      EntityType_Rotating
   });
-  paperScene.entities.push_back({
+  dodecahedronScene.entities.push_back({
       5,
       2,
       vec3{-1.75, 0, 1.5},
@@ -258,20 +265,24 @@ WorldInfo originalWorld() {
       Pi32 * 0.5f,
       0
   });
-  paperScene.portals.reserve(1);
-  paperScene.portals.push_back({
+  dodecahedronScene.portals.reserve(1);
+  dodecahedronScene.portals.push_back({
       0,
       vec3{1, 0, 0},
       vec3{-1.5, 0, 1.5},
       vec2{3, 3}
   });
-  scenes.push_back(paperScene);
+  dodecahedronScene.directionalLights.push_back({
+                                                  vec4{1, 1, 1, 0.3f},
+                                                  vec3{-1.0, -1.0, 1.0}
+                                              });
+  scenes.push_back(dodecahedronScene);
 
   SceneInfo icosahedronScene;
   icosahedronScene.index = 4;
   icosahedronScene.title = "Icosahedron";
   icosahedronScene.skyboxFileName = "polluted_earth";
-  icosahedronScene.ambientLightColorAndPower = vec4{0, 0, 0, 0};
+  icosahedronScene.ambientLightColorAndPower = vec4{1, 1, 1, 0.7f};
   icosahedronScene.entities.reserve(2);
   icosahedronScene.entities.push_back({
       3,
@@ -279,7 +290,7 @@ WorldInfo originalWorld() {
       vec3{0, 0, 1.5},
       vec3{1, 1, 1},
       3.35,
-      EntityType_Wireframe | EntityType_Rotating
+      EntityType_Rotating
   });
   icosahedronScene.entities.push_back({
       5,
@@ -296,6 +307,10 @@ WorldInfo originalWorld() {
       vec3{0, 1.5, 1.5},
       vec2{3, 3}
   });
+  icosahedronScene.directionalLights.push_back({
+                                             vec4{1, 1, 1, 0.3f},
+                                             vec3{-1.0, -1.0, 1.0}
+                                         });
   scenes.push_back(icosahedronScene);
 
   return worldInfo;

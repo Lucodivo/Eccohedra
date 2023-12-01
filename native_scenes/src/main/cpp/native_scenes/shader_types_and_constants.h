@@ -29,13 +29,13 @@ struct FragUBO {
   f32 time;
 };
 
-u32 lightUBOBindingIndex = 2;
+// TODO use explicit padding
+u32 multiLightUBOBindingIndex = 2;
 struct LightUniform {
   vec4 colorAndPower; // NOTE: fourth component used for light power
   vec4 pos; // NOTE: fourth component for padding, currently un-defined
 };
-
-struct LightUBO {
+struct MultiLightUBO {
   vec4 ambientLight;
   LightUniform dirPosLightStack[8];
   u32 dirLightCount;

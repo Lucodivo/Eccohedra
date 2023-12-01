@@ -23,7 +23,6 @@ void android_main(android_app *app) {
   app->onInputEvent = handleInput;
 
   {
-    TimeBlock("Acquire Android Resource Managers")
     assetManager_GLOBAL = app->activity->assetManager;
     // TODO: ASensorManager_getInstance() is deprecated. Use ASensorManager_getInstanceForPackage("foo.bar.baz");
     engine.sensorManager = ASensorManager_getInstance();

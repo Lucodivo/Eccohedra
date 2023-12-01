@@ -21,8 +21,6 @@ void inline bindActiveTextureCubeMap(s32 activeIndex, GLuint textureId) {
 
 void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert = false, bool inputSRGB = false, u32* width = NULL, u32* height = NULL)
 {
-  TimeFunction
-
   glGenTextures(1, textureId);
   glBindTexture(GL_TEXTURE_2D, *textureId);
 
@@ -39,13 +37,11 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
   // TODO: Investigate what can be done, if anything, to load cubemap assets faster
   assets::AssetFile textureAssetFile;
   {
-    TimeBlock("load2DTexture - assets::loadAssetFile")
     assets::loadAssetFile(assetManager_GLOBAL, assetPath.c_str(), &textureAssetFile);
   }
 
   assets::TextureInfo textureInfo;
   {
-    TimeBlock("load2DTexture - assets::readTextureInfo")
     assets::readTextureInfo(textureAssetFile, &textureInfo);
   }
 
@@ -83,8 +79,6 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
 }
 
 void loadCubeMapTexture(const char* fileName, GLuint* textureId) {
-  TimeFunction
-
   glGenTextures(1, textureId);
   glBindTexture(GL_TEXTURE_CUBE_MAP, *textureId);
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -100,18 +94,15 @@ void loadCubeMapTexture(const char* fileName, GLuint* textureId) {
   // TODO: Investigate what can be done, if anything, to load cubemap assets faster
   assets::AssetFile cubeMapAssetFile;
   {
-    TimeBlock("loadCubeMapTexture - assets::loadAssetFile")
     assets::loadAssetFile(assetManager_GLOBAL, assetPath.c_str(), &cubeMapAssetFile);
   }
 
   assets::CubeMapInfo cubeMapInfo;
   {
-    TimeBlock("loadCubeMapTexture - assets::readCubeMapInfo")
     assets::readCubeMapInfo(cubeMapAssetFile, &cubeMapInfo);
   }
 
   {
-    TimeBlock("loadCubeMapTexture - glTexImage2D")
     char* cubeMapData = cubeMapAssetFile.binaryBlob.data();
     GLenum compressionFormat = GL_COMPRESSED_RGB8_ETC2;
     // TODO: If we ever support other formats besides RGB8 we will need to explicitly translate the CubeMapInfo.format to a GL_{format}

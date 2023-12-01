@@ -71,6 +71,7 @@ struct Scene {
 };
 
 struct SceneInput {
+  bool activeMotion;
   f32 x;
   f32 y;
 };
@@ -95,11 +96,10 @@ struct World
     GLuint projectionViewModelUboId;
     FragUBO fragUbo;
     GLuint fragUboId;
-    LightUBO lightUbo;
-    GLuint lightUboId;
+    MultiLightUBO multiLightUbo;
+    GLuint multiLightUboId;
   } UBOs;
   ShaderProgram shaders[16];
-  ShaderProgram singleColorShader;
   ShaderProgram skyboxShader;
   ShaderProgram stencilShader;
   GLuint portalQueryObjects[MAX_PORTALS];
@@ -194,19 +194,6 @@ u32 addNewModel(World* world, const char* modelFileLoc) {
   u32 modelIndex = world->modelCount++;
   loadModelAsset(modelFileLoc, world->models + modelIndex);
   return modelIndex;
-}
-
-void drawTrianglesWireframe(World* world, const VertexAtt* vertexAtt) {
-  // TODO: This will not work at all in a general case
-  // TODO: It only currently works because the wireframe shapes are the first things we draw in each scene
-  // TODO: can't just disable the depth test whenever
-  glUseProgram(world->singleColorShader.id);
-  setUniform(world->singleColorShader.id, "baseColor", vec3{0.0f, 0.0f, 0.0f});
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_CULL_FACE);
-  drawLines(vertexAtt); // TODO: This probably does not work and should be monitored
-  glEnable(GL_CULL_FACE);
-  glEnable(GL_DEPTH_TEST);
 }
 
 mat4 calcBoxStencilModelMatFromPortalModelMat(const mat4& portalModelMat) {
@@ -307,30 +294,30 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
 
   // update scene light uniform buffer object
   {
-    const u32 maxLights = ArrayCount(world->UBOs.lightUbo.dirPosLightStack);
+    const u32 maxLights = ArrayCount(world->UBOs.multiLightUbo.dirPosLightStack);
     assert((scene->dirLightCount + scene->posLightCount) <= maxLights);
 
     // NOTE: The lights are on a single double ended array where directional lights are added to the beginning
     // and directional lights are added to the end.
     // TODO: If LightUniform and Light struct for class were the same we could do a simple memcpy
-    world->UBOs.lightUbo.dirLightCount = scene->dirLightCount;
+    world->UBOs.multiLightUbo.dirLightCount = scene->dirLightCount;
     for(u32 i = 0; i < scene->dirLightCount; ++i) {
-      world->UBOs.lightUbo.dirPosLightStack[i].colorAndPower = scene->dirPosLightStack[i].colorAndPower;
-      world->UBOs.lightUbo.dirPosLightStack[i].pos.xyz = scene->dirPosLightStack[i].pos;
+      world->UBOs.multiLightUbo.dirPosLightStack[i].colorAndPower = scene->dirPosLightStack[i].colorAndPower;
+      world->UBOs.multiLightUbo.dirPosLightStack[i].pos.xyz = scene->dirPosLightStack[i].pos;
       // TODO: W component of pos currently undefined and potentially dangerous. Determine if it can be used.
     }
 
-    world->UBOs.lightUbo.posLightCount = scene->posLightCount;
+    world->UBOs.multiLightUbo.posLightCount = scene->posLightCount;
     for(u32 i = 0; i < scene->posLightCount; ++i) {
-      world->UBOs.lightUbo.dirPosLightStack[maxLights - i].colorAndPower = scene->dirPosLightStack[maxLights - i].colorAndPower;
-      world->UBOs.lightUbo.dirPosLightStack[maxLights - i].pos.xyz = scene->dirPosLightStack[maxLights - i].pos;
+      world->UBOs.multiLightUbo.dirPosLightStack[maxLights - i].colorAndPower = scene->dirPosLightStack[maxLights - i].colorAndPower;
+      world->UBOs.multiLightUbo.dirPosLightStack[maxLights - i].pos.xyz = scene->dirPosLightStack[maxLights - i].pos;
       // TODO: W component of pos currently undefined and potentially dangerous. Determine if it can be used.
     }
 
-    world->UBOs.lightUbo.ambientLight = scene->ambientLightColorAndPower;
+    world->UBOs.multiLightUbo.ambientLight = scene->ambientLightColorAndPower;
 
-    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.lightUboId);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(LightUBO), &world->UBOs.lightUbo);
+    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.multiLightUboId);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MultiLightUBO), &world->UBOs.multiLightUbo);
   }
 
   for(u32 sceneEntityIndex = 0; sceneEntityIndex < scene->entityCount; ++sceneEntityIndex) {
@@ -365,13 +352,6 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
       }
 
       drawTriangles(&mesh->vertexAtt);
-    }
-
-    if(entity->flags & EntityType_Wireframe) { // wireframes should be drawn on top default mesh
-      for(u32 meshIndex = 0; meshIndex < model.meshCount; ++meshIndex) {
-        Mesh* mesh = model.meshes + meshIndex;
-        drawTrianglesWireframe(world, &mesh->vertexAtt);
-      }
     }
   }
 }
@@ -468,7 +448,6 @@ void cleanupWorld(World* world) {
   memset(world->models, 0, sizeof(Model) * world->modelCount);
 
   deleteShaderPrograms(world->shaders, world->shaderCount);
-  deleteShaderPrograms(&world->singleColorShader, 1);
   deleteShaderPrograms(&world->stencilShader, 1);
   deleteShaderPrograms(&world->skyboxShader, 1);
 
@@ -479,8 +458,6 @@ void cleanupWorld(World* world) {
 
 // TODO: Cleanup the way the save files are organized.
 void loadWorld(World* world) {
-  TimeFunction
-
   LOGI("Loading native Portal Scene...");
 
   WorldInfo saveFormat = originalWorld();
@@ -594,8 +571,6 @@ void updateSceneWindow(World* world, u32 width, u32 height) {
 }
 
 void initPortalScene(World* world) {
-  TimeFunction
-
   glGenQueries(ArrayCount(world->portalQueryObjects), world->portalQueryObjects);
 
   initCommonVertexAtt(&world->commonVertAtts);
@@ -613,7 +588,6 @@ void initPortalScene(World* world) {
 
   // Universal shaders
   {
-    world->singleColorShader = createShaderProgram(posVertexShaderFileLoc, singleColorFragmentShaderFileLoc);
     world->stencilShader = createShaderProgram(posVertexShaderFileLoc, blackFragmentShaderFileLoc);
     world->skyboxShader = createShaderProgram(skyboxVertexShaderFileLoc, skyboxFragmentShaderFileLoc);
   }
@@ -630,10 +604,16 @@ void initPortalScene(World* world) {
     glBufferData(GL_UNIFORM_BUFFER, sizeof(FragUBO), NULL, GL_STREAM_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, fragUBOBindingIndex, world->UBOs.fragUboId, 0, sizeof(FragUBO));
 
-    glGenBuffers(1, &world->UBOs.lightUboId);
-    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.lightUboId);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(LightUBO), NULL, GL_DYNAMIC_DRAW);
-    glBindBufferRange(GL_UNIFORM_BUFFER, lightUBOBindingIndex, world->UBOs.lightUboId, 0, sizeof(LightUBO));
+    glGenBuffers(1, &world->UBOs.multiLightUboId);
+    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.multiLightUboId);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(MultiLightUBO), NULL, GL_DYNAMIC_DRAW);
+    glBindBufferRange(GL_UNIFORM_BUFFER, multiLightUBOBindingIndex, world->UBOs.multiLightUboId, 0, sizeof(MultiLightUBO));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glGenBuffers(1, &world->UBOs.multiLightUboId);
+    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.multiLightUboId);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(MultiLightUBO), NULL, GL_DYNAMIC_DRAW);
+    glBindBufferRange(GL_UNIFORM_BUFFER, multiLightUBOBindingIndex, world->UBOs.multiLightUboId, 0, sizeof(MultiLightUBO));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
   }
 
@@ -737,7 +717,7 @@ void updatePortalScene(World* world, SceneInput input) {
 
   PlayerPosition& player = world->player;
   f32 thetaDelta, newTheta, radiusDelta, newRadius;
-  if(input.x != 0.0f || input.y != 0.0f) {
+  if(input.activeMotion) {
     thetaDelta = -(thetaMultiplier * input.x);
     newTheta = player.pos.theta + thetaDelta;
     radiusDelta = -(radiusMultiplier * input.y);
@@ -746,7 +726,7 @@ void updatePortalScene(World* world, SceneInput input) {
     flingVelocityY = 0.0f;
   } else {
     const SceneInput& previousInput = previousInputs[previousInputIndex];
-    if(previousInput.x != 0.0f || previousInput.y != 0.0f) {
+    if(previousInput.activeMotion) {
       // if last frame contained a movement, consider using highest X value as a fling
       f32 potentialFlingX = 0.0f;
       f32 potentialFlingY = 0.0f;

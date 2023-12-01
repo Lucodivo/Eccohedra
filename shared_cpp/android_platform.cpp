@@ -1,5 +1,4 @@
 Asset::Asset(AAssetManager* assetManager, const char *filePath) {
-  TimeFunction
   this->filePath = filePath;
   androidAsset = AAssetManager_open(assetManager, filePath, AASSET_MODE_BUFFER);
   if (androidAsset) {
@@ -55,8 +54,6 @@ std::vector<std::string> assetsGetChildrenFilesAndDirs(android_app *app, const c
 }
 
 void logAllAssets(AAssetManager* assetManager, android_app *app) {
-  TimeFunction
-
   const char *filename;
 
   LOGI("+++ ASSETS FOUND +++");
@@ -104,8 +101,6 @@ void detachFromMainThread(android_app *app) {
  *    for Android-N and before, when compiling with NDK-r15
  */
 ASensorManager *acquireASensorManagerInstance(android_app *app) {
-  TimeFunction
-
   if (!app)
     return nullptr;
 

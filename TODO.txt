@@ -36,8 +36,6 @@ Overall Improvements:
 
 
 Refactoring:
-- Scenes save format was previously used for loading from JSON files. World information is now hardcoded
- to reduce asset reads. Refactor save format code as it contains much superfluous code.
 - purge raw texture/model assets from the repo and store them somewhere else to be downloaded separately.
 - Remove json from baked assets (does not *currently*
 
