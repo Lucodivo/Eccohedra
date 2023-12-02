@@ -1,14 +1,15 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes
 
 import android.content.Context
-import android.opengl.GLES32.*
 import android.opengl.GLES30.glBindVertexArray
+import android.opengl.GLES32.*
 import android.view.MotionEvent
 import com.inasweaterpoorlyknit.Mat3
-import com.inasweaterpoorlyknit.Vec2
 import com.inasweaterpoorlyknit.Vec3
+import com.inasweaterpoorlyknit.clamp
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
+import com.inasweaterpoorlyknit.mod
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -37,8 +38,8 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
     private lateinit var program: Program
     private var quadVAO: Int = -1
 
-    private var elapsedTime : Double = .0
-    private var lastFrameTime: Double = -1.0
+    private var elapsedTime : Double = 0.0
+    private var lastFrameTime: Double = 0.0
     private var firstFrameTime: Double = -1.0
 
     private var lightAlive = false
@@ -48,6 +49,7 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
     private val lightMaxTravelDist = 100f
     private var lightDistanceTraveled = 0f
     private val lightSpeed = 2f
+
 
     private val cameraSpeedNormal = .5f
     private val cameraSpeedFast = 2f
@@ -100,8 +102,13 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
         val deltaTime = elapsedTime - lastFrameTime
         lastFrameTime = elapsedTime
 
-        val rotationMat = rotationSensorHelper.getRotationMatrix(sceneOrientation)
+        var rotationMat = rotationSensorHelper.getRotationMatrix(sceneOrientation)
         moveCameraForward(rotationMat, (deltaTime * cameraSpeed).toFloat())
+
+        if(sdScene(cameraPos, rotationMat) <= 0.0f) {
+            resetScene()
+            rotationMat = Mat3(1.0f)
+        }
 
         glClear(GL_COLOR_BUFFER_BIT)
 
@@ -112,13 +119,64 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
         if(lightAlive) {
             val deltaDistDelta = (deltaTime * lightSpeed).toFloat()
             val lightPosDelta: Vec3 = lightMoveDir * deltaDistDelta
-            lightPosition = lightPosition + lightPosDelta
+            lightPosition += lightPosDelta
             lightDistanceTraveled += deltaDistDelta
             if(lightDistanceTraveled > lightMaxTravelDist) lightAlive = false
         }
 
         // Draw triangles from the forever-bounded quadVAO
         glDrawElements(GL_TRIANGLES, frameBufferQuadNumVertices, GL_UNSIGNED_INT, 0 /* offset in the EBO */)
+    }
+
+    private fun resetScene() {
+        cameraPos = Vec3(0f, 1f, 0f)
+        cameraForward = defaultCameraForward
+
+        elapsedTime = 0.0
+        lastFrameTime = 0.0
+        firstFrameTime = systemTimeInDeciseconds()
+
+        lightAlive = false
+        lightPosition = Vec3(0f, 0f, 100f)
+        lightMoveDir = Vec3(0f, 0f, 0f)
+        lightDistanceTraveled = 0f
+
+        rotationSensorHelper.reset()
+    }
+    private val capsuleLineWidth = 3.0f
+    private val capsuleLineHalfWidth = capsuleLineWidth * 0.5f
+
+    private fun sdScene(pos: Vec3, rotationMat: Mat3): Float {
+        var capsuleCenterPosA = Vec3(-capsuleLineHalfWidth, 0.0f, 0.0f)
+        var capsuleCenterPosB = Vec3(capsuleLineHalfWidth, 0.0f, 0.0f)
+        val capsuleContainerDimens = 6.0f
+        val offset = capsuleContainerDimens * 0.5f // this value also
+
+        capsuleCenterPosA = rotationMat * capsuleCenterPosA
+        capsuleCenterPosB = rotationMat * capsuleCenterPosB
+        capsuleCenterPosA += Vec3(offset)
+        capsuleCenterPosB += Vec3(offset)
+
+        val posCapsuleContainer: Vec3 = mod(pos, Vec3(capsuleContainerDimens))
+        return sdCapsule(posCapsuleContainer, capsuleCenterPosA, capsuleCenterPosB, 1.0f)
+    }
+
+    private fun sdCapsule(pos: Vec3, posA: Vec3, posB: Vec3, radius: Float): Float {
+        val oneOverCapsuleLineWidth = 1.0f / capsuleLineWidth
+
+        // Line segments from point A to B (line segment of capsule)
+        val aToB: Vec3 = posB - posA
+        // Line from point A to ray's position
+        val aToRayPos: Vec3 = pos - posA
+
+        // find the projection of the line from A to the ray's position onto the capsule's line segment
+        val abCosTheta: Float = aToB.dot(aToRayPos)
+        // float magnitudeAToB = capsuleLineWidth
+        val projectionAToRayOnAToB: Float = abCosTheta * oneOverCapsuleLineWidth // = abCosTheta / magnitudeAToB
+
+        // Use the projection to walk down the capsule's line segment and find the closest point
+        val closestPoint: Vec3 = posA + aToB * clamp(projectionAToRayOnAToB * oneOverCapsuleLineWidth, 0.0f, 1.0f)
+        return (pos - closestPoint).len - radius
     }
 
     override fun onAttach() {

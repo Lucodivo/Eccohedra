@@ -22,7 +22,8 @@ fun Float.degToRad(): Float = this * radiansPerDegree.toFloat()
 
 fun max(a: Float, b: Float) = if(a > b) { a } else { b }
 fun min(a: Float, b: Float) = if(a < b) { a } else { b }
-fun clamp(min: Double, max: Double, value: Double) = if (value < min) { min } else if (value > max) { max } else { value }
+fun clamp(value: Double, min: Double, max: Double) = if (value < min) { min } else if (value > max) { max } else { value }
+fun clamp(value: Float, min: Float, max: Float) = if (value < min) { min } else if (value > max) { max } else { value }
 fun lerp(x: Float, y: Float, a: Float) = x * (1.0f - a) + (y * a)
 fun mod_opengl(x: Float, y: Float) = x - (y * floor(x/y))
 
@@ -118,6 +119,8 @@ class Vec3 {
 fun lerp(v1: Vec3, v2: Vec3, a: Float) = Vec3(lerp(v1.x, v2.x, a), lerp(v1.y, v2.y, a), lerp(v1.z, v2.z, a))
 // NOTE: mod as defined by OpenGL
 fun mod(v: Vec3, c: Float) = Vec3(mod_opengl(v.x, c), mod_opengl(v.y, c), mod_opengl(v.z, c))
+fun mod(v1: Vec3, v2: Vec3) = Vec3(mod_opengl(v1.x, v2.x), mod_opengl(v1.y, v2.y), mod_opengl(v1.z, v2.z))
+fun distance(v1: Vec3, v2: Vec3) = (v1 - v2).len
 
 class Vec4 {
     val elements: FloatArray

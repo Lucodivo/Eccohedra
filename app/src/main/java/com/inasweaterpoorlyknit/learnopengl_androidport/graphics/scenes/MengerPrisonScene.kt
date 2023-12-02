@@ -211,21 +211,21 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
     }
 
     // below is code pulled from fragment shader to verify if camera has collided with the structure
-    fun sdMengerPrison(rayPos: Vec3): Float {
+    private fun sdMengerPrison(pos: Vec3): Float {
         val boxDimen = 20.0f
         val halfBoxDimen = boxDimen * 0.5f
         val hitDist = 0.01f
-        var prisonRay: Vec3 = mod(rayPos, boxDimen * 2.0f)
+        var prisonRay: Vec3 = mod(pos, boxDimen * 2.0f)
         prisonRay -= Vec3(boxDimen, boxDimen, boxDimen) // move container origin to center
         var mengerPrisonDist = sdCross(prisonRay, Vec3(halfBoxDimen))
         if (mengerPrisonDist > hitDist) return mengerPrisonDist // use dist of biggest crosses as bounding volume
         var scale = 1.0f
         for (i in 0 until maxIterations) {
             val boxedWorldDimen: Float = boxDimen / scale
-            val rayPosShiftVal = boxedWorldDimen * 0.5f
-            val rayPosShift = Vec3(rayPosShiftVal, rayPosShiftVal, rayPosShiftVal)
-            var ray: Vec3 = mod(rayPos + rayPosShift, boxedWorldDimen)
-            ray -= rayPosShift
+            val posShiftVal = boxedWorldDimen * 0.5f
+            val posShift = Vec3(posShiftVal, posShiftVal, posShiftVal)
+            var ray: Vec3 = mod(pos + posShift, boxedWorldDimen)
+            ray -= posShift
             ray *= scale
             var crossesDist = sdCross(ray * 3.0f, Vec3(halfBoxDimen))
             scale *= 3.0f
@@ -235,16 +235,16 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         return mengerPrisonDist
     }
 
-    fun sdRect(rayPos: Vec2, dimen: Vec2): Float {
-        val rayToCorner: Vec2 = abs(rayPos) - dimen
+    private fun sdRect(pos: Vec2, dimen: Vec2): Float {
+        val rayToCorner: Vec2 = abs(pos) - dimen
         val maxDelta: Float = min(max(rayToCorner.x, rayToCorner.y), 0.0f)
         return max(rayToCorner, Vec2(0.0f, 0.0f)).len + maxDelta
     }
 
-    fun sdCross(rayPos: Vec3, dimen: Vec3): Float {
-        val distA = sdRect(rayPos.xy, dimen.xy)
-        val distB = sdRect(rayPos.xz, dimen.xz)
-        val distC = sdRect(rayPos.yz, dimen.yz)
+    private fun sdCross(pos: Vec3, dimen: Vec3): Float {
+        val distA = sdRect(pos.xy, dimen.xy)
+        val distB = sdRect(pos.xz, dimen.xz)
+        val distC = sdRect(pos.yz, dimen.yz)
         return min(distA, min(distB, distC))
     }
 }
