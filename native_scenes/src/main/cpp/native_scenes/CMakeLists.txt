@@ -28,10 +28,3 @@ target_link_libraries(gate-scene
 )
 
 add_dependencies(gate-scene shaders-validation)
-
-add_library(test-native-activity SHARED)
-target_sources(test-native-activity PRIVATE test_native_activity.cpp)
-target_include_directories(test-native-activity PRIVATE ${COMMON_NATIVE_INCLUDE})
-target_link_libraries(test-native-activity
-        ${COMMON_NATIVE_LIBS}
-)

@@ -197,7 +197,7 @@ u32 addNewModel(World* world, const char* modelFileLoc) {
 }
 
 mat4 calcBoxStencilModelMatFromPortalModelMat(const mat4& portalModelMat) {
-  return portalModelMat * scale_mat4(vec3{1.0f, PORTAL_BACKING_BOX_DEPTH, 1.0f}) * translate_mat4(-cubeFaceNegativeYCenter);
+  return portalModelMat * scale_mat4(vec3{1.0f, PORTAL_BACKING_BOX_DEPTH, 1.0f}) * translate_mat4({0.0f, 0.5f, 0.0f});
 }
 
 void drawPortal(World* world, Portal* portal) {

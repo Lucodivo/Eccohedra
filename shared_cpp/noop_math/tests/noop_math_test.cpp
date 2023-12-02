@@ -1,5 +1,14 @@
 #include "test.h"
 
+#define cos30 0.86602540f
+#define cos45 0.70710678f
+#define cos60 0.5f
+
+#define sin30 0.5f
+#define sin45 0.70710678f
+#define sin60 0.86602540f
+
+
 TEST(NoopMath, translateTest) {
   vec3 translation{12.8f, 25.6f, 51.2f};
   mat4 expectedResult{

@@ -118,12 +118,6 @@ const u8 invertedWindingCubePosAttsIndices_OpenNegYFace[]{
         20, 22,21,
         22, 20,23,
 };
-const u32 cubeFaceNegativeXIndicesOffset = 0;
-const u32 cubeFacePositiveXIndicesOffset = 6;
-const u32 cubeFaceNegativeYIndicesOffset = 12;
-const u32 cubeFacePositiveYIndicesOffset = 18;
-const u32 cubeFaceNegativeZIndicesOffset = 24;
-const u32 cubeFacePositiveZIndicesOffset = 30;
 
 // ===== Quad values (vec3 position, vec2 tex) =====
 // faces -Y direction
@@ -375,14 +369,6 @@ void drawTriangles(const VertexAtt* vertexAtt, u32 count, u32 offset) {
 
 void drawTriangles(const VertexAtt* vertexAtt) {
   drawTriangles(vertexAtt, vertexAtt->indexCount, 0);
-}
-
-void drawLines(const VertexAtt* vertexAtt) {
-  // TODO: This is a total guess, if wireframes are messed up, this is why!
-  glDrawElements(GL_LINE_LOOP,
-                 vertexAtt->indexCount,
-                 convertSizeInBytesToOpenGLUIntType(vertexAtt->indexTypeSizeInBytes),
-                 (void*)0);
 }
 
 void deleteVertexAtts(VertexAtt *vertexAtts, u32 count) {

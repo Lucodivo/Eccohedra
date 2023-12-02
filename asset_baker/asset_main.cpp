@@ -47,7 +47,6 @@ struct {
 struct ConverterState {
   fs::path assetsDir;
   fs::path bakedAssetDir;
-  fs::path outputFileDir;
   std::vector<fs::path> bakedFilePaths;
 };
 
@@ -71,8 +70,6 @@ bool convertModel(const fs::path& inputPath, const char* outputFileName);
 void saveCache(const std::unordered_map<std::string, AssetBakeCachedItem>& oldCache, const std::vector<AssetBakeCachedItem>& newBakedItems);
 void loadCache(std::unordered_map<std::string, AssetBakeCachedItem>& assetBakeCache);
 
-void writeOutputData(const std::unordered_map<std::string, AssetBakeCachedItem>& oldCache, const ConverterState& converterState);
-void replace(std::string& str, const char oldToken, const char newToken);
 void replaceBackSlashes(std::string& str);
 std::size_t fileCountInDir(const fs::path& dirPath);
 std::size_t dirCountInDir(const fs::path& dirPath);
@@ -81,14 +78,12 @@ f64 lastModifiedTimeStamp(const fs::path& file);
 bool fileUpToDate(const std::unordered_map<std::string, AssetBakeCachedItem>& cache, const fs::path& file);
 void replace(std::string& str, const char* oldTokens, u32 oldTokensCount, char newToken);
 
-bool compressImage(u8* uncompressedBytes, u32 width, u32 height, u32 numChannels, u8* compressedBytes);
 bool CompressionCallback(float fProgress, CMP_DWORD_PTR pUser1, CMP_DWORD_PTR pUser2);
 
 bool bakeFailed = false;
 
 const char* rawAssetsDir = "native_scenes/src/main/assets_raw";
 const char* bakedAssetsDir = "native_scenes/src/main/assets";
-const char* metadataOutputDir = "native_scenes/src/main/cpp/assets_metadata";
 
 void outputErrorMsg(const char* format, ...) {
   va_list args;
@@ -126,7 +121,6 @@ int main(int argc, char* argv[]) {
   ConverterState converterState;
   converterState.assetsDir = rawAssetsDir;
   converterState.bakedAssetDir = bakedAssetsDir;
-  converterState.outputFileDir = metadataOutputDir;
 
   if(!fs::is_directory(converterState.assetsDir)) {
     std::cout << "Could not find assets directory: " << argv[1];
@@ -215,7 +209,6 @@ int main(int argc, char* argv[]) {
     newlyCachedItems.push_back(newlyBakedItem);
   }
 
-  writeOutputData(oldAssetBakeCache, converterState);
   saveCache(oldAssetBakeCache, newlyCachedItems);
 
   return bakeFailed ? -1 : 0;
@@ -774,51 +767,6 @@ void replaceBackSlashes(std::string &str) {
       c = '/';
     }
   }
-}
-
-void writeOutputData(const std::unordered_map<std::string, AssetBakeCachedItem> &oldCache,
-                     const ConverterState &converterState) {
-  if(!fs::is_directory(converterState.outputFileDir)) {
-    fs::create_directory(converterState.outputFileDir);
-  }
-
-  std::ofstream outTexturesFile, outMeshFile, outMaterialFile, outPrefabFile;
-  outTexturesFile.open((converterState.outputFileDir / "baked_textures.incl").string(), std::ios::out);
-  outMeshFile.open((converterState.outputFileDir / "baked_meshes.incl").string(), std::ios::out);
-  outMaterialFile.open((converterState.outputFileDir / "baked_materials.incl").string(), std::ios::out);
-  outPrefabFile.open((converterState.outputFileDir / "baked_prefabs.incl").string(), std::ios::out);
-
-  auto write = [&](std::string bakedPath, std::string originalFileName, const char* fileExt) {
-    const char tokensToReplace[] = {'.', '-'};
-    replace(originalFileName, tokensToReplace, ArrayCount(tokensToReplace), '_');
-    replaceBackSlashes(bakedPath);
-    if(strcmp(fileExt, bakedExtensions.texture) == 0) {
-      outTexturesFile << "BakedTexture(" << originalFileName << ",\"" << bakedPath << "\")\n";
-    }
-  };
-
-  for(const fs::path& path: converterState.bakedFilePaths) {
-    std::string extensionStr = path.extension().string();
-    std::string fileName = path.filename().replace_extension("").string();
-    std::string filePath = path.string();
-    write(filePath, fileName, extensionStr.c_str());
-  }
-
-  for(auto [originalFileName, cachedItem] : oldCache) {
-    u32 cachedBakedFileCount = (u32)cachedItem.bakedFiles.size();
-    for(u32 i = 0; i < cachedBakedFileCount; i++) {
-      const AssetBakeCachedItem::BakedFile& bakedFile = cachedItem.bakedFiles[i];
-      std::string extensionStr = bakedFile.ext;
-      std::string fileName = std::string(bakedFile.name.begin(), bakedFile.name.end() - bakedFile.ext.size());
-      std::string filePath = bakedFile.path;
-      write(filePath, fileName, extensionStr.c_str());
-    }
-  }
-
-  outTexturesFile.close();
-  outMeshFile.close();
-  outMaterialFile.close();
-  outPrefabFile.close();
 }
 
 void saveCache(const std::unordered_map<std::string, AssetBakeCachedItem> &oldCache,
