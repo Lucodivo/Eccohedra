@@ -32,6 +32,11 @@ class RotationSensorHelper: SensorEventListener {
         }
     }
 
+    fun reset() {
+        firstSensorVals_rotationVector = null
+        lastSensorValues_rotationVector = null
+    }
+
     fun deinit(context: Context) {
         // Turn our sensor off on detached
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager

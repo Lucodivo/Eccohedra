@@ -8,6 +8,10 @@ import com.inasweaterpoorlyknit.Vec2
 import com.inasweaterpoorlyknit.Vec3
 import com.inasweaterpoorlyknit.learnopengl_androidport.*
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
+import com.inasweaterpoorlyknit.max
+import com.inasweaterpoorlyknit.min
+import com.inasweaterpoorlyknit.abs
+import com.inasweaterpoorlyknit.mod
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -18,10 +22,9 @@ data class Resolution (
 )
 
 class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.OnSharedPreferenceChangeListener {
-
     companion object {
         // TODO: Consider linking box/container dimen to uniform?
-        const val repeatedContainerDimen = 40.0f // NOTE: This value MUST be equal to the capsuleContainerDimens in the fragment shader!!
+        const val repeatedContainerDimen = 40.0f
 
         private object uniform {
             const val iterations = "iterations"
@@ -59,7 +62,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
     private var cameraForward = defaultCameraForward
 
     private var elapsedTime : Double = 0.0
-    private var lastFrameTime: Double = -1.0
+    private var lastFrameTime: Double = 0.0
     private var firstFrameTime: Double = -1.0
 
     private var actionDown = false
@@ -110,6 +113,15 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         }
     }
 
+    private fun resetScene() {
+        cameraPos = Vec3(0.0f, 0.0f, 0.0f)
+        cameraForward = defaultCameraForward
+        elapsedTime = 0.0
+        lastFrameTime = 0.0
+        firstFrameTime = systemTimeInDeciseconds()
+        rotationSensorHelper.reset()
+    }
+
     override fun onDrawFrame(gl: GL10?) {
         // NOTE: OpenGL calls must be called within specified call back functions
         // Calling OpenGL functions in other functions will surely result in bugs
@@ -124,6 +136,13 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         cameraPos += cameraForward * cameraSpeed * deltaTime.toFloat()
         // prevent floating point values from growing to unreasonable values
         cameraPos %= repeatedContainerDimen
+
+        // check for collision
+        val cameraDistToPrison = sdMengerPrison(cameraPos)
+        if(cameraDistToPrison <= 0.0f) {
+            // reset scene
+            resetScene()
+        }
 
         if(prevFrameResolutionIndex != currentResolutionIndex) {
             // new resolution index changed by user, adjust accordingly
@@ -189,5 +208,43 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
             return defaultResolutionIndex
         }
         return newResolutionIndex
+    }
+
+    // below is code pulled from fragment shader to verify if camera has collided with the structure
+    fun sdMengerPrison(rayPos: Vec3): Float {
+        val boxDimen = 20.0f
+        val halfBoxDimen = boxDimen * 0.5f
+        val hitDist = 0.01f
+        var prisonRay: Vec3 = mod(rayPos, boxDimen * 2.0f)
+        prisonRay -= Vec3(boxDimen, boxDimen, boxDimen) // move container origin to center
+        var mengerPrisonDist = sdCross(prisonRay, Vec3(halfBoxDimen))
+        if (mengerPrisonDist > hitDist) return mengerPrisonDist // use dist of biggest crosses as bounding volume
+        var scale = 1.0f
+        for (i in 0 until maxIterations) {
+            val boxedWorldDimen: Float = boxDimen / scale
+            val rayPosShiftVal = boxedWorldDimen * 0.5f
+            val rayPosShift = Vec3(rayPosShiftVal, rayPosShiftVal, rayPosShiftVal)
+            var ray: Vec3 = mod(rayPos + rayPosShift, boxedWorldDimen)
+            ray -= rayPosShift
+            ray *= scale
+            var crossesDist = sdCross(ray * 3.0f, Vec3(halfBoxDimen))
+            scale *= 3.0f
+            crossesDist /= scale
+            mengerPrisonDist = max(mengerPrisonDist, -crossesDist)
+        }
+        return mengerPrisonDist
+    }
+
+    fun sdRect(rayPos: Vec2, dimen: Vec2): Float {
+        val rayToCorner: Vec2 = abs(rayPos) - dimen
+        val maxDelta: Float = min(max(rayToCorner.x, rayToCorner.y), 0.0f)
+        return max(rayToCorner, Vec2(0.0f, 0.0f)).len + maxDelta
+    }
+
+    fun sdCross(rayPos: Vec3, dimen: Vec3): Float {
+        val distA = sdRect(rayPos.xy, dimen.xy)
+        val distB = sdRect(rayPos.xz, dimen.xz)
+        val distC = sdRect(rayPos.yz, dimen.yz)
+        return min(distA, min(distB, distC))
     }
 }

@@ -1,7 +1,9 @@
 package com.inasweaterpoorlyknit
 
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
+import kotlin.math.floor
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.math.tan
@@ -18,8 +20,11 @@ const val radiansPerDegree = PI / 180.0
 fun Double.degToRad(): Double = this * radiansPerDegree
 fun Float.degToRad(): Float = this * radiansPerDegree.toFloat()
 
+fun max(a: Float, b: Float) = if(a > b) { a } else { b }
+fun min(a: Float, b: Float) = if(a < b) { a } else { b }
 fun clamp(min: Double, max: Double, value: Double) = if (value < min) { min } else if (value > max) { max } else { value }
 fun lerp(x: Float, y: Float, a: Float) = x * (1.0f - a) + (y * a)
+fun mod_opengl(x: Float, y: Float) = x - (y * floor(x/y))
 
 // Just using Khronos' definition for smoothstep in GLSL
 // https://registry.khronos.org/OpenGL-Refpages/gl4/html/smoothstep.xhtml
@@ -56,6 +61,10 @@ class Vec2 {
     override fun toString() = "Vec2(x=$x, y=$y)"
 }
 
+fun max(v1: Vec2, v2: Vec2) = Vec2(max(v1.x, v2.x), max(v1.y, v2.y))
+fun min(v1: Vec2, v2: Vec2) = Vec2(min(v1.x, v2.x), min(v1.y, v2.y))
+fun abs(v: Vec2) = Vec2(abs(v.x), abs(v.y))
+
 data class dVec2(val x: Double, val y: Double) {
     constructor(v: Vec2): this(v.x.toDouble(), v.y.toDouble())
     operator fun minus(v: dVec2) = dVec2(x-v.x, y-v.y)
@@ -65,12 +74,17 @@ data class dVec2(val x: Double, val y: Double) {
 
 class Vec3 {
     val elements: FloatArray
-    constructor(fillVal: Float = 0f){ elements = FloatArray(3){fillVal} }
+    constructor(c: Float = 0f){ elements =  floatArrayOf(c, c, c) }
     constructor(x: Float, y: Float, z: Float) { elements = floatArrayOf(x, y, z) }
 
     val x inline get() = elements[0]
     val y inline get() = elements[1]
     val z inline get() = elements[2]
+
+    val xy inline get() = Vec2(x, y);
+    val yz inline get() = Vec2(y, z);
+    val xz inline get() = Vec2(x, z);
+
     val r inline get() = elements[0]
     val g inline get() = elements[1]
     val b inline get() = elements[2]
@@ -102,6 +116,8 @@ class Vec3 {
 }
 
 fun lerp(v1: Vec3, v2: Vec3, a: Float) = Vec3(lerp(v1.x, v2.x, a), lerp(v1.y, v2.y, a), lerp(v1.z, v2.z, a))
+// NOTE: mod as defined by OpenGL
+fun mod(v: Vec3, c: Float) = Vec3(mod_opengl(v.x, c), mod_opengl(v.y, c), mod_opengl(v.z, c))
 
 class Vec4 {
     val elements: FloatArray
