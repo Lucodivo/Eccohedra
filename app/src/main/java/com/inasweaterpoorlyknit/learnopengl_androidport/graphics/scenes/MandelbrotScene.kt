@@ -3,6 +3,7 @@ package com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes
 import android.content.Context
 import android.content.SharedPreferences
 import android.opengl.GLES32.*
+import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
@@ -13,7 +14,6 @@ import com.inasweaterpoorlyknit.dVec2
 import com.inasweaterpoorlyknit.Vec3
 import com.inasweaterpoorlyknit.learnopengl_androidport.*
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.*
-import com.inasweaterpoorlyknit.lerp
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -26,21 +26,17 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
     companion object {
         private object uniform {
             const val viewPortResolution = "viewPortResolution"
-            const val accentColors = "accentColors"
-            const val accentColor1 = "accentColor1"
-            const val accentColor2 = "accentColor2"
+            const val accentColor = "accentColor"
             const val zoom = "zoom"
-            const val maxIterations = "maxIterations"
             const val centerOffset = "centerOffset"
             const val rotationMat = "rotationMat"
         }
 
-        data class AccentColor(val name: String, val accentColor1: Vec3, val accentColor2: Vec3)
+        data class AccentColor(val name: String, val accentColor: Vec3)
         val colors = arrayOf(
-            AccentColor("🎭", Vec3(38f/255f, 82f/255f, 237f/255f), Vec3(228f/255f, 133f/255f, 0f/255f)), // blue/yellow
-            AccentColor("🏳️‍⚧️", Vec3(245f/255f, 171f/255f, 185f/255f), Vec3(91f/255f, 207f/255f, 250f/255f)), // pastel blue/pink
-            AccentColor("💗", Vec3(231f/255f, 90f/255f, 100f/255f), Vec3(168f/255f, 43f/255f, 204f/255f)), // pink/purple
-            AccentColor("🏜️", Vec3(0.9019608f, 0.59607846f, 0.0f), Vec3(0.81441176f, 0.11088236f, 0.26382354f)) // orange/yellow
+            AccentColor("🔴", Vec3(1.0f, 0.0f, 0.0f)), // blue/yellow
+            AccentColor("🟢", Vec3(0.0f, 1.0f, 0.0f)), // pastel blue/pink
+            AccentColor("🔵", Vec3(0.0f, 0.0f, 1.0f)), // pink/purple
         )
         const val defaultColorIndex = 0
 
@@ -51,10 +47,13 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
 
     private lateinit var mandelbrotProgram: Program
     private var quadVAO: Int = -1
+    private var frameBufferId: Int = -1
+    private var colorAttachmentId: Int = -1
 
     private var zoom = baseZoom
     private var centerOffset = dVec2(0.0, 0.0) //Vec2HighP(-1.70, 0.0)
     private var frameRotationMatrix = Mat2(1f)
+    private var inputSinceLastDraw = true
 
     // Motion event variables
     private var postPinchZoom_panFlushRequired = false
@@ -120,10 +119,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         mandelbrotProgram.use()
         glBindVertexArray(quadVAO)
         mandelbrotProgram.setUniform(uniform.viewPortResolution, windowWidth.toFloat(), windowHeight.toFloat())
-        mandelbrotProgram.setUniform(uniform.accentColor1, colors[accentColorsIndex].accentColor1)
-        mandelbrotProgram.setUniform(uniform.accentColor2, colors[accentColorsIndex].accentColor2)
-
-        mandelbrotProgram.setUniform(uniform.maxIterations, 1000)
+        mandelbrotProgram.setUniform(uniform.accentColor, colors[accentColorsIndex].accentColor)
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
@@ -134,6 +130,64 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         mandelbrotProgram.use()
         mandelbrotProgram.setUniform(uniform.viewPortResolution, width.toFloat(), height.toFloat())
 
+        setupDrawBuffer()
+    }
+
+    private fun setupDrawBuffer(){
+        val glInt = IntBuffer.allocate(1)
+        if(frameBufferId != -1) {
+            glInt.put(0, frameBufferId)
+            glDeleteFramebuffers(1, glInt)
+            frameBufferId = -1
+        }
+        if(colorAttachmentId != -1) {
+            glInt.put(0, colorAttachmentId)
+            glDeleteTextures(1, glInt)
+            colorAttachmentId = -1
+        }
+
+        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, glInt)
+        val originalDrawFramebuffer = glInt[0]
+        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, glInt)
+        val originalReadFramebuffer = glInt[0]
+        glGetIntegerv(GL_ACTIVE_TEXTURE, glInt)
+        val originalActiveTexture = glInt[0]
+
+        // creating frame buffer
+        glGenFramebuffers(1, glInt)
+        frameBufferId = glInt[0]
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBufferId)
+
+        // creating frame buffer color texture
+        glGenTextures(1, glInt)
+        colorAttachmentId = glInt[0]
+        // NOTE: Binding the texture to the GL_TEXTURE_2D target, means that
+        // NOTE: gl operations on the GL_TEXTURE_2D target will affect our texture
+        // NOTE: while it is remains bound to that target
+        glActiveTexture(GL_TEXTURE0)
+        glGetIntegerv(GL_TEXTURE_BINDING_2D, glInt)
+        val originalTexture = glInt[0]
+
+        glBindTexture(GL_TEXTURE_2D, colorAttachmentId)
+        glTexImage2D(GL_TEXTURE_2D, 0/*LoD*/, GL_RGB, windowWidth, windowHeight, 0/*border*/, GL_RGB, GL_UNSIGNED_BYTE, null)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+        // attach texture w/ color to frame buffer
+        glFramebufferTexture2D(GL_FRAMEBUFFER, // frame buffer we're targeting (draw, read, or both)
+            GL_COLOR_ATTACHMENT0, // type of attachment and index of attachment
+            GL_TEXTURE_2D, // type of texture
+            colorAttachmentId, // texture
+            0) // mipmap level
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            Log.e("Mandelbrot Scene Error: ", "Error creating framebuffer!")
+        }
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, originalDrawFramebuffer)
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, originalReadFramebuffer)
+        glBindTexture(GL_TEXTURE_2D, originalTexture) // re-bind original texture
+        glActiveTexture(originalActiveTexture)
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -144,17 +198,33 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         // This makes it a great candidate for preventing additional draws. However, we do not have control over swapping of buffers.
         // A potential way to optimize this would be to draw to a separate buffer that always gets copied to the display buffer but in which that separate buffer
         // is only updated when the changes noted above occur
+        val glInt = IntBuffer.allocate(1)
+        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, glInt)
+        val givenDrawFramebuffer = glInt[0]
+        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, glInt)
+        val givenReadFramebuffer = glInt[0]
 
-        val rotation = rotateGestureDetector.lifetimeRotation
+        if(inputSinceLastDraw) {
+            val rotation = rotateGestureDetector.lifetimeRotation
 
-        frameRotationMatrix = rotationMat2D(rotation)
+            frameRotationMatrix = rotationMat2D(rotation)
 
-        glClear(GL_COLOR_BUFFER_BIT)
+            glBindFramebuffer(GL_FRAMEBUFFER, frameBufferId)
 
-        mandelbrotProgram.setUniform(uniform.zoom, zoom.toFloat())
-        mandelbrotProgram.setUniform(uniform.centerOffset, centerOffset.x.toFloat(), centerOffset.y.toFloat())
-        mandelbrotProgram.setUniform(uniform.rotationMat, frameRotationMatrix)
-        glDrawElements(GL_TRIANGLES, frameBufferQuadNumVertices, GL_UNSIGNED_INT, 0) // offset in the EBO
+            glClear(GL_COLOR_BUFFER_BIT)
+
+            mandelbrotProgram.setUniform(uniform.zoom, zoom.toFloat())
+            mandelbrotProgram.setUniform(uniform.centerOffset, centerOffset.x.toFloat(), centerOffset.y.toFloat())
+            mandelbrotProgram.setUniform(uniform.rotationMat, frameRotationMatrix)
+            glDrawElements(GL_TRIANGLES, frameBufferQuadNumVertices, GL_UNSIGNED_INT, 0) // offset in the EBO
+
+            inputSinceLastDraw = false
+        }
+
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, frameBufferId)
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, givenDrawFramebuffer)
+        glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR)
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, givenReadFramebuffer)
     }
 
     private fun pan(deltaX: Double, deltaY: Double) {
@@ -173,6 +243,8 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        inputSinceLastDraw = true
+
         rotateGestureDetector.onTouchEvent(event)
         scaleGestureDetector.onTouchEvent(event)
         gestureDetector.onTouchEvent(event)
@@ -197,8 +269,8 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
                 if(postPinchZoom_panFlushRequired) {
                     // When one finger is pulled off of a pinch to zoom, that pinch to zoom event ends but the single finger event continues.
                     // The initial result causes a MotionEvent with a huge delta position. This aims to ignore this MotionEvent.
-                    postPinchZoom_panFlushRequired = false;
-                    return true;
+                    postPinchZoom_panFlushRequired = false
+                    return true
                 }
 
                 if(doubleTapInProgress) {
