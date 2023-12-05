@@ -45,10 +45,15 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         private const val baseZoom: Double = minZoom
     }
 
+    object frameBuffer {
+        var id = -1
+        var colorAttachmentId = -1
+        var width = -1
+        var height = -1
+    }
+
     private lateinit var mandelbrotProgram: Program
     private var quadVAO: Int = -1
-    private var frameBufferId: Int = -1
-    private var colorAttachmentId: Int = -1
 
     private var zoom = baseZoom
     private var centerOffset = dVec2(0.0, 0.0) //Vec2HighP(-1.70, 0.0)
@@ -124,6 +129,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
         super.onSurfaceChanged(gl, width, height)
+        inputSinceLastDraw = true;
 
         pixelsPerUnit = min(windowWidth, windowHeight).toDouble()
 
@@ -135,15 +141,15 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
 
     private fun setupDrawBuffer(){
         val glInt = IntBuffer.allocate(1)
-        if(frameBufferId != -1) {
-            glInt.put(0, frameBufferId)
+        if(frameBuffer.width != -1) {
+            if(frameBuffer.width == windowWidth && frameBuffer.height == windowHeight) {
+               return
+            }
+
+            glInt.put(0, frameBuffer.id)
             glDeleteFramebuffers(1, glInt)
-            frameBufferId = -1
-        }
-        if(colorAttachmentId != -1) {
-            glInt.put(0, colorAttachmentId)
+            glInt.put(0, frameBuffer.colorAttachmentId)
             glDeleteTextures(1, glInt)
-            colorAttachmentId = -1
         }
 
         glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, glInt)
@@ -155,12 +161,12 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
 
         // creating frame buffer
         glGenFramebuffers(1, glInt)
-        frameBufferId = glInt[0]
-        glBindFramebuffer(GL_FRAMEBUFFER, frameBufferId)
+        frameBuffer.id = glInt[0]
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.id)
 
         // creating frame buffer color texture
         glGenTextures(1, glInt)
-        colorAttachmentId = glInt[0]
+        frameBuffer.colorAttachmentId = glInt[0]
         // NOTE: Binding the texture to the GL_TEXTURE_2D target, means that
         // NOTE: gl operations on the GL_TEXTURE_2D target will affect our texture
         // NOTE: while it is remains bound to that target
@@ -168,7 +174,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         glGetIntegerv(GL_TEXTURE_BINDING_2D, glInt)
         val originalTexture = glInt[0]
 
-        glBindTexture(GL_TEXTURE_2D, colorAttachmentId)
+        glBindTexture(GL_TEXTURE_2D, frameBuffer.colorAttachmentId)
         glTexImage2D(GL_TEXTURE_2D, 0/*LoD*/, GL_RGB, windowWidth, windowHeight, 0/*border*/, GL_RGB, GL_UNSIGNED_BYTE, null)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -177,7 +183,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         glFramebufferTexture2D(GL_FRAMEBUFFER, // frame buffer we're targeting (draw, read, or both)
             GL_COLOR_ATTACHMENT0, // type of attachment and index of attachment
             GL_TEXTURE_2D, // type of texture
-            colorAttachmentId, // texture
+            frameBuffer.colorAttachmentId, // texture
             0) // mipmap level
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -209,7 +215,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
 
             frameRotationMatrix = rotationMat2D(rotation)
 
-            glBindFramebuffer(GL_FRAMEBUFFER, frameBufferId)
+            glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.id)
 
             glClear(GL_COLOR_BUFFER_BIT)
 
@@ -221,7 +227,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
             inputSinceLastDraw = false
         }
 
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, frameBufferId)
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, frameBuffer.id)
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, givenDrawFramebuffer)
         glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR)
         glBindFramebuffer(GL_READ_FRAMEBUFFER, givenReadFramebuffer)

@@ -9,7 +9,8 @@ uniform vec2 centerOffset;
 
 in vec2 pos;
 
-const int maxIterations = 300;
+const int maxIterations = 1000;
+const vec3 baseColor = vec3(1.0, 1.0, 1.0);
 
 void main() {
     int iterations = 0;
@@ -28,6 +29,8 @@ void main() {
         iterations++;
     }
 
-    float shade = float(maxIterations - iterations) / float(maxIterations);
-    FragColor = vec4(accentColor * shade, 1.0);
+    float iterOverMax = float(iterations) / float(maxIterations);
+    vec3 outsideSetColor = mix(baseColor, accentColor, iterOverMax);
+    float mandelbrotSetNullifier = 1.0 - floor(iterOverMax);
+    FragColor = vec4(outsideSetColor * mandelbrotSetNullifier, 1.0);
 }

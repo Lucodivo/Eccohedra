@@ -41,7 +41,7 @@ class SceneListDetailViewModel : ViewModel() {
     init {
         _presentationMode.value = ListDetailPresentationMode.LIST
 
-        debugScene(::InfiniteCapsulesScene)
+        //debugScene(::InfiniteCapsulesScene)
         //debugNativeScene(BlueSceneNativeActivity::class.java)
     }
 
