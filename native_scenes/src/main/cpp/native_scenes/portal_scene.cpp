@@ -41,16 +41,10 @@ struct PlayerPosition {
   }
 };
 
-enum PortalState {
-  PortalState_FacingCamera = 1 << 0,
-  PortalState_InFocus = 1 << 1
-};
-
 struct Portal {
-  vec3 normal;
+  vec2 normal;
   vec3 centerPosition;
   vec2 dimens;
-  b32 stateFlags; // PortalState flags
   u32 stencilMask;
   u32 sceneDestination;
 };
@@ -102,7 +96,6 @@ struct World
   ShaderProgram shaders[16];
   ShaderProgram skyboxShader;
   ShaderProgram stencilShader;
-  GLuint portalQueryObjects[MAX_PORTALS];
   CommonVertAtts commonVertAtts;
   u32 shaderCount;
 };
@@ -110,24 +103,25 @@ struct World
 const f32 near = 0.1f;
 const f32 far = 200.0f;
 
-void drawScene(World* world, const u32 sceneIndex, u32 stencilMask = 0x00);
-void drawPortals(World* world, const u32 sceneIndex);
+void drawScene(World* world, const u32 sceneIndex, u32 stencilMask);
+void drawSceneWithPortals(World* world, u32 sceneIndex, u32 stencilMask, u32 portalsDepth);
 
 void addPortal(World* world, u32 homeSceneIndex,
-               const vec3& centerPosition, const vec3& normal, const vec2& dimens,
-               const u32 stencilMask, const u32 destinationSceneIndex) {
-  assert(stencilMask <= MAX_STENCIL_VALUE && stencilMask > 0);
+               const vec3& centerPosition, const vec2& normal, const vec2& dimens,
+               const u32 destinationSceneIndex) {
+  func_persist u32 incrementingPortalStencilMask = 0;
+  assert(incrementingPortalStencilMask < 8); // number of bits in stencil
 
   Scene* homeScene = world->scenes + homeSceneIndex;
   assert(ArrayCount(homeScene->portals) > homeScene->portalCount);
 
   Portal portal{};
-  portal.stencilMask = stencilMask;
+  portal.stencilMask = 1 << incrementingPortalStencilMask;
+  incrementingPortalStencilMask++;
   portal.dimens = dimens;
   portal.centerPosition = centerPosition;
   portal.normal = normal;
   portal.sceneDestination = destinationSceneIndex;
-  portal.stateFlags = 0;
 
   homeScene->portals[homeScene->portalCount++] = portal;
 }
@@ -196,28 +190,23 @@ u32 addNewModel(World* world, const char* modelFileLoc) {
   return modelIndex;
 }
 
-mat4 calcBoxStencilModelMatFromPortalModelMat(const mat4& portalModelMat) {
-  return portalModelMat * scale_mat4(vec3{1.0f, PORTAL_BACKING_BOX_DEPTH, 1.0f}) * translate_mat4({0.0f, 0.5f, 0.0f});
-}
-
 void drawPortal(World* world, Portal* portal) {
+  vec2 portalToPlayer = world->player.pos.xyz.xy - portal->centerPosition.xy;
+  bool portalMightBeVisible = similarDirection(portalToPlayer, portal->normal);
+  if(!portalMightBeVisible) { return; }
+  vec2 portalNormalPerp = vec2{portal->normal[1], -portal->normal[0]};
+  f32 halfPortalWidth = portal->dimens[0] * 0.5f;
+  bool portalMightBeInFocus = abs(dot(portalToPlayer, portalNormalPerp)) < halfPortalWidth;
+
   glUseProgram(world->stencilShader.id);
 
-  // Stencil function example
-  // GL_LEQUAL: Passes if ( ref & mask ) <= ( stencil & mask )
-  glStencilFunc(GL_EQUAL, // func
-                0xFF, // ref
-                0x00); // mask // Only draw portals where the stencil is cleared
-  glStencilOp(GL_KEEP, // action when stencil fails
-              GL_KEEP, // action when stencil passes but depth fails
-              GL_REPLACE); // action when both stencil and depth pass
-
-  mat4 portalModelMat = quadModelMatrix(portal->centerPosition, portal->normal, portal->dimens[0], portal->dimens[1]);
-  VertexAtt* portalVertexAtt = world->commonVertAtts.quad(false);
-  if(flagIsSet(portal->stateFlags, PortalState_InFocus)) {
-    portalModelMat = calcBoxStencilModelMatFromPortalModelMat(portalModelMat);
-    portalVertexAtt = world->commonVertAtts.cube(true, true);
-  }
+  mat4 portalModelMat = quadModelMatrix(portal->centerPosition, Vec3(portal->normal, 0.0f), portal->dimens[0], portal->dimens[1]);
+  portalModelMat = portalMightBeInFocus ?
+      portalModelMat * scale_mat4(vec3{1.0f, PORTAL_BACKING_BOX_DEPTH, 1.0f}) * translate_mat4({0.0f, 0.5f, 0.0f}) :
+      portalModelMat;
+  VertexAtt* portalVertexAtt = portalMightBeInFocus ?
+      world->commonVertAtts.cube(true, true) :
+      world->commonVertAtts.quad(false);
 
   glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
   glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &portalModelMat);
@@ -227,25 +216,19 @@ void drawPortal(World* world, Portal* portal) {
   drawTriangles(portalVertexAtt);
 }
 
-void drawPortals(World* world, const u32 sceneIndex){
+void drawPortals(World* world, const u32 sceneIndex, const u32 stencilMask, const u32 portalsDepth){
+
+  if(portalsDepth <= 0) { return; }
 
   Scene* scene = world->scenes + sceneIndex;
 
+  glStencilFunc(GL_EQUAL, 0xFF, stencilMask);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
   for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
     Portal* portal = scene->portals + portalIndex;
-    // don't draw portals if portal isn't visible
-    // TODO: better visibility tests besides facing camera?
-    if(!flagIsSet(portal->stateFlags, PortalState_FacingCamera)) { continue; }
-
-    // begin occlusion query
-    glBeginQuery(GL_ANY_SAMPLES_PASSED, world->portalQueryObjects[portalIndex]);
     drawPortal(world, portal);
-    // end occlusion query
-    glEndQuery(GL_ANY_SAMPLES_PASSED);
   }
-
-  // turn off writes to the stencil
-  glStencilMask(0x00);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
   // Draw portal worlds
   // We need to clear disable depth values so distant objects through the "portals" still get drawn
@@ -253,12 +236,9 @@ void drawPortals(World* world, const u32 sceneIndex){
   glClear(GL_DEPTH_BUFFER_BIT);
 
   for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
-    Portal portal = scene->portals[portalIndex];
-    // don't draw scene if portal isn't visible
-    // TODO: We need to develop and test an algorithm thar more accurately tells us whether a particular portal is in sight of the camera
-    if(!flagIsSet(portal.stateFlags, PortalState_FacingCamera)) { continue; }
+    const Portal& portal = scene->portals[portalIndex];
 
-    vec3 portalNormal_viewSpace = (world->UBOs.projectionViewModelUbo.view * Vec4(-portal.normal, 0.0f)).xyz;
+    vec3 portalNormal_viewSpace = (world->UBOs.projectionViewModelUbo.view * Vec4(-portal.normal, 0.0f, 0.0f)).xyz;
     vec3 portalCenterPos_viewSpace = (world->UBOs.projectionViewModelUbo.view * Vec4(portal.centerPosition, 1.0f)).xyz;
     mat4 portalProjectionMat = world->display.width > world->display.height ?
                                obliquePerspective_fovHorz(world->display.fov, world->display.aspect, near, far, portalNormal_viewSpace, portalCenterPos_viewSpace) :
@@ -269,15 +249,18 @@ void drawPortals(World* world, const u32 sceneIndex){
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // Conditional render only if the any samples passed while drawing the portal
+    // TODO: check a dirty flag before rendering
     drawScene(world, portal.sceneDestination, portal.stencilMask);
+  }
+
+  for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
+    const Portal& portal = scene->portals[portalIndex];
+    drawPortals(world, portal.sceneDestination, portal.stencilMask, portalsDepth - 1);
   }
 }
 
 void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
-  glStencilFunc(
-          GL_EQUAL, // test function applied to stored stencil value and ref [ex: discard when stored value GL_GREATER ref]
-          stencilMask, // ref
-          0xFF); // enable which bits in reference and stored value are compared
+  glStencilFunc( GL_EQUAL, 0xFF, stencilMask);
 
   Scene* scene = world->scenes + sceneIndex;
 
@@ -356,12 +339,12 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
   }
 }
 
-void drawSceneWithPortals(World* world)
+void drawSceneWithPortals(World* world, u32 sceneIndex, u32 stencilMask, u32 portalsDepth)
 {
   // draw scene
-  drawScene(world, world->currentSceneIndex);
+  drawScene(world, sceneIndex, stencilMask);
   // draw portals
-  drawPortals(world, world->currentSceneIndex);
+  drawPortals(world, world->currentSceneIndex, stencilMask, portalsDepth);
 }
 
 void updateEntities(World* world) {
@@ -378,50 +361,6 @@ void updateEntities(World* world) {
     }
   }
 
-  Scene* currentScene = &world->scenes[world->currentSceneIndex];
-  vec3 playerViewPosition = world->player.pos.xyz;
-  b32 portalEntered = false;
-  u32 portalSceneDestination;
-  auto updatePortalsForScene = [playerViewPosition, &portalEntered, &portalSceneDestination](Scene* scene) {
-    for(u32 portalIndex = 0; portalIndex < scene->portalCount; ++portalIndex) {
-      Portal* portal = scene->portals + portalIndex;
-
-      vec3 portalCenterToPlayerView = playerViewPosition - portal->centerPosition;
-      b32 portalFacingCamera = similarDirection(portal->normal, playerViewPosition - portal->centerPosition) ? PortalState_FacingCamera : false;
-
-      b32 portalWasInFocus = flagIsSet(portal->stateFlags, PortalState_InFocus);
-      vec3 viewPositionPerpendicularToPortal = perpendicularTo(portalCenterToPlayerView, portal->normal);
-      f32 widthDistFromCenter = magnitude(viewPositionPerpendicularToPortal.xy);
-      f32 heightDistFromCenter = viewPositionPerpendicularToPortal[2];
-      b32 viewerInsideDimens = widthDistFromCenter < (portal->dimens[0]* 0.5f) && heightDistFromCenter < (portal->dimens[1]* 0.5f);
-
-      b32 portalInFocus = (portalFacingCamera && viewerInsideDimens) ? PortalState_InFocus : false;
-      b32 insidePortal = portalWasInFocus && !portalFacingCamera; // portal was in focus and now we're on the other side
-
-      overrideFlags(&portal->stateFlags, portalFacingCamera | portalInFocus);
-
-      if(insidePortal){
-        portalEntered = true;
-        portalSceneDestination = portal->sceneDestination;
-        break;
-      }
-    }
-  };
-
-  // update portals for current scene
-  updatePortalsForScene(currentScene);
-  // if portal was entered, we need to update portals for new scene
-  if(portalEntered) {
-    // clear portals for old scene
-    for(u32 portalIndex = 0; portalIndex < currentScene->portalCount; ++portalIndex) {
-      clearFlags(&currentScene->portals[portalIndex].stateFlags); // clear all flags of previous currentScene
-    }
-
-    world->currentSceneIndex = portalSceneDestination;
-
-    // update portals for new scene
-    updatePortalsForScene(world->scenes + world->currentSceneIndex);
-  }
 }
 
 void cleanupScene(Scene* scene) {
@@ -451,43 +390,40 @@ void cleanupWorld(World* world) {
   deleteShaderPrograms(&world->stencilShader, 1);
   deleteShaderPrograms(&world->skyboxShader, 1);
 
-  glDeleteQueries(ArrayCount(world->portalQueryObjects), world->portalQueryObjects);
-
   *world = {0};
 }
 
-// TODO: Cleanup the way the save files are organized.
 void loadWorld(World* world) {
   LOGI("Loading native Portal Scene...");
 
-  WorldInfo saveFormat = originalWorld();
+  WorldInfo worldInfo = originalWorld();
 
-  size_t sceneCount = saveFormat.scenes.size();
-  size_t modelCount = saveFormat.models.size();
-  size_t shaderCount = saveFormat.shaders.size();
+  size_t sceneCount = worldInfo.scenes.size();
+  size_t modelCount = worldInfo.models.size();
+  size_t shaderCount = worldInfo.shaders.size();
 
   u32 worldShaderIndices[ArrayCount(world->shaders)] = {};
   { // shaders
     for(u32 shaderIndex = 0; shaderIndex < shaderCount; shaderIndex++) {
-      ShaderInfo shaderSaveFormat = saveFormat.shaders[shaderIndex];
-      assert(shaderSaveFormat.index < shaderCount);
+      ShaderInfo shaderInfo = worldInfo.shaders[shaderIndex];
+      assert(shaderInfo.index < shaderCount);
 
-      const char* noiseTexture = shaderSaveFormat.noiseTextureName.empty() ? nullptr : shaderSaveFormat.noiseTextureName.c_str();
-      worldShaderIndices[shaderSaveFormat.index] = addNewShader(world, shaderSaveFormat.vertexName.c_str(), shaderSaveFormat.fragmentName.c_str(), noiseTexture);
+      const char* noiseTexture = shaderInfo.noiseTextureName.empty() ? nullptr : shaderInfo.noiseTextureName.c_str();
+      worldShaderIndices[shaderInfo.index] = addNewShader(world, shaderInfo.vertexName.c_str(), shaderInfo.fragmentName.c_str(), noiseTexture);
     }
   }
 
   u32 worldModelIndices[ArrayCount(world->models)] = {};
   { // models
     for(u32 modelIndex = 0; modelIndex < modelCount; modelIndex++) {
-      ModelInfo modelSaveFormat = saveFormat.models[modelIndex];
-      assert(modelSaveFormat.index < modelCount);
-      worldModelIndices[modelSaveFormat.index] = addNewModel(world, modelSaveFormat.fileName.c_str());
+      ModelInfo modelInfo = worldInfo.models[modelIndex];
+      assert(modelInfo.index < modelCount);
+      worldModelIndices[modelInfo.index] = addNewModel(world, modelInfo.fileName.c_str());
 
-      Model* model = world->models + worldModelIndices[modelSaveFormat.index];
+      Model* model = world->models + worldModelIndices[modelInfo.index];
       for(u32 meshIndex = 0; meshIndex < model->meshCount; meshIndex++) {
         Mesh* mesh = model->meshes + meshIndex;
-        mesh->textureData.baseColor = modelSaveFormat.baseColor;
+        mesh->textureData.baseColor = modelInfo.baseColor;
       }
     }
   }
@@ -495,43 +431,43 @@ void loadWorld(World* world) {
   u32 worldSceneIndices[ArrayCount(world->scenes)] = {};
   { // scenes
     for(u32 sceneIndex = 0; sceneIndex < sceneCount; sceneIndex++) {
-      SceneInfo sceneSaveFormat = saveFormat.scenes[sceneIndex];
-      size_t entityCount = sceneSaveFormat.entities.size();
+      SceneInfo sceneInfo = worldInfo.scenes[sceneIndex];
+      size_t entityCount = sceneInfo.entities.size();
 
-      assert(sceneSaveFormat.index < sceneCount);
-      worldSceneIndices[sceneSaveFormat.index] = addNewScene(world, sceneSaveFormat.title.c_str());
-      Scene* scene = world->scenes + worldSceneIndices[sceneSaveFormat.index];
-      scene->title = sceneSaveFormat.title;
+      assert(sceneInfo.index < sceneCount);
+      worldSceneIndices[sceneInfo.index] = addNewScene(world, sceneInfo.title.c_str());
+      Scene* scene = world->scenes + worldSceneIndices[sceneInfo.index];
+      scene->title = sceneInfo.title;
 
-      if(!sceneSaveFormat.skyboxFileName.empty()) { // if we have a skybox...
-        scene->skyboxFileName = sceneSaveFormat.skyboxFileName;
+      if(!sceneInfo.skyboxFileName.empty()) { // if we have a skybox...
+        scene->skyboxFileName = sceneInfo.skyboxFileName;
         loadCubeMapTexture(scene->skyboxFileName.c_str(), &scene->skyboxTexture);
       } else {
         scene->skyboxTexture = TEXTURE_ID_NO_TEXTURE;
       }
 
       for(u32 entityIndex = 0; entityIndex < entityCount; entityIndex++) {
-        Entity entitySaveFormat = sceneSaveFormat.entities[entityIndex];
-        addNewEntity(world, worldSceneIndices[sceneSaveFormat.index], worldModelIndices[entitySaveFormat.modelIndex],
-                     entitySaveFormat.posXYZ, entitySaveFormat.scaleXYZ, entitySaveFormat.yaw,
-                     worldShaderIndices[entitySaveFormat.shaderIndex], entitySaveFormat.flags);
+        Entity entity = sceneInfo.entities[entityIndex];
+        addNewEntity(world, worldSceneIndices[sceneInfo.index], worldModelIndices[entity.modelIndex],
+                     entity.posXYZ, entity.scaleXYZ, entity.yaw,
+                     worldShaderIndices[entity.shaderIndex], entity.flags);
       }
 
-      size_t dirLightCount = sceneSaveFormat.directionalLights.size();
+      size_t dirLightCount = sceneInfo.directionalLights.size();
       for(u32 dirLightIndex = 0; dirLightIndex < dirLightCount; dirLightIndex++) {
-        Light dirLightSaveFormat = sceneSaveFormat.directionalLights[dirLightIndex];
-        addNewDirectionalLight(world, worldSceneIndices[sceneSaveFormat.index], dirLightSaveFormat.colorAndPower, dirLightSaveFormat.dirToSource);
+        Light light = sceneInfo.directionalLights[dirLightIndex];
+        addNewDirectionalLight(world, worldSceneIndices[sceneInfo.index], light.colorAndPower, light.dirToSource);
       }
 
-      size_t posLightCount = sceneSaveFormat.positionalLights.size();
+      size_t posLightCount = sceneInfo.positionalLights.size();
       for(u32 posLightIndex = 0; posLightIndex < posLightCount; posLightIndex++) {
-        Light posLightSaveFormat = sceneSaveFormat.positionalLights[posLightIndex];
-        addNewPositionalLight(world, worldSceneIndices[sceneSaveFormat.index], posLightSaveFormat.colorAndPower, posLightSaveFormat.pos);
+        Light light = sceneInfo.positionalLights[posLightIndex];
+        addNewPositionalLight(world, worldSceneIndices[sceneInfo.index], light.colorAndPower, light.pos);
       }
 
-      if(sceneSaveFormat.ambientLightColorAndPower[3] != 0.0f) {
-        adjustAmbientLight(world, worldSceneIndices[sceneSaveFormat.index],
-                           sceneSaveFormat.ambientLightColorAndPower);
+      if(sceneInfo.ambientLightColorAndPower[3] != 0.0f) {
+        adjustAmbientLight(world, worldSceneIndices[sceneInfo.index],
+                           sceneInfo.ambientLightColorAndPower);
       }
     }
 
@@ -539,20 +475,20 @@ void loadWorld(World* world) {
     // the other worlds to have been initialized
     for(u32 sceneIndex = 0; sceneIndex < sceneCount; sceneIndex++)
     {
-      SceneInfo sceneSaveFormat = saveFormat.scenes[sceneIndex];
-      size_t portalCount = sceneSaveFormat.portals.size();
+      SceneInfo sceneInfo = worldInfo.scenes[sceneIndex];
+      size_t portalCount = sceneInfo.portals.size();
       assert(portalCount <= MAX_PORTALS);
       for (u32 portalIndex = 0; portalIndex < portalCount; portalIndex++)
       {
-        PortalInfo portalSaveFormat = sceneSaveFormat.portals[portalIndex];
-        addPortal(world, worldSceneIndices[sceneSaveFormat.index], portalSaveFormat.centerXYZ, portalSaveFormat.normalXYZ, portalSaveFormat.dimensXY,
-                  portalIndex + 1, worldSceneIndices[portalSaveFormat.destination]);
+        PortalInfo portalInfo = sceneInfo.portals[portalIndex];
+        addPortal(world, worldSceneIndices[sceneInfo.index], portalInfo.centerXYZ, portalInfo.normalXY, portalInfo.dimensXY,
+                  worldSceneIndices[portalInfo.destination]);
       }
     }
   }
 
-  assert(saveFormat.startingSceneIndex < sceneCount);
-  world->currentSceneIndex = worldSceneIndices[saveFormat.startingSceneIndex];
+  assert(worldInfo.startingSceneIndex < sceneCount);
+  world->currentSceneIndex = worldSceneIndices[worldInfo.startingSceneIndex];
 
   return;
 }
@@ -571,13 +507,12 @@ void updateSceneWindow(World* world, u32 width, u32 height) {
 }
 
 void initPortalScene(World* world) {
-  glGenQueries(ArrayCount(world->portalQueryObjects), world->portalQueryObjects);
-
   initCommonVertexAtt(&world->commonVertAtts);
 
   world->player.setPolarPos(-PiOverTwo32, 12.0f);
 
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+  glClearStencil(0x00);
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LEQUAL);
   glLineWidth(3.0f);
@@ -628,8 +563,8 @@ void initPortalScene(World* world) {
     This collision detection is hard baked for the current state of the worlds as of it's creation.
 
 */
-PlayerPosition collisionDetectionAndCorrection(World* world, PlayerPosition desiredPosition) {
-  PlayerPosition& startingPlayerPos = world->player;
+void collisionDetectionAndCorrection(World* world, PlayerPosition desiredPosition) {
+  PlayerPosition startingPlayerPos = world->player;
   PlayerPosition correctedPlayerPos = desiredPosition;
   if(world->currentSceneIndex == 0) { // if gate scene...
     // TODO: check for collisions with the gate's columns
@@ -660,7 +595,7 @@ PlayerPosition collisionDetectionAndCorrection(World* world, PlayerPosition desi
     for(u32 i = 0; i < scene.portalCount; i++) {
       Portal& portal = scene.portals[i];
       // this logic assumes the portals normal never points even partially in the z dimension
-      vec3 portalForward = portal.normal; // forward == opening
+      vec3 portalForward = Vec3(portal.normal, 0.0f); // forward == opening
       vec3 portalRight = cross(portalForward, vec3{0.f, 0.f, 1.f});
       vec3 deltaFromCenterLeftRight = (0.5f * portalWidth * portalRight);
       // check if the old position was not in front of the portal
@@ -693,7 +628,22 @@ PlayerPosition collisionDetectionAndCorrection(World* world, PlayerPosition desi
       }
     }
   }
-  return correctedPlayerPos;
+  world->player = correctedPlayerPos;
+
+  // check portal collision
+  Scene* currentScene = &world->scenes[world->currentSceneIndex];
+  vec2 playerPosition = world->player.pos.xyz.xy;
+  for(u32 portalIndex = 0; portalIndex < currentScene->portalCount; ++portalIndex) {
+    Portal* portal = currentScene->portals + portalIndex;
+
+    vec2 portalNormalPerp = vec2{portal->normal[1], -portal->normal[0]};
+    vec2 portalCenterToEdgeDelta = (0.5f * portal->dimens[0] * portalNormalPerp);
+    vec2 portalEdge1 = (portal->centerPosition.xy + portalCenterToEdgeDelta);
+    vec2 portalEdge2 = (portal->centerPosition.xy - portalCenterToEdgeDelta);
+    if(lineSegmentsIntersection(startingPlayerPos.pos.xyz.xy, playerPosition, portalEdge1, portalEdge2, nullptr)) {
+      world->currentSceneIndex = portal->sceneDestination;
+    }
+  }
 }
 
 void updatePortalScene(World* world, SceneInput input) {
@@ -753,8 +703,7 @@ void updatePortalScene(World* world, SceneInput input) {
   if(newTheta < 0) { newTheta += Tau32; }
 
   PlayerPosition desiredPosition = PlayerPosition::fromPolar(newTheta, newRadius);
-  PlayerPosition correctedPosition = collisionDetectionAndCorrection(world, desiredPosition);
-  world->player = correctedPosition;
+  collisionDetectionAndCorrection(world, desiredPosition);
 
   updateEntities(world);
 }
@@ -768,9 +717,6 @@ void drawPortalScene(World* world) {
 
   // draw
   glStencilMask(0xFF);
-  glStencilFunc(GL_ALWAYS, // stencil function always passes
-                0x00, // reference
-                0x00); // mask
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
   // universal matrices in UBO
@@ -780,7 +726,7 @@ void drawPortalScene(World* world) {
   glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.fragUboId);
   glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(FragUBO), &world->UBOs.fragUbo);
 
-  drawSceneWithPortals(world);
+  drawSceneWithPortals(world, world->currentSceneIndex, 0x00, 1);
 }
 
 void deinitPortalScene(World* world) {

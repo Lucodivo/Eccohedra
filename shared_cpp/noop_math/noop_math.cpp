@@ -132,6 +132,34 @@ namespace noop {
     return a - ((a + b) * t);
   }
 
+  bool lineSegmentsIntersection(vec2 a1, vec2 a2, vec2 b1, vec2 b2, vec2* intersection) {
+    // From Andre Lamothe's Tricks of the Windows Game Programming Gurus
+    vec2 a1toa2 = a2 - a1;
+    vec2 b1tob2 = b2 - b1;
+
+    float s, t;
+    s = (-a1toa2[1] * (a1[0] - b1[0]) + a1toa2[0] * (a1[1] - b1[1])) / (-b1tob2[0] * a1toa2[1] + a1toa2[0] * b1tob2[1]);
+    t = ( b1tob2[0] * (a1[1] - b1[1]) - b1tob2[1] * (a1[0] - b1[0])) / (-b1tob2[0] * a1toa2[1] + a1toa2[0] * b1tob2[1]);
+
+    if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
+    {
+      // Collision detected
+      if(intersection != nullptr) {
+        intersection->values[0] = a1[0] + (t * a1toa2[0]);
+        intersection->values[1] = a1[1] + (t * a1toa2[1]);
+      }
+      return true;
+    }
+
+    return false; // No collision
+  }
+
+  f32 determinant(mat2 m) {
+    // | a b |
+    // | c d | = ad - bc
+    return m[0]*m[3] - m[2]*m[1];
+  }
+
 // vec3
   vec3 Vec3(vec2 xy, f32 z) {
     return vec3{xy[0], xy[1], z};
@@ -260,6 +288,10 @@ namespace noop {
   }
 
 // vec4
+  vec4 Vec4(vec2 xy, f32 z,  f32 w) {
+    return vec4{xy[0], xy[1], z, w};
+  }
+
   vec4 Vec4(vec3 xyz, f32 w) {
     return vec4{xyz[0], xyz[1], xyz[2], w};
   }

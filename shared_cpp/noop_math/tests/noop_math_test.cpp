@@ -8,6 +8,45 @@
 #define sin45 0.70710678f
 #define sin60 0.86602540f
 
+TEST(NoopMath, lineSegmentIntersection_origin) {
+  vec2 a1{ -1.0f, 0.0f };
+  vec2 a2{ 1.0f, 0.0f };
+  vec2 b1{ 0.0f, -1.0f };
+  vec2 b2{ 0.0f, 1.0f };
+  
+  vec2 expectedIntersection{0.0f, 0.0f};
+  vec2 actualIntersection;
+  bool intersected = lineSegmentsIntersection(a1, a2, b1, b2, &actualIntersection);
+
+  ASSERT_TRUE(intersected);
+  ASSERT_TRUE(actualIntersection == expectedIntersection);
+}
+
+TEST(NoopMath, lineSegmentIntersection_arbitrary) {
+  vec2 a1{ 0.0f, -10.0f };
+  vec2 a2{ 10.0f, 0.0f };
+  vec2 b1{ 0.0f, 0.0f };
+  vec2 b2{ 10.0f, -10.0f };
+  
+  vec2 expectedIntersection{5.0f, -5.0f};
+  vec2 actualIntersection;
+  bool intersected = lineSegmentsIntersection(a1, a2, b1, b2, &actualIntersection);
+
+  ASSERT_TRUE(intersected);
+  ASSERT_TRUE(actualIntersection == expectedIntersection);
+}
+
+TEST(NoopMath, lineSegmentIntersection_miss) {
+  vec2 a1{ -1.0f, 0.0f };
+  vec2 a2{ 1.0f, 0.0f };
+  vec2 b1{ 2.0f, -1.0f };
+  vec2 b2{ 2.0f, 1.0f };
+  
+  vec2 actualIntersection;
+  bool intersected = lineSegmentsIntersection(a1, a2, b1, b2, &actualIntersection);
+
+  ASSERT_FALSE(intersected);
+}
 
 TEST(NoopMath, translateTest) {
   vec3 translation{12.8f, 25.6f, 51.2f};

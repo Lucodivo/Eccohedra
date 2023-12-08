@@ -167,6 +167,8 @@ namespace noop {
 
   vec2 lerp(const vec2 &a, const vec2 &b, f32 t);
 
+  bool lineSegmentsIntersection(vec2 A1, vec2 A2, vec2 B1, vec2 B2, vec2* intersection = nullptr);
+
 // == vec3 ==
   vec3 Vec3(vec2 xy, f32 z);
 
@@ -221,6 +223,8 @@ namespace noop {
 
 // vec4
   b32 operator==(const vec4 &v1, const vec4 &v2);
+
+  vec4 Vec4(vec2 xy, f32 z,  f32 w);
 
   vec4 Vec4(vec3 xyz, f32 w);
 
@@ -328,6 +332,8 @@ namespace noop {
   mat2 transpose(const mat2 &A);
 
   mat2 rotate(f32 radians);
+
+  f32 determinant(mat2 m);
 
 // mat3
   b32 operator==(const mat3 &A, const mat3 &B);

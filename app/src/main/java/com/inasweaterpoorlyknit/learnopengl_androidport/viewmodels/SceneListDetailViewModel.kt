@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.GateNativeActivity
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.Scene
-import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.TestNativeActivity
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.InfiniteCapsulesScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.InfiniteCubeScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MandelbrotScene

@@ -18,7 +18,7 @@ struct Entity {
 
 struct PortalInfo {
   u32 destination;
-  vec3 normalXYZ;
+  vec2 normalXY;
   vec3 centerXYZ;
   vec2 dimensXY;
 };
@@ -144,25 +144,25 @@ WorldInfo originalWorld() {
   gateScene.portals.reserve(4);
   gateScene.portals.push_back({
     1,
-    vec3{0, -1, 0},
+    vec2{0, -1},
     vec3{0, -1.5, 1.5},
     vec2{3, 3}
   });
   gateScene.portals.push_back({
       2,
-      vec3{1, 0, 0},
+      vec2{1, 0},
       vec3{1.5, 0, 1.5},
       vec2{3, 3}
   });
   gateScene.portals.push_back({
       3,
-      vec3{-1, 0, 0},
+      vec2{-1, 0},
       vec3{-1.5, 0, 1.5},
       vec2{3, 3}
   });
   gateScene.portals.push_back({
       4,
-      vec3{0, 1, 0},
+      vec2{0, 1},
       vec3{0, 1.5, 1.5},
       vec2{3, 3}
   });
@@ -198,7 +198,7 @@ WorldInfo originalWorld() {
   tetrahedronScene.portals.reserve(1);
   tetrahedronScene.portals.push_back({
       0,
-      vec3{0, 1, 0},
+      vec2{0, 1},
       vec3{0, -1.5, 1.5},
       vec2{3, 3}
   });
@@ -233,7 +233,7 @@ WorldInfo originalWorld() {
   octahedronScene.portals.reserve(1);
   octahedronScene.portals.push_back({
       0,
-      vec3{-1, 0, 0},
+      vec2{-1, 0},
       vec3{1.5, 0, 1.5},
       vec2{3, 3}
   });
@@ -268,7 +268,7 @@ WorldInfo originalWorld() {
   dodecahedronScene.portals.reserve(1);
   dodecahedronScene.portals.push_back({
       0,
-      vec3{1, 0, 0},
+      vec2{1.0, 0},
       vec3{-1.5, 0, 1.5},
       vec2{3, 3}
   });
@@ -303,7 +303,7 @@ WorldInfo originalWorld() {
   icosahedronScene.portals.reserve(1);
   icosahedronScene.portals.push_back({
       0,
-      vec3{0, -1, 0},
+      vec2{0, -1},
       vec3{0, 1.5, 1.5},
       vec2{3, 3}
   });
