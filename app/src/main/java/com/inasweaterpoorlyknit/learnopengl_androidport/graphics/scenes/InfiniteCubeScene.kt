@@ -4,9 +4,11 @@ import android.content.Context
 import android.opengl.GLES30.*
 import android.view.GestureDetector
 import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import androidx.core.math.MathUtils.clamp
 import com.inasweaterpoorlyknit.Mat3
 import com.inasweaterpoorlyknit.Mat4
+import com.inasweaterpoorlyknit.Vec2
 import com.inasweaterpoorlyknit.Vec3
 import com.inasweaterpoorlyknit.degToRad
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
@@ -16,6 +18,7 @@ import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 import kotlin.math.abs
 import kotlin.math.cos
+import kotlin.math.pow
 import kotlin.math.sin
 
 // NOTE: DS means deciseconds
@@ -34,7 +37,8 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
         private const val zNear = .1
         private const val zFar = 100.0
 
-        private const val cameraForwardPanScaleFactor = .005
+        private const val cameraForwardPanScaleFactor = .002
+        private const val cameraForwardPinchScaleFactor = .002
         private const val panRotateScaleFactor = .001
 
         private const val rotationDragPercent = .98f
@@ -79,6 +83,10 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
     private var rotationVelocity = 0f
     private var cameraForwardVelocity = 0.0
 
+    private var pinchInProgress = false
+    private var postPinchZoom_panFlushRequired = false
+    private var prevScaleGestureFocus: Vec2 = Vec2(0f, 0f)
+
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         var firstEventSinceDown = true
 
@@ -93,7 +101,7 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
         }
 
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-            if(firstEventSinceDown) { // first event can contain distances that are jarringly large
+            if(firstEventSinceDown) { // first event can contain distances that are essentially garbage
                 firstEventSinceDown = false
             } else {
                 val absDistX = abs(distanceX)
@@ -120,6 +128,37 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
             return true
         }
     })
+
+    private var scaleGestureDetector = ScaleGestureDetector(context, object :
+        ScaleGestureDetector.OnScaleGestureListener {
+        override fun onScale(detector: ScaleGestureDetector): Boolean {
+            // zoom
+            val spanDelta = detector.currentSpan - detector.previousSpan;
+            moveCameraForward(spanDelta * cameraForwardPinchScaleFactor)
+
+            // pan
+            val dx: Double = detector.focusX.toDouble() - prevScaleGestureFocus.x.toDouble()
+            prevScaleGestureFocus = Vec2(detector.focusX, detector.focusY)
+            rotateCube(dx * panRotateScaleFactor)
+
+            return true
+        }
+
+        override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+            prevScaleGestureFocus = Vec2(detector.focusX, detector.focusY)
+            pinchInProgress = true
+            return true
+        }
+
+        override fun onScaleEnd(detector: ScaleGestureDetector) {
+            pinchInProgress = false
+            postPinchZoom_panFlushRequired = true
+        }
+    })
+
+    init {
+        scaleGestureDetector.isQuickScaleEnabled = false
+    }
 
     override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
         // TODO: We do not use normals and could consider avoiding unnecessary computation
@@ -291,5 +330,9 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
         if(timeColorOffset >= 1000f) timeColorOffset = 0f
     }
 
-    override fun onTouchEvent(event: MotionEvent): Boolean = if (gestureDetector.onTouchEvent(event)) true else super.onTouchEvent(event)
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        scaleGestureDetector.onTouchEvent(event)
+        if(!pinchInProgress) { gestureDetector.onTouchEvent(event) }
+        return true
+    }
 }

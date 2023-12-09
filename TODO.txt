@@ -23,11 +23,11 @@ Scene improvements:
     - Increase max zoom
         - Best potential solution seems to be utilizing Perturbation Theory.
         - Failed attempts were made at trying to emulate higher floating point precision in the fragment shader.
-    - Let user choose two accent colors
 
 - Gate scene
     - Gate casting shadow onto self?
     - input sensitivity is different when changing theta/radius depending on whether the app is running in portrait mode or landscape (maybe desired? requires testing.)
+    * pinch to zoom
 
 - Menger prison
     - If user "crashes" reset scene
