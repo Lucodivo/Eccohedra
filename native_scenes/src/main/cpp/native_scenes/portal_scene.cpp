@@ -45,7 +45,6 @@ struct Portal {
   vec2 normal;
   vec3 centerPosition;
   vec2 dimens;
-  u32 stencilMask;
   u32 sceneDestination;
 };
 
@@ -60,6 +59,7 @@ struct Scene {
   u32 posLightCount;
   vec4 ambientLightColorAndPower;
   GLuint skyboxTexture;
+  u32 stencilMask;
   std::string title;
   std::string skyboxFileName;
 };
@@ -109,15 +109,11 @@ void drawSceneWithPortals(World* world, u32 sceneIndex, u32 stencilMask, u32 por
 void addPortal(World* world, u32 homeSceneIndex,
                const vec3& centerPosition, const vec2& normal, const vec2& dimens,
                const u32 destinationSceneIndex) {
-  func_persist u32 incrementingPortalStencilMask = 0;
-  assert(incrementingPortalStencilMask < 8); // number of bits in stencil
 
   Scene* homeScene = world->scenes + homeSceneIndex;
   assert(ArrayCount(homeScene->portals) > homeScene->portalCount);
 
   Portal portal{};
-  portal.stencilMask = 1 << incrementingPortalStencilMask;
-  incrementingPortalStencilMask++;
   portal.dimens = dimens;
   portal.centerPosition = centerPosition;
   portal.normal = normal;
@@ -127,11 +123,15 @@ void addPortal(World* world, u32 homeSceneIndex,
 }
 
 u32 addNewScene(World* world, const char* title) {
+  func_persist u32 incrementingPortalStencilMask = 0;
+  assert(incrementingPortalStencilMask < 8); // number of bits in stencil
   assert(ArrayCount(world->scenes) > world->sceneCount);
   u32 sceneIndex = world->sceneCount++;
   Scene* scene = world->scenes + sceneIndex;
   *scene = {};
   scene->title = title;
+  scene->stencilMask = 1 << incrementingPortalStencilMask;
+  incrementingPortalStencilMask++;
   return sceneIndex;
 }
 
@@ -212,7 +212,7 @@ void drawPortal(World* world, Portal* portal) {
   glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &portalModelMat);
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
   glUseProgram(world->stencilShader.id);
-  glStencilMask(portal->stencilMask);
+  glStencilMask(world->scenes[portal->sceneDestination].stencilMask);
   drawTriangles(portalVertexAtt);
 }
 
@@ -250,12 +250,12 @@ void drawPortals(World* world, const u32 sceneIndex, const u32 stencilMask, cons
 
     // Conditional render only if the any samples passed while drawing the portal
     // TODO: check a dirty flag before rendering
-    drawScene(world, portal.sceneDestination, portal.stencilMask);
+    drawScene(world, portal.sceneDestination, world->scenes[portal.sceneDestination].stencilMask);
   }
 
   for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
     const Portal& portal = scene->portals[portalIndex];
-    drawPortals(world, portal.sceneDestination, portal.stencilMask, portalsDepth - 1);
+    drawPortals(world, portal.sceneDestination, world->scenes[portal.sceneDestination].stencilMask, portalsDepth - 1);
   }
 }
 
