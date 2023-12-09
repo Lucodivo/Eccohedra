@@ -190,13 +190,15 @@ u32 addNewModel(World* world, const char* modelFileLoc) {
   return modelIndex;
 }
 
-void drawPortal(World* world, Portal* portal) {
+void drawPortal(World* world, u32 sceneIndex, u32 portalIndex) {
+  Portal* portal = world->scenes[sceneIndex].portals + portalIndex;
   vec2 portalToPlayer = world->player.pos.xyz.xy - portal->centerPosition.xy;
   bool portalMightBeVisible = similarDirection(portalToPlayer, portal->normal);
   if(!portalMightBeVisible) { return; }
   vec2 portalNormalPerp = vec2{portal->normal[1], -portal->normal[0]};
   f32 halfPortalWidth = portal->dimens[0] * 0.5f;
-  bool portalMightBeInFocus = abs(dot(portalToPlayer, portalNormalPerp)) < halfPortalWidth;
+  bool portalMightBeInFocus = world->currentSceneIndex == sceneIndex &&
+      abs(dot(portalToPlayer, portalNormalPerp)) < halfPortalWidth;
 
   glUseProgram(world->stencilShader.id);
 
@@ -225,8 +227,7 @@ void drawPortals(World* world, const u32 sceneIndex, const u32 stencilMask, cons
   glStencilFunc(GL_EQUAL, 0xFF, stencilMask);
   glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
   for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
-    Portal* portal = scene->portals + portalIndex;
-    drawPortal(world, portal);
+    drawPortal(world, sceneIndex, portalIndex);
   }
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
@@ -251,10 +252,6 @@ void drawPortals(World* world, const u32 sceneIndex, const u32 stencilMask, cons
     // Conditional render only if the any samples passed while drawing the portal
     // TODO: check a dirty flag before rendering
     drawScene(world, portal.sceneDestination, world->scenes[portal.sceneDestination].stencilMask);
-  }
-
-  for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
-    const Portal& portal = scene->portals[portalIndex];
     drawPortals(world, portal.sceneDestination, world->scenes[portal.sceneDestination].stencilMask, portalsDepth - 1);
   }
 }
