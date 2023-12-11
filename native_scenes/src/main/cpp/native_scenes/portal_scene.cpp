@@ -1,5 +1,7 @@
 #define PORTAL_BACKING_BOX_DEPTH 0.5f
 #define MAX_PORTALS 8
+#define MAX_SCENE_COUNT 8
+#define STENCIL_MASK_BITS 8
 
 struct PlayerPosition {
   struct {
@@ -76,7 +78,7 @@ struct World
   PlayerPosition player;
   u32 currentSceneIndex;
   StopWatch stopWatch;
-  Scene scenes[16];
+  Scene scenes[MAX_SCENE_COUNT];
   u32 sceneCount;
   Model models[128];
   u32 modelCount;
@@ -94,6 +96,12 @@ struct World
     MultiLightUBO multiLightUbo;
     GLuint multiLightUboId;
   } UBOs;
+  struct {
+    SceneInput previousInputs[4];
+    size_t previousInputIndex = ArrayCount(previousInputs) - 1;
+    f32 flingVelocityX = 0.0f;
+    f32 flingVelocityY = 0.0f;
+  } inputHistory;
   ShaderProgram shaders[16];
   ShaderProgram skyboxShader;
   ShaderProgram stencilShader;
@@ -124,15 +132,14 @@ void addPortal(World* world, u32 sourceSceneIndex,
 }
 
 u32 addNewScene(World* world, const char* title) {
-  func_persist u32 incrementingPortalStencilMask = 0;
-  assert(incrementingPortalStencilMask < 8); // number of bits in stencil
   assert(ArrayCount(world->scenes) > world->sceneCount);
-  u32 sceneIndex = world->sceneCount++;
+  u32 sceneIndex = world->sceneCount;
   Scene* scene = world->scenes + sceneIndex;
-  *scene = {};
+  *scene = { 0 };
   scene->title = title;
-  scene->stencilMask = 1 << incrementingPortalStencilMask;
-  incrementingPortalStencilMask++;
+  assert(world->sceneCount < STENCIL_MASK_BITS);
+  scene->stencilMask = 1 << world->sceneCount;
+  world->sceneCount++;
   return sceneIndex;
 }
 
@@ -657,43 +664,38 @@ void updatePortalScene(World* world, SceneInput input) {
   world->stopWatch.lap();
   world->UBOs.fragUbo.time = world->stopWatch.totalInSeconds;
 
-  func_persist SceneInput previousInputs[4];
-  func_persist size_t previousInputIndex = ArrayCount(previousInputs) - 1;
-  func_persist f32 flingVelocityX = 0.0f;
-  func_persist f32 flingVelocityY = 0.0f;
-
   PlayerPosition& player = world->player;
   f32 thetaDelta, radiusDelta;
   if(input.active) {
     thetaDelta = thetaMultiplier * input.dx;
     radiusDelta = radiusMultiplier * (input.dy + input.dSpan_pinch);
-    flingVelocityX = 0.0f;
-    flingVelocityY = 0.0f;
+    world->inputHistory.flingVelocityX = 0.0f;
+    world->inputHistory.flingVelocityY = 0.0f;
   } else {
-    const SceneInput& previousInput = previousInputs[previousInputIndex];
+    const SceneInput& previousInput = world->inputHistory.previousInputs[world->inputHistory.previousInputIndex];
     if(previousInput.active) {
       // if last frame contained a movement, consider using highest values as a fling
-      SceneInput maxPrevInput = previousInputs[0];
-      for(size_t i = 1; i < ArrayCount(previousInputs); i++) {
-        const SceneInput& prevInput = previousInputs[i];
+      SceneInput maxPrevInput = world->inputHistory.previousInputs[0];
+      for(size_t i = 1; i < ArrayCount(world->inputHistory.previousInputs); i++) {
+        const SceneInput& prevInput = world->inputHistory.previousInputs[i];
         maxPrevInput.dx = abs(maxPrevInput.dx) > abs(prevInput.dx) ? maxPrevInput.dx : prevInput.dx;
         maxPrevInput.dy = abs(maxPrevInput.dy) > abs(prevInput.dy) ? maxPrevInput.dy : prevInput.dy;
         maxPrevInput.dSpan_pinch = abs(maxPrevInput.dSpan_pinch) > abs(prevInput.dSpan_pinch) ? maxPrevInput.dSpan_pinch : prevInput.dSpan_pinch;
       }
       if(((maxPrevInput.dx * maxPrevInput.dx) + (maxPrevInput.dy * maxPrevInput.dy) + (maxPrevInput.dSpan_pinch * maxPrevInput.dSpan_pinch)) > (flingThreshold * flingThreshold)) {
-        flingVelocityX = maxPrevInput.dx;
-        flingVelocityY = maxPrevInput.dy + maxPrevInput.dSpan_pinch;
+        world->inputHistory.flingVelocityX = maxPrevInput.dx;
+        world->inputHistory.flingVelocityY = maxPrevInput.dy + maxPrevInput.dSpan_pinch;
       }
     }
-    thetaDelta = thetaMultiplier * flingVelocityX;
-    radiusDelta = radiusMultiplier * flingVelocityY;
-    flingVelocityX *= flingDrag;
-    flingVelocityY *= flingDrag;
-    if(abs(flingVelocityX) < flingMinVelocity) { flingVelocityX = 0.0f; }
-    if(abs(flingVelocityY) < flingMinVelocity) { flingVelocityY = 0.0f; }
+    thetaDelta = thetaMultiplier * world->inputHistory.flingVelocityX;
+    radiusDelta = radiusMultiplier * world->inputHistory.flingVelocityY;
+    world->inputHistory.flingVelocityX *= flingDrag;
+    world->inputHistory.flingVelocityY *= flingDrag;
+    if(abs(world->inputHistory.flingVelocityX) < flingMinVelocity) { world->inputHistory.flingVelocityX = 0.0f; }
+    if(abs(world->inputHistory.flingVelocityY) < flingMinVelocity) { world->inputHistory.flingVelocityY = 0.0f; }
   }
-  previousInputIndex = (previousInputIndex + 1) % ArrayCount(previousInputs);
-  previousInputs[previousInputIndex] = input;
+  world->inputHistory.previousInputIndex = (world->inputHistory.previousInputIndex + 1) % ArrayCount(world->inputHistory.previousInputs);
+  world->inputHistory.previousInputs[world->inputHistory.previousInputIndex] = input;
 
   f32 newTheta = player.pos.theta + thetaDelta;
   f32 newRadius = player.pos.radius + (radiusDelta * player.pos.radius);
