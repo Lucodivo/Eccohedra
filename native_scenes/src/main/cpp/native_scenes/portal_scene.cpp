@@ -1,5 +1,5 @@
 #define PORTAL_BACKING_BOX_DEPTH 0.5f
-#define MAX_PORTALS 4
+#define MAX_PORTALS 8
 
 struct PlayerPosition {
   struct {
@@ -65,9 +65,10 @@ struct Scene {
 };
 
 struct SceneInput {
-  bool activeMotion;
-  f32 x;
-  f32 y;
+  bool active;
+  f32 dx;
+  f32 dy;
+  f32 dSpan_pinch;
 };
 
 struct World
@@ -106,12 +107,12 @@ const f32 far = 200.0f;
 void drawScene(World* world, const u32 sceneIndex, u32 stencilMask);
 void drawSceneWithPortals(World* world, u32 sceneIndex, u32 stencilMask, u32 portalsDepth);
 
-void addPortal(World* world, u32 homeSceneIndex,
+void addPortal(World* world, u32 sourceSceneIndex,
                const vec3& centerPosition, const vec2& normal, const vec2& dimens,
                const u32 destinationSceneIndex) {
 
-  Scene* homeScene = world->scenes + homeSceneIndex;
-  assert(ArrayCount(homeScene->portals) > homeScene->portalCount);
+  Scene* sourceScene = world->scenes + sourceSceneIndex;
+  assert(ArrayCount(sourceScene->portals) > sourceScene->portalCount);
 
   Portal portal{};
   portal.dimens = dimens;
@@ -119,7 +120,7 @@ void addPortal(World* world, u32 homeSceneIndex,
   portal.normal = normal;
   portal.sceneDestination = destinationSceneIndex;
 
-  homeScene->portals[homeScene->portalCount++] = portal;
+  sourceScene->portals[sourceScene->portalCount++] = portal;
 }
 
 u32 addNewScene(World* world, const char* title) {
@@ -563,6 +564,7 @@ void initPortalScene(World* world) {
 void collisionDetectionAndCorrection(World* world, PlayerPosition desiredPosition) {
   PlayerPosition startingPlayerPos = world->player;
   PlayerPosition correctedPlayerPos = desiredPosition;
+  const f32 outerBoundingSphereRadius = 75.0f;
   if(world->currentSceneIndex == 0) { // if gate scene...
     // TODO: check for collisions with the gate's columns
     const vec2 quarterFoldedXY = vec2{abs(desiredPosition.pos.xyz[0]), abs(desiredPosition.pos.xyz[1])};
@@ -625,6 +627,7 @@ void collisionDetectionAndCorrection(World* world, PlayerPosition desiredPositio
       }
     }
   }
+  correctedPlayerPos.pos.radius = Min(correctedPlayerPos.pos.radius, outerBoundingSphereRadius);
   world->player = correctedPlayerPos;
 
   // check portal collision
@@ -644,53 +647,46 @@ void collisionDetectionAndCorrection(World* world, PlayerPosition desiredPositio
 }
 
 void updatePortalScene(World* world, SceneInput input) {
-  const f32 thetaMultiplier = 2.0f;
-  const f32 radiusMultiplier = 10.0f;
+  const f32 thetaMultiplier = -2.0f;
+  const f32 radiusMultiplier = -1.0f;
   const f32 flingDrag = .88f;
   const f32 flingMinVelocity = 0.0003f;
-  const f32 flingThresholdSq = 0.0004f;
+  const f32 flingThreshold = 0.004f;
 
   // NOTE: input should be handled through handleInput(android_app* app, AInputEvent* event)
   world->stopWatch.lap();
   world->UBOs.fragUbo.time = world->stopWatch.totalInSeconds;
 
-  func_persist SceneInput previousInputs[8];
+  func_persist SceneInput previousInputs[4];
   func_persist size_t previousInputIndex = ArrayCount(previousInputs) - 1;
   func_persist f32 flingVelocityX = 0.0f;
   func_persist f32 flingVelocityY = 0.0f;
 
   PlayerPosition& player = world->player;
-  f32 thetaDelta, newTheta, radiusDelta, newRadius;
-  if(input.activeMotion) {
-    thetaDelta = -(thetaMultiplier * input.x);
-    newTheta = player.pos.theta + thetaDelta;
-    radiusDelta = -(radiusMultiplier * input.y);
-    newRadius = player.pos.radius + radiusDelta;
+  f32 thetaDelta, radiusDelta;
+  if(input.active) {
+    thetaDelta = thetaMultiplier * input.dx;
+    radiusDelta = radiusMultiplier * (input.dy + input.dSpan_pinch);
     flingVelocityX = 0.0f;
     flingVelocityY = 0.0f;
   } else {
     const SceneInput& previousInput = previousInputs[previousInputIndex];
-    if(previousInput.activeMotion) {
-      // if last frame contained a movement, consider using highest X value as a fling
-      vec2 flingDirection = vec2{previousInput.x, previousInput.y};
-      float flingMagnSq = magnitudeSquared(flingDirection);
-      if(flingMagnSq >= flingThresholdSq) {
-        flingDirection = flingDirection / sqrtf(flingMagnSq);
-        f32 flingStartingVelocitySq = 0.0f;
-        for(size_t i = 0; i < ArrayCount(previousInputs); i++) {
-          const SceneInput& prevInput = previousInputs[i];
-          f32 prevInputVelocitySq = ((prevInput.x * prevInput.x) + (prevInput.y * prevInput.y));
-          flingStartingVelocitySq = prevInputVelocitySq > flingStartingVelocitySq ? prevInputVelocitySq : flingStartingVelocitySq;
-        }
-        f32 flingStartingVelocity = sqrtf(flingStartingVelocitySq);
-        flingVelocityX = flingDirection[0] * flingStartingVelocity;
-        flingVelocityY = flingDirection[1] * flingStartingVelocity;
+    if(previousInput.active) {
+      // if last frame contained a movement, consider using highest values as a fling
+      SceneInput maxPrevInput = previousInputs[0];
+      for(size_t i = 1; i < ArrayCount(previousInputs); i++) {
+        const SceneInput& prevInput = previousInputs[i];
+        maxPrevInput.dx = abs(maxPrevInput.dx) > abs(prevInput.dx) ? maxPrevInput.dx : prevInput.dx;
+        maxPrevInput.dy = abs(maxPrevInput.dy) > abs(prevInput.dy) ? maxPrevInput.dy : prevInput.dy;
+        maxPrevInput.dSpan_pinch = abs(maxPrevInput.dSpan_pinch) > abs(prevInput.dSpan_pinch) ? maxPrevInput.dSpan_pinch : prevInput.dSpan_pinch;
+      }
+      if(((maxPrevInput.dx * maxPrevInput.dx) + (maxPrevInput.dy * maxPrevInput.dy) + (maxPrevInput.dSpan_pinch * maxPrevInput.dSpan_pinch)) > (flingThreshold * flingThreshold)) {
+        flingVelocityX = maxPrevInput.dx;
+        flingVelocityY = maxPrevInput.dy + maxPrevInput.dSpan_pinch;
       }
     }
-    thetaDelta = -(thetaMultiplier * flingVelocityX);
-    newTheta = player.pos.theta + thetaDelta;
-    radiusDelta = -(radiusMultiplier * flingVelocityY);
-    newRadius = player.pos.radius + radiusDelta;
+    thetaDelta = thetaMultiplier * flingVelocityX;
+    radiusDelta = radiusMultiplier * flingVelocityY;
     flingVelocityX *= flingDrag;
     flingVelocityY *= flingDrag;
     if(abs(flingVelocityX) < flingMinVelocity) { flingVelocityX = 0.0f; }
@@ -699,6 +695,8 @@ void updatePortalScene(World* world, SceneInput input) {
   previousInputIndex = (previousInputIndex + 1) % ArrayCount(previousInputs);
   previousInputs[previousInputIndex] = input;
 
+  f32 newTheta = player.pos.theta + thetaDelta;
+  f32 newRadius = player.pos.radius + (radiusDelta * player.pos.radius);
   if(newTheta > Tau32) { newTheta -= Tau32; }
   if(newTheta < 0) { newTheta += Tau32; }
 
@@ -726,7 +724,7 @@ void drawPortalScene(World* world) {
   glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.fragUboId);
   glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(FragUBO), &world->UBOs.fragUbo);
 
-  drawSceneWithPortals(world, world->currentSceneIndex, 0x00, 1);
+  drawSceneWithPortals(world, world->currentSceneIndex, 0x00, 2);
 }
 
 void deinitPortalScene(World* world) {
