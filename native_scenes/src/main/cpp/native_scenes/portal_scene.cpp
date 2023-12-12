@@ -657,7 +657,9 @@ void collisionDetectionAndCorrection(World* world, PlayerPosition desiredPositio
     vec2 portalCenterToEdgeDelta = (0.5f * portal->dimens[0] * portalNormalPerp);
     vec2 portalEdge1 = (portal->centerPosition.xy + portalCenterToEdgeDelta);
     vec2 portalEdge2 = (portal->centerPosition.xy - portalCenterToEdgeDelta);
-    if(lineSegmentsIntersection(startingPlayerPos.pos.xyz.xy, playerPosition, portalEdge1, portalEdge2, nullptr)) {
+    bool playerStartedInFrontOfPortal = similarDirection(startingPlayerPos.pos.xyz.xy - portal->centerPosition.xy, portal->normal);
+    bool playerCrossedOverPortal = lineSegmentsIntersection(startingPlayerPos.pos.xyz.xy, playerPosition, portalEdge1, portalEdge2, nullptr);
+    if(playerStartedInFrontOfPortal && playerCrossedOverPortal) {
       // NOTE: THIS SIGNIFIES A PLAYER HAS WONDERED TO THE OTHER SIDE OF A PORTAL
 
       // add a transient portal if there is not "other side" portal at the destination
