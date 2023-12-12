@@ -48,6 +48,8 @@ struct Portal {
   vec3 centerPosition;
   vec2 dimens;
   u32 sceneDestination;
+  bool oneWay;
+  bool transient;
 };
 
 struct Scene {
@@ -115,17 +117,17 @@ const f32 far = 200.0f;
 void drawScene(World* world, const u32 sceneIndex, u32 stencilMask);
 void drawSceneWithPortals(World* world, u32 sceneIndex, u32 stencilMask, u32 portalsDepth);
 
-void addPortal(World* world, u32 sourceSceneIndex,
-               const vec3& centerPosition, const vec2& normal, const vec2& dimens,
-               const u32 destinationSceneIndex) {
+void addPortal(World* world, u32 sourceSceneIndex, const u32 destinationSceneIndex, PortalInfo* portalInfo, bool transient = false) {
 
   Scene* sourceScene = world->scenes + sourceSceneIndex;
   assert(ArrayCount(sourceScene->portals) > sourceScene->portalCount);
 
   Portal portal{};
-  portal.dimens = dimens;
-  portal.centerPosition = centerPosition;
-  portal.normal = normal;
+  portal.dimens = portalInfo->dimensXY;
+  portal.centerPosition = portalInfo->centerXYZ;
+  portal.normal = portalInfo->normalXY;
+  portal.oneWay = portalInfo->oneWay;
+  portal.transient = transient;
   portal.sceneDestination = destinationSceneIndex;
 
   sourceScene->portals[sourceScene->portalCount++] = portal;
@@ -198,11 +200,15 @@ u32 addNewModel(World* world, const char* modelFileLoc) {
   return modelIndex;
 }
 
-void drawPortal(World* world, u32 sceneIndex, u32 portalIndex) {
+// returns true if it attempted to draw a portal
+bool drawPortal(World* world, u32 sceneIndex, u32 portalIndex) {
   Portal* portal = world->scenes[sceneIndex].portals + portalIndex;
   vec2 portalToPlayer = world->player.pos.xyz.xy - portal->centerPosition.xy;
-  bool portalMightBeVisible = similarDirection(portalToPlayer, portal->normal);
-  if(!portalMightBeVisible) { return; }
+  vec2 playerViewDir = -world->player.pos.xyz.xy; // Player assumed to always face the origin
+  bool playerInFrontOfPortal = dot(portalToPlayer, portal->normal) >= 0.0f;
+  bool playerLookingInDirOfPortal = dot(playerViewDir, portal->normal) <= 0.0f;
+  bool portalMightBeVisible = playerInFrontOfPortal && playerLookingInDirOfPortal;
+  if(!portalMightBeVisible) { return false; }
   vec2 portalNormalPerp = vec2{portal->normal[1], -portal->normal[0]};
   f32 halfPortalWidth = portal->dimens[0] * 0.5f;
   bool portalMightBeInFocus = world->currentSceneIndex == sceneIndex &&
@@ -224,18 +230,20 @@ void drawPortal(World* world, u32 sceneIndex, u32 portalIndex) {
   glUseProgram(world->stencilShader.id);
   glStencilMask(world->scenes[portal->sceneDestination].stencilMask);
   drawTriangles(portalVertexAtt);
+
+  return true;
 }
 
 void drawPortals(World* world, const u32 sceneIndex, const u32 stencilMask, const u32 portalsDepth){
-
   if(portalsDepth <= 0) { return; }
 
   Scene* scene = world->scenes + sceneIndex;
 
+  bool portalMightBeVisible[MAX_PORTALS];
   glStencilFunc(GL_EQUAL, 0xFF, stencilMask);
   glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
   for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
-    drawPortal(world, sceneIndex, portalIndex);
+    portalMightBeVisible[portalIndex] = drawPortal(world, sceneIndex, portalIndex);
   }
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
@@ -245,6 +253,7 @@ void drawPortals(World* world, const u32 sceneIndex, const u32 stencilMask, cons
   glClear(GL_DEPTH_BUFFER_BIT);
 
   for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
+    if(!portalMightBeVisible[portalIndex]) { continue; }
     const Portal& portal = scene->portals[portalIndex];
 
     vec3 portalNormal_viewSpace = (world->UBOs.projectionViewModelUbo.view * Vec4(-portal.normal, 0.0f, 0.0f)).xyz;
@@ -257,8 +266,6 @@ void drawPortals(World* world, const u32 sceneIndex, const u32 stencilMask, cons
     glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, projection), sizeof(mat4), &portalProjectionMat);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    // Conditional render only if the any samples passed while drawing the portal
-    // TODO: check a dirty flag before rendering
     drawScene(world, portal.sceneDestination, world->scenes[portal.sceneDestination].stencilMask);
     drawPortals(world, portal.sceneDestination, world->scenes[portal.sceneDestination].stencilMask, portalsDepth - 1);
   }
@@ -486,14 +493,17 @@ void loadWorld(World* world) {
       for (u32 portalIndex = 0; portalIndex < portalCount; portalIndex++)
       {
         PortalInfo portalInfo = sceneInfo.portals[portalIndex];
-        addPortal(world, worldSceneIndices[sceneInfo.index], portalInfo.centerXYZ, portalInfo.normalXY, portalInfo.dimensXY,
-                  worldSceneIndices[portalInfo.destination]);
+        addPortal(world, worldSceneIndices[sceneInfo.index], worldSceneIndices[portalInfo.destination], &portalInfo);
       }
     }
   }
 
   assert(worldInfo.startingSceneIndex < sceneCount);
   world->currentSceneIndex = worldSceneIndices[worldInfo.startingSceneIndex];
+
+  // TODO: DELETE!!!!
+  world->currentSceneIndex = 1;
+  world->player.pos.radius += 3.0f;
 
   return;
 }
@@ -648,7 +658,26 @@ void collisionDetectionAndCorrection(World* world, PlayerPosition desiredPositio
     vec2 portalEdge1 = (portal->centerPosition.xy + portalCenterToEdgeDelta);
     vec2 portalEdge2 = (portal->centerPosition.xy - portalCenterToEdgeDelta);
     if(lineSegmentsIntersection(startingPlayerPos.pos.xyz.xy, playerPosition, portalEdge1, portalEdge2, nullptr)) {
+      // NOTE: THIS SIGNIFIES A PLAYER HAS WONDERED TO THE OTHER SIDE OF A PORTAL
+
+      // add a transient portal if there is not "other side" portal at the destination
+      if(portal->oneWay) {
+        PortalInfo transientPortal;
+        transientPortal.normalXY = -portal->normal;
+        transientPortal.centerXYZ = portal->centerPosition;
+        transientPortal.dimensXY = portal->dimens;
+        transientPortal.destination = world->currentSceneIndex;
+        transientPortal.oneWay = false;
+        addPortal(world, portal->sceneDestination, world->currentSceneIndex, &transientPortal, true);
+      }
+
+      // remove any transient portal in current scene. If any exist, it will be the last one.
+      if(currentScene->portals[currentScene->portalCount - 1].transient) {
+        currentScene->portalCount -= 1;
+      }
+
       world->currentSceneIndex = portal->sceneDestination;
+      break;
     }
   }
 }
