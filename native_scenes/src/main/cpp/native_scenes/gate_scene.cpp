@@ -21,6 +21,9 @@ struct InputState {
   f32 lastPinchSpan_screenRes;
   vec2 deltaPinchFocusPoint_normalized;
   f32 deltaPinchSpan_normalized;
+
+  // helps reduce unexpected panning when pinch pointers are released at slightly staggered times
+  u32 panAfterPinchThrowAwayCount;
 };
 
 struct SceneState {
@@ -164,7 +167,6 @@ static s32 handleInput(android_app *app, AInputEvent *event) {
   InputState& inputState = engine->inputState;
   int32_t eventType = AInputEvent_getType(event);
   int32_t eventSource = AInputEvent_getSource(event);
-  func_persist u32 panAfterPinchThrowAwayCount = 0;
   switch (eventType) {
     case AINPUT_EVENT_TYPE_MOTION:
       switch (eventSource) {
@@ -191,14 +193,14 @@ static s32 handleInput(android_app *app, AInputEvent *event) {
                 if(!inputState.panInProgress) { // pan was interrupted by a pinch, refresh state.
                   inputState.lastPanPoint_screenRes = pointerPos;
                   inputState.deltaPanPoint_normalized = vec2{.0f, .0f};
-                  panAfterPinchThrowAwayCount = 2;
+                  inputState.panAfterPinchThrowAwayCount = 2;
                   inputState.panInProgress = true;
                   break;
                 }
-                if(panAfterPinchThrowAwayCount > 0) {
+                if(inputState.panAfterPinchThrowAwayCount > 0) {
                   // Two fingers don't always leave the screen at the same time.
                   // This buffer is an attempt to prevent accidental pans when one finger leaves first.
-                  panAfterPinchThrowAwayCount -= 1;
+                  inputState.panAfterPinchThrowAwayCount -= 1;
                   inputState.lastPanPoint_screenRes = pointerPos;
                   break;
                 }

@@ -21,6 +21,7 @@ struct PortalInfo {
   vec2 normalXY;
   vec3 centerXYZ;
   vec2 dimensXY;
+  bool oneWay;
 };
 
 struct ModelInfo {
@@ -146,25 +147,29 @@ WorldInfo originalWorld() {
     1,
     vec2{0, -1},
     vec3{0, -1.5, 1.5},
-    vec2{3, 3}
+    vec2{3, 3},
+    false
   });
   gateScene.portals.push_back({
       2,
       vec2{1, 0},
       vec3{1.5, 0, 1.5},
-      vec2{3, 3}
+      vec2{3, 3},
+      false
   });
   gateScene.portals.push_back({
       3,
       vec2{-1, 0},
       vec3{-1.5, 0, 1.5},
-      vec2{3, 3}
+      vec2{3, 3},
+      false
   });
   gateScene.portals.push_back({
       4,
       vec2{0, 1},
       vec3{0, 1.5, 1.5},
-      vec2{3, 3}
+      vec2{3, 3},
+      false
   });
   gateScene.directionalLights.reserve(1);
   gateScene.directionalLights.push_back({
@@ -190,17 +195,18 @@ WorldInfo originalWorld() {
   tetrahedronScene.entities.push_back({
       5,
       2,
-      vec3{0, -1.75, 1.5},
+      vec3{0, -9.75, 1.5},
       vec3{portalWidth, portalDepth, 3},
-      Pi32,
+      0,
       0
   });
   tetrahedronScene.portals.reserve(1);
   tetrahedronScene.portals.push_back({
       0,
-      vec2{0, 1},
-      vec3{0, -1.5, 1.5},
-      vec2{3, 3}
+      vec2{0, -1},
+      vec3{0, -10.0, 1.5},
+      vec2{3, 3},
+      true
   });
   tetrahedronScene.directionalLights.push_back({
                                             vec4{1, 1, 1, 0.15f},
@@ -235,7 +241,8 @@ WorldInfo originalWorld() {
       0,
       vec2{-1, 0},
       vec3{1.5, 0, 1.5},
-      vec2{3, 3}
+      vec2{3, 3},
+      false
   });
   octahedronScene.directionalLights.push_back({
                                                    vec4{1, 1, 1, 0.2f},
@@ -260,17 +267,18 @@ WorldInfo originalWorld() {
   dodecahedronScene.entities.push_back({
       5,
       2,
-      vec3{-1.75, 0, 1.5},
+      vec3{0.25f, 4.0f, 1.5},
       vec3{portalWidth, portalDepth, 3},
-      Pi32 * 0.5f,
+      -(Pi32 * 0.5f),
       0
   });
   dodecahedronScene.portals.reserve(1);
   dodecahedronScene.portals.push_back({
       0,
-      vec2{1.0, 0},
-      vec3{-1.5, 0, 1.5},
-      vec2{3, 3}
+      vec2{-1.0, 0},
+      vec3{0.0f, 4.0f, 1.5},
+      vec2{3, 3},
+      true
   });
   dodecahedronScene.directionalLights.push_back({
                                                   vec4{1, 1, 1, 0.3f},
@@ -305,7 +313,8 @@ WorldInfo originalWorld() {
       0,
       vec2{0, -1},
       vec3{0, 1.5, 1.5},
-      vec2{3, 3}
+      vec2{3, 3},
+      false
   });
   icosahedronScene.directionalLights.push_back({
                                              vec4{1, 1, 1, 0.3f},
