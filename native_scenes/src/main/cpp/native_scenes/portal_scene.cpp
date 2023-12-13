@@ -207,14 +207,18 @@ u32 addNewModel(World* world, const char* modelFileLoc) {
 // returns true if it attempted to draw a portal
 bool drawPortal(World* world, u32 sceneIndex, u32 portalIndex) {
   Portal* portal = world->scenes[sceneIndex].portals + portalIndex;
-  vec2 portalToPlayer = world->player.pos.xyz.xy - portal->centerPosition.xy;
-  vec2 playerViewDir = -world->player.pos.xyz.xy; // Player assumed to always face the origin
-  bool playerInFrontOfPortal = similarDirection(portalToPlayer, portal->normal);
-  bool playerLookingInDirOfPortal = similarDirection(playerViewDir, -portalToPlayer);
-  bool portalMightBeVisible = playerInFrontOfPortal && playerLookingInDirOfPortal;
-  if(!portalMightBeVisible) { return false; }
   vec2 portalNormalPerp = vec2{portal->normal[1], -portal->normal[0]};
   f32 halfPortalWidth = portal->dimens[0] * 0.5f;
+  vec2 centerToSide = (portalNormalPerp * halfPortalWidth);
+
+  vec2 portalToPlayer = world->player.pos.xyz.xy - portal->centerPosition.xy;
+  vec2 playerToPortal = -portalToPlayer;
+  vec2 playerViewDir = -world->player.pos.xyz.xy; // Player assumed to always face the origin
+  bool playerInFrontOfPortal = similarDirection(portalToPlayer, portal->normal);
+  bool playerLookingInDirOfPortal = similarDirection(playerViewDir, playerToPortal + centerToSide) ||
+                                    similarDirection(playerViewDir, playerToPortal - centerToSide);
+  bool portalMightBeVisible = playerInFrontOfPortal && playerLookingInDirOfPortal;
+  if(!portalMightBeVisible) { return false; }
   bool portalMightBeInFocus = world->currentSceneIndex == sceneIndex &&
       abs(dot(portalToPlayer, portalNormalPerp)) < halfPortalWidth;
 
