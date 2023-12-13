@@ -4,9 +4,14 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.inasweaterpoorlyknit.learnopengl_androidport.*
+import com.inasweaterpoorlyknit.learnopengl_androidport.OpenGLScenesApplication
+import com.inasweaterpoorlyknit.learnopengl_androidport.getMandelbrotColorIndex
+import com.inasweaterpoorlyknit.learnopengl_androidport.getMengerSpongeResolutionIndex
+import com.inasweaterpoorlyknit.learnopengl_androidport.getSharedPreferences
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MandelbrotScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MengerPrisonScene
+import com.inasweaterpoorlyknit.learnopengl_androidport.setMandelbrotColorIndex
+import com.inasweaterpoorlyknit.learnopengl_androidport.setMengerSpongeResolutionIndex
 
 class InfoViewModel(application: Application) : AndroidViewModel(application) {
 

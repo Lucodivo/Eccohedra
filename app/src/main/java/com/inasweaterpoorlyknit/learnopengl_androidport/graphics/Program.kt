@@ -4,7 +4,6 @@ import android.content.Context
 import android.opengl.GLES32.*
 import android.util.Log
 import androidx.annotation.RawRes
-
 import com.inasweaterpoorlyknit.Mat2
 import com.inasweaterpoorlyknit.Mat3
 import com.inasweaterpoorlyknit.Mat4

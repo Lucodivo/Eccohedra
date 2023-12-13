@@ -1,7 +1,7 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.graphics
 
 import android.content.Context
-import android.opengl.GLES32.*
+import android.opengl.GLES32.glViewport
 import android.opengl.GLSurfaceView
 import android.view.MotionEvent
 import javax.microedition.khronos.opengles.GL10

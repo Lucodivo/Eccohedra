@@ -2,7 +2,11 @@ package com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes
 
 import android.content.Context
 import android.opengl.GLES30.glBindVertexArray
-import android.opengl.GLES32.*
+import android.opengl.GLES32.GL_COLOR_BUFFER_BIT
+import android.opengl.GLES32.GL_TRIANGLES
+import android.opengl.GLES32.GL_UNSIGNED_INT
+import android.opengl.GLES32.glClear
+import android.opengl.GLES32.glDrawElements
 import android.view.MotionEvent
 import com.inasweaterpoorlyknit.Mat3
 import com.inasweaterpoorlyknit.Vec3
