@@ -46,10 +46,12 @@ struct PlayerPosition {
 struct Portal {
   vec2 normal;
   vec3 centerPosition;
-  vec2 dimens;
+  vec3 dimens;
   u32 sceneDestination;
   bool oneWay;
   bool transient;
+  s32 backingModelIndex;
+  s32 backingShaderIndex;
 };
 
 struct Scene {
@@ -123,12 +125,14 @@ void addPortal(World* world, u32 sourceSceneIndex, const u32 destinationSceneInd
   assert(ArrayCount(sourceScene->portals) > sourceScene->portalCount);
 
   Portal portal{};
-  portal.dimens = portalInfo->dimensXY;
+  portal.dimens = portalInfo->dimensXYZ;
   portal.centerPosition = portalInfo->centerXYZ;
   portal.normal = portalInfo->normalXY;
   portal.oneWay = portalInfo->oneWay;
   portal.transient = transient;
   portal.sceneDestination = destinationSceneIndex;
+  portal.backingModelIndex = portalInfo->backingModelIndex;
+  portal.backingShaderIndex = portalInfo->backingShaderIndex;
 
   sourceScene->portals[sourceScene->portalCount++] = portal;
 }
@@ -216,7 +220,7 @@ bool drawPortal(World* world, u32 sceneIndex, u32 portalIndex) {
 
   glUseProgram(world->stencilShader.id);
 
-  mat4 portalModelMat = quadModelMatrix(portal->centerPosition, Vec3(portal->normal, 0.0f), portal->dimens[0], portal->dimens[1]);
+  mat4 portalModelMat = quadModelMatrix(portal->centerPosition, Vec3(portal->normal, 0.0f), portal->dimens[0], portal->dimens[2]);
   portalModelMat = portalMightBeInFocus ?
       portalModelMat * scale_mat4(vec3{1.0f, PORTAL_BACKING_BOX_DEPTH, 1.0f}) * translate_mat4({0.0f, 0.5f, 0.0f}) :
       portalModelMat;
@@ -315,6 +319,7 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MultiLightUBO), &world->UBOs.multiLightUbo);
   }
 
+  // draw entities
   for(u32 sceneEntityIndex = 0; sceneEntityIndex < scene->entityCount; ++sceneEntityIndex) {
     Entity* entity = &scene->entities[sceneEntityIndex];
     ShaderProgram shader = world->shaders[entity->shaderIndex];
@@ -331,6 +336,45 @@ void drawScene(World* world, const u32 sceneIndex, u32 stencilMask) {
       setSampler2D(shader.id, noiseTexUniformName, noiseActiveTextureIndex);
     }
     Model model = world->models[entity->modelIndex];
+    // TODO: Should some of this logic be moved to drawModel()?
+    for(u32 meshIndex = 0; meshIndex < model.meshCount; ++meshIndex) {
+      Mesh* mesh = model.meshes + meshIndex;
+      if(mesh->textureData.baseColor[3] != 0.0f) {
+        setUniform(shader.id, baseColorUniformName, mesh->textureData.baseColor.xyz);
+      }
+      if(mesh->textureData.albedoTextureId != TEXTURE_ID_NO_TEXTURE) {
+        bindActiveTextureSampler2d(albedoActiveTextureIndex, mesh->textureData.albedoTextureId);
+        setSampler2D(shader.id, albedoTexUniformName, albedoActiveTextureIndex);
+      }
+      if(mesh->textureData.normalTextureId != TEXTURE_ID_NO_TEXTURE) {
+        bindActiveTextureSampler2d(normalActiveTextureIndex, mesh->textureData.normalTextureId);
+        setSampler2D(shader.id, normalTexUniformName, normalActiveTextureIndex);
+      }
+
+      drawTriangles(&mesh->vertexAtt);
+    }
+  }
+
+  // draw portal backs
+  for(u32 portalIndex = 0; portalIndex < scene->portalCount; ++portalIndex) {
+    const Portal& portal = scene->portals[portalIndex];
+    if(portal.backingModelIndex == WORLD_INFO_NO_INDEX) { continue; }
+    ShaderProgram shader = world->shaders[portal.backingShaderIndex];
+    Model model = world->models[portal.backingModelIndex];
+
+    f32 yaw = acos(-portal.normal[1]) * sign(portal.normal[0]);
+    vec3 portalBackOffset = Vec3(-(0.5 * portal.dimens[1]) * portal.normal, 0.0f);
+    mat4 modelMatrix = scaleRotTrans_mat4(portal.dimens, vec3{0.0f, 0.0f, 1.0f}, yaw, portal.centerPosition + portalBackOffset);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
+    glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &modelMatrix);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glUseProgram(shader.id);
+    if(shader.noiseTextureId != TEXTURE_ID_NO_TEXTURE) {
+      bindActiveTextureSampler2d(noiseActiveTextureIndex, shader.noiseTextureId);
+      setSampler2D(shader.id, noiseTexUniformName, noiseActiveTextureIndex);
+    }
     // TODO: Should some of this logic be moved to drawModel()?
     for(u32 meshIndex = 0; meshIndex < model.meshCount; ++meshIndex) {
       Mesh* mesh = model.meshes + meshIndex;
@@ -406,6 +450,8 @@ void cleanupWorld(World* world) {
 }
 
 void loadWorld(World* world) {
+  // TODO: all of the indices work is superfluous in the current state of loading a world
+  // TODO: further reduce the unnecessary logic
   LOGI("Loading native Portal Scene...");
 
   WorldInfo worldInfo = originalWorld();
@@ -501,10 +547,6 @@ void loadWorld(World* world) {
   assert(worldInfo.startingSceneIndex < sceneCount);
   world->currentSceneIndex = worldSceneIndices[worldInfo.startingSceneIndex];
 
-  // TODO: DELETE!!!!
-  world->currentSceneIndex = 1;
-  world->player.pos.radius += 3.0f;
-
   return;
 }
 
@@ -582,9 +624,10 @@ void collisionDetectionAndCorrection(World* world, PlayerPosition desiredPositio
   PlayerPosition startingPlayerPos = world->player;
   PlayerPosition correctedPlayerPos = desiredPosition;
   const f32 outerBoundingSphereRadius = 75.0f;
+
   if(world->currentSceneIndex == 0) { // if gate scene...
     // TODO: check for collisions with the gate's columns
-    const vec2 quarterFoldedXY = vec2{abs(desiredPosition.pos.xyz[0]), abs(desiredPosition.pos.xyz[1])};
+    const vec2 quarterFoldedXY = vec2{abs(correctedPlayerPos.pos.xyz[0]), abs(correctedPlayerPos.pos.xyz[1])};
     const vec2 columnXY = vec2{1.768f, 1.768 };
     const f32 columnRadius = 0.5f;
     const f32 columnRadiusSq = columnRadius * columnRadius;
@@ -595,55 +638,66 @@ void collisionDetectionAndCorrection(World* world, PlayerPosition desiredPositio
       vec2 foldedXY_dirFromColumn = normalize(foldedXY_columnOrigin);
       vec2 foldedCorrection = (foldedXY_dirFromColumn * columnRadius) - foldedXY_columnOrigin;
       vec2 unfoldedCorrection = vec2{
-          desiredPosition.pos.xyz[0] > 0 ? foldedCorrection[0]: -foldedCorrection[0],
-          desiredPosition.pos.xyz[1] > 0 ? foldedCorrection[1]: -foldedCorrection[1]
+          correctedPlayerPos.pos.xyz[0] > 0 ? foldedCorrection[0]: -foldedCorrection[0],
+          correctedPlayerPos.pos.xyz[1] > 0 ? foldedCorrection[1]: -foldedCorrection[1]
       };
-      correctedPlayerPos = PlayerPosition::fromXYZ(desiredPosition.pos.xyz[0] + unfoldedCorrection[0], desiredPosition.pos.xyz[1] + unfoldedCorrection[1], desiredPosition.pos.xyz[2]);
+      correctedPlayerPos = PlayerPosition::fromXYZ(correctedPlayerPos.pos.xyz[0] + unfoldedCorrection[0], correctedPlayerPos.pos.xyz[1] + unfoldedCorrection[1], correctedPlayerPos.pos.xyz[2]);
     }
-  } else { // a "shape" scene
-    // correct potential collision with "shape"
-    const f32 shapeBoundingSphereRadius = 1.5f;
-    f32 newRadius = Max(desiredPosition.pos.radius, shapeBoundingSphereRadius);
-    correctedPlayerPos = PlayerPosition::fromPolar(desiredPosition.pos.theta, newRadius);
+  }
 
-    // prevent collision with portal backings
-    Scene& scene = world->scenes[world->currentSceneIndex];
-    for(u32 i = 0; i < scene.portalCount; i++) {
-      Portal& portal = scene.portals[i];
-      // this logic assumes the portals normal never points even partially in the z dimension
-      vec3 portalForward = Vec3(portal.normal, 0.0f); // forward == opening
-      vec3 portalRight = cross(portalForward, vec3{0.f, 0.f, 1.f});
-      vec3 deltaFromCenterLeftRight = (0.5f * portalWidth * portalRight);
-      // check if the old position was not in front of the portal
-      f32 maxPortalForwardDirection = dot(portal.centerPosition, portalForward);
-      f32 startingPlayerInForwardDirection = dot(startingPlayerPos.pos.xyz, portalForward);
-      bool playerWasInFrontOfPortal = startingPlayerInForwardDirection >= maxPortalForwardDirection;
-      if(!playerWasInFrontOfPortal) { // only check collision detection if player was not in front of the portal.
-        f32 portalBufferDepth = 0.5f;
-        f32 minPortalForwardDirection = maxPortalForwardDirection - portalDepth - portalBufferDepth;
-        f32 maxPortalRightDirection = dot(portal.centerPosition + deltaFromCenterLeftRight, portalRight) + portalBufferDepth;
-        f32 minPortalRightDirection = maxPortalRightDirection - portalWidth - (2.0f * portalBufferDepth);
-        f32 desiredPosInForwardDir = dot(desiredPosition.pos.xyz, portalForward);
-        f32 desiredPosInRightDir = dot(desiredPosition.pos.xyz, portalRight);
-        if(desiredPosInForwardDir > minPortalForwardDirection && desiredPosInForwardDir < maxPortalForwardDirection &&
-          desiredPosInRightDir > minPortalRightDirection && desiredPosInRightDir < maxPortalRightDirection) {
-          // desired position will cause a collision and is in need of correction
-          // either push it out the back or out the side
-          f32 correctionDeltaForward = minPortalForwardDirection - desiredPosInForwardDir;
-          f32 correctionDeltaLeft = minPortalRightDirection - desiredPosInRightDir;
-          f32 correctionDeltaRight = maxPortalRightDirection - desiredPosInRightDir;
-          correctionDeltaRight = abs(correctionDeltaLeft) < abs(correctionDeltaRight) ? correctionDeltaLeft : correctionDeltaRight;
-          if(abs(correctionDeltaForward) < abs(correctionDeltaRight)) {
-            // push out the bottom
-            correctedPlayerPos = PlayerPosition::fromXYZ(desiredPosition.pos.xyz + (correctionDeltaForward * portalForward));
-          } else {
-            // push out the side
-            correctedPlayerPos = PlayerPosition::fromXYZ(desiredPosition.pos.xyz + (correctionDeltaRight * portalRight));
-          }
+  // correct potential collision with "shape"
+  const f32 shapeBoundingSphereRadius = 1.5f;
+  f32 newRadius = Max(correctedPlayerPos.pos.radius, shapeBoundingSphereRadius);
+  correctedPlayerPos = PlayerPosition::fromPolar(correctedPlayerPos.pos.theta, newRadius);
+
+  // prevent collision with portal backings
+  Scene &scene = world->scenes[world->currentSceneIndex];
+  for (u32 i = 0; i < scene.portalCount; i++) {
+    Portal &portal = scene.portals[i];
+    if(portal.backingModelIndex == WORLD_INFO_NO_INDEX) { continue; }
+    // this logic assumes the portals normal never points even partially in the z dimension
+    vec3 portalForward = Vec3(portal.normal, 0.0f); // forward == opening
+    vec3 portalRight = cross(portalForward, vec3{0.f, 0.f, 1.f});
+    vec3 deltaFromCenterLeftRight = (0.5f * portal.dimens[0] * portalRight);
+    // check if the old position was not in front of the portal
+    f32 maxPortalForwardDirection = dot(portal.centerPosition, portalForward);
+    f32 startingPlayerInForwardDirection = dot(startingPlayerPos.pos.xyz, portalForward);
+    bool playerWasInFrontOfPortal = startingPlayerInForwardDirection >= maxPortalForwardDirection;
+    if (!playerWasInFrontOfPortal) { // only check collision detection if player was not in front of the portal.
+      f32 portalBufferDepth = 0.5f;
+      f32 minPortalForwardDirection =
+          maxPortalForwardDirection - portal.dimens[1] - portalBufferDepth;
+      f32 maxPortalRightDirection =
+          dot(portal.centerPosition + deltaFromCenterLeftRight, portalRight) + portalBufferDepth;
+      f32 minPortalRightDirection =
+          maxPortalRightDirection - portal.dimens[0] - (2.0f * portalBufferDepth);
+      f32 desiredPosInForwardDir = dot(correctedPlayerPos.pos.xyz, portalForward);
+      f32 desiredPosInRightDir = dot(correctedPlayerPos.pos.xyz, portalRight);
+      if (desiredPosInForwardDir > minPortalForwardDirection &&
+          desiredPosInForwardDir < maxPortalForwardDirection &&
+          desiredPosInRightDir > minPortalRightDirection &&
+          desiredPosInRightDir < maxPortalRightDirection) {
+        // desired position will cause a collision and is in need of correction
+        // either push it out the back or out the side
+        f32 correctionDeltaForward = minPortalForwardDirection - desiredPosInForwardDir;
+        f32 correctionDeltaLeft = minPortalRightDirection - desiredPosInRightDir;
+        f32 correctionDeltaRight = maxPortalRightDirection - desiredPosInRightDir;
+        correctionDeltaRight =
+            abs(correctionDeltaLeft) < abs(correctionDeltaRight) ? correctionDeltaLeft
+                                                                 : correctionDeltaRight;
+        if (abs(correctionDeltaForward) < abs(correctionDeltaRight)) {
+          // push out the bottom
+          correctedPlayerPos = PlayerPosition::fromXYZ(
+              correctedPlayerPos.pos.xyz + (correctionDeltaForward * portalForward));
+        } else {
+          // push out the side
+          correctedPlayerPos = PlayerPosition::fromXYZ(
+              correctedPlayerPos.pos.xyz + (correctionDeltaRight * portalRight));
         }
       }
     }
   }
+
   correctedPlayerPos.pos.radius = Min(correctedPlayerPos.pos.radius, outerBoundingSphereRadius);
   world->player = correctedPlayerPos;
 
@@ -667,9 +721,11 @@ void collisionDetectionAndCorrection(World* world, PlayerPosition desiredPositio
         PortalInfo transientPortal;
         transientPortal.normalXY = -portal->normal;
         transientPortal.centerXYZ = portal->centerPosition;
-        transientPortal.dimensXY = portal->dimens;
+        transientPortal.dimensXYZ = portal->dimens;
         transientPortal.destination = world->currentSceneIndex;
         transientPortal.oneWay = false;
+        transientPortal.backingModelIndex = portal->backingModelIndex;
+        transientPortal.backingShaderIndex = portal->backingShaderIndex;
         addPortal(world, portal->sceneDestination, world->currentSceneIndex, &transientPortal, true);
       }
 

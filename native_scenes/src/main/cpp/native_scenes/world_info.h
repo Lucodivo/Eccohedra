@@ -1,7 +1,6 @@
 #pragma once
 
-const f32 portalDepth = 0.5f;
-const f32 portalWidth = 3.0f;
+#define WORLD_INFO_NO_INDEX -1
 
 enum EntityFlags {
   EntityType_Rotating = 1 << 0,
@@ -20,8 +19,10 @@ struct PortalInfo {
   u32 destination;
   vec2 normalXY;
   vec3 centerXYZ;
-  vec2 dimensXY;
+  vec3 dimensXYZ;
   bool oneWay;
+  s32 backingModelIndex; // equal to WORLD_INFO_NO_INDEX when no backing model
+  s32 backingShaderIndex; // ^^
 };
 
 struct ModelInfo {
@@ -147,29 +148,37 @@ WorldInfo originalWorld() {
     1,
     vec2{0, -1},
     vec3{0, -1.5, 1.5},
-    vec2{3, 3},
-    false
+    vec3{3, 0, 3},
+    false,
+    WORLD_INFO_NO_INDEX,
+    WORLD_INFO_NO_INDEX
   });
   gateScene.portals.push_back({
       2,
       vec2{1, 0},
       vec3{1.5, 0, 1.5},
-      vec2{3, 3},
-      false
+      vec3{3, 0, 3},
+      false,
+      WORLD_INFO_NO_INDEX,
+      WORLD_INFO_NO_INDEX
   });
   gateScene.portals.push_back({
       3,
       vec2{-1, 0},
       vec3{-1.5, 0, 1.5},
-      vec2{3, 3},
-      false
+      vec3{3, 0, 3},
+      false,
+      WORLD_INFO_NO_INDEX,
+      WORLD_INFO_NO_INDEX
   });
   gateScene.portals.push_back({
       4,
       vec2{0, 1},
       vec3{0, 1.5, 1.5},
-      vec2{3, 3},
-      false
+      vec3{3, 0, 3},
+      false,
+      WORLD_INFO_NO_INDEX,
+      WORLD_INFO_NO_INDEX
   });
   gateScene.directionalLights.reserve(1);
   gateScene.directionalLights.push_back({
@@ -192,21 +201,15 @@ WorldInfo originalWorld() {
       3.35,
       EntityType_Rotating
   });
-  tetrahedronScene.entities.push_back({
-      5,
-      2,
-      vec3{0, -9.75, 1.5},
-      vec3{portalWidth, portalDepth, 3},
-      0,
-      0
-  });
   tetrahedronScene.portals.reserve(1);
   tetrahedronScene.portals.push_back({
       0,
       vec2{0, -1},
       vec3{0, -10.0, 1.5},
-      vec2{3, 3},
-      true
+      vec3{3, 0.5f, 3},
+      true,
+      5,
+      2
   });
   tetrahedronScene.directionalLights.push_back({
                                             vec4{1, 1, 1, 0.15f},
@@ -228,21 +231,15 @@ WorldInfo originalWorld() {
       3.35,
       EntityType_Rotating
   });
-  octahedronScene.entities.push_back({
-      5,
-      2,
-      vec3{1.75, 0, 1.5},
-      vec3{portalWidth, portalDepth, 3},
-      -(Pi32 * 0.5f),
-      0
-  });
   octahedronScene.portals.reserve(1);
   octahedronScene.portals.push_back({
       0,
       vec2{-1, 0},
       vec3{1.5, 0, 1.5},
-      vec2{3, 3},
-      false
+      vec3{3, 0.5f, 3},
+      false,
+      5,
+      2
   });
   octahedronScene.directionalLights.push_back({
                                                    vec4{1, 1, 1, 0.2f},
@@ -264,21 +261,15 @@ WorldInfo originalWorld() {
       3.35,
       EntityType_Rotating
   });
-  dodecahedronScene.entities.push_back({
-      5,
-      2,
-      vec3{0.25f, 4.0f, 1.5},
-      vec3{portalWidth, portalDepth, 3},
-      -(Pi32 * 0.5f),
-      0
-  });
   dodecahedronScene.portals.reserve(1);
   dodecahedronScene.portals.push_back({
       0,
       vec2{-1.0, 0},
       vec3{0.0f, 4.0f, 1.5},
-      vec2{3, 3},
-      true
+      vec3{3, 0.5f, 3},
+      true,
+      5,
+      2
   });
   dodecahedronScene.directionalLights.push_back({
                                                   vec4{1, 1, 1, 0.3f},
@@ -300,21 +291,15 @@ WorldInfo originalWorld() {
       3.35,
       EntityType_Rotating
   });
-  icosahedronScene.entities.push_back({
-      5,
-      2,
-      vec3{0, 1.75, 1.5},
-      vec3{portalWidth, portalDepth, 3},
-      0,
-      0
-  });
   icosahedronScene.portals.reserve(1);
   icosahedronScene.portals.push_back({
       0,
       vec2{0, -1},
       vec3{0, 1.5, 1.5},
-      vec2{3, 3},
-      false
+      vec3{3, 0.5f, 3},
+      false,
+      5,
+      2
   });
   icosahedronScene.directionalLights.push_back({
                                              vec4{1, 1, 1, 0.3f},
