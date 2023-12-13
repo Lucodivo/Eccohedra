@@ -209,8 +209,8 @@ bool drawPortal(World* world, u32 sceneIndex, u32 portalIndex) {
   Portal* portal = world->scenes[sceneIndex].portals + portalIndex;
   vec2 portalToPlayer = world->player.pos.xyz.xy - portal->centerPosition.xy;
   vec2 playerViewDir = -world->player.pos.xyz.xy; // Player assumed to always face the origin
-  bool playerInFrontOfPortal = dot(portalToPlayer, portal->normal) >= 0.0f;
-  bool playerLookingInDirOfPortal = dot(playerViewDir, portal->normal) <= 0.0f;
+  bool playerInFrontOfPortal = similarDirection(portalToPlayer, portal->normal);
+  bool playerLookingInDirOfPortal = similarDirection(playerViewDir, -portalToPlayer);
   bool portalMightBeVisible = playerInFrontOfPortal && playerLookingInDirOfPortal;
   if(!portalMightBeVisible) { return false; }
   vec2 portalNormalPerp = vec2{portal->normal[1], -portal->normal[0]};
