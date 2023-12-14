@@ -41,7 +41,8 @@ This project is an extension of another project called [OpenGLScenes](https://gi
   - Note: Hilt is documented for future use. If looking for examples, not much can be found here ATM.
 - [Native Code / JNI / NDK](app/src/main/cpp/AndroidNativeCode.md)
 - [C++ Guidelines & Reminders](app/src/main/cpp/CppGuidelinesAndReminders.md)
-
+- [How To Portals](native_scenes/src/main/cpp/native_scenes/HowToPortals.md)
+ 
 ## Shaders
 GLSL shaders are loaded as raw resources and are currently located [here](app/src/main/res/raw). 
 The positives of loading as a raw resource is that we get autocomplete functionality and compile-time checking for shaders. 
@@ -71,11 +72,12 @@ All the following information is under the assumption the project is being built
   - If you want to skip the validation of glsl shaders, removing any `add_dependencies({target-name} shaders-validation)` in CMakeLists.txt
     will do the trick.
 - Assets must be baked with the asset_baker before the project can properly be run.
-  - asset_baker source can be found in asset_baker/ in the root directory of the project.
-  - asset_baker has hardcoded directories that will work smoothly as long as asset_baker is ran in the root
+  - asset_baker source can be found in asset_baker/in the root directory of the project.
+  - asset_baker has hardcoded directories that will work smoothly as long as asset_baker is runs in the root
   	directory of the entire Android project.
   - asset_baker uses a cache system that will re-bake items that have been modified since last they were baked.
-  - (⚠IN PROGRESS⚠)
+  - asset_baker relies has a dependency on [AMD's Compressinator](https://github.com/GPUOpen-Tools/compressonator) static libraries. Unfortunately, this must be compiled or found yourself.
+    - (⚠IN PROGRESS⚠)
 
 ## Screenshots
 
@@ -86,3 +88,4 @@ All the following information is under the assumption the project is being built
 ![Infinite Capsules Scene](https://github.com/Lucodivo/RepoSampleImages/blob/master/OpenGLScenes/Android/InfiniteCapsules.png)
 ![Mandelbrot Scene](https://github.com/Lucodivo/RepoSampleImages/blob/master/OpenGLScenes/Android/Mandelbrot.png)
 ![MengerPrison Scene](https://github.com/Lucodivo/RepoSampleImages/blob/master/OpenGLScenes/Android/MengerPrison.png)
+![Gate Portal Scene](https://github.com/Lucodivo/RepoSampleImages/blob/master/OpenGLScenes/Android/GatePortal.png)
