@@ -205,10 +205,14 @@ u32 addNewModel(World* world, const char* modelFileLoc) {
   return modelIndex;
 }
 
-void drawPortals(World* world, const u32 sceneIndex, const u32 stencilMask, const u32 portalsDepth){
+void drawPortals(World* world, const u32 sceneIndex, const u32 stencilMask, const mat4 sceneProjectionMat, const u32 portalsDepth){
   if(portalsDepth <= 0) { return; }
 
   Scene* scene = world->scenes + sceneIndex;
+
+  const mat4 focusPortalModelMat = scale_mat4(vec3{1.0f, PORTAL_BACKING_BOX_DEPTH, 1.0f}) * translate_mat4({0.0f, 0.5f, 0.0f});
+  // Player assumed to always face the origin. The radius is assumed to never be zero.
+  vec2 playerViewDir = -(world->player.pos.xyz.xy / world->player.pos.radius);
 
   bool portalMightBeOnScreen[MAX_PORTALS];
   mat4 portalModelMat[MAX_PORTALS];
@@ -218,6 +222,7 @@ void drawPortals(World* world, const u32 sceneIndex, const u32 stencilMask, cons
   glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
   glStencilFunc(GL_EQUAL, 0xFF, stencilMask);
   glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
+  glColorMask(false, false, false, false);
   glUseProgram(world->stencilShader.id);
   for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
     const Portal& portal = scene->portals[portalIndex];
@@ -227,25 +232,18 @@ void drawPortals(World* world, const u32 sceneIndex, const u32 stencilMask, cons
 
     vec2 portalToPlayer = world->player.pos.xyz.xy - portal.centerPosition.xy;
     vec2 playerToPortal = -portalToPlayer;
-    // Player assumed to always face the origin. The radius is assumed to never be zero.
-    vec2 playerViewDir = -(world->player.pos.xyz.xy / world->player.pos.radius);
     bool playerInFrontOfPortal = similarDirection(portalToPlayer, portal.normal);
     bool playerLookingInDirOfPortal = similarDirection(playerViewDir, playerToPortal + centerToSide) ||
                                       similarDirection(playerViewDir, playerToPortal - centerToSide);
     bool portalMightBeVisible = playerInFrontOfPortal && playerLookingInDirOfPortal;
-    if(!portalMightBeVisible) {
-      portalMightBeOnScreen[portalIndex] = false;
-      continue;
-    }
+    portalMightBeOnScreen[portalIndex] = portalMightBeVisible;
+    if(!portalMightBeVisible) continue;
+
     bool portalMightBeInFocus = world->currentSceneIndex == sceneIndex &&
                                 abs(dot(portalToPlayer, portalNormalPerp)) < halfPortalWidth;
 
     portalModelMat[portalIndex] = quadModelMatrix(portal.centerPosition, Vec3(portal.normal, 0.0f), portal.dimens[0], portal.dimens[2]);
-    if(portalMightBeInFocus) {
-      portalModelMat[portalIndex] = portalModelMat[portalIndex]
-          * scale_mat4(vec3{1.0f, PORTAL_BACKING_BOX_DEPTH, 1.0f})
-          * translate_mat4({0.0f, 0.5f, 0.0f});
-    }
+    if(portalMightBeInFocus) portalModelMat[portalIndex] = portalModelMat[portalIndex] * focusPortalModelMat;
     portalVertAtt[portalIndex] = portalMightBeInFocus ?
                                  world->commonVertAtts.cube(true, true) :
                                  world->commonVertAtts.quad(false);
@@ -266,23 +264,11 @@ void drawPortals(World* world, const u32 sceneIndex, const u32 stencilMask, cons
   }
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-  // clear depth buffer where the portals exists
-  glDepthFunc(GL_ALWAYS);
-  glColorMask(false, false, false, false);
-  glUseProgram(world->clearDepthShader.id);
-  for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
-    if (!portalMightBeOnScreen[portalIndex]) { continue; }
-    glStencilFunc(GL_EQUAL, 0xFF, world->scenes[scene->portals[portalIndex].sceneDestination].stencilMask);
-    glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &portalModelMat[portalIndex]);
-    drawTriangles(portalVertAtt[portalIndex]);
-  }
-  glBindBuffer(GL_UNIFORM_BUFFER, 0);
-  glColorMask(true, true, true, true);
-  glDepthFunc(GL_LEQUAL);
-
   for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
     if(!portalMightBeOnScreen[portalIndex]) { continue; }
     const Portal& portal = scene->portals[portalIndex];
+
+    glColorMask(true, true, true, true);
 
     vec3 portalNormal_viewSpace = (world->UBOs.projectionViewModelUbo.view * Vec4(-portal.normal, 0.0f, 0.0f)).xyz;
     vec3 portalCenterPos_viewSpace = (world->UBOs.projectionViewModelUbo.view * Vec4(portal.centerPosition, 1.0f)).xyz;
@@ -290,12 +276,11 @@ void drawPortals(World* world, const u32 sceneIndex, const u32 stencilMask, cons
                                obliquePerspective_fovHorz(world->display.fov, world->display.aspect, near, far, portalNormal_viewSpace, portalCenterPos_viewSpace) :
                                obliquePerspective(world->display.fov, world->display.aspect, near, far, portalNormal_viewSpace, portalCenterPos_viewSpace);
 
-    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
     glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, projection), sizeof(mat4), &portalProjectionMat);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     drawScene(world, portal.sceneDestination, world->scenes[portal.sceneDestination].stencilMask);
-    drawPortals(world, portal.sceneDestination, world->scenes[portal.sceneDestination].stencilMask, portalsDepth - 1);
+    drawPortals(world, portal.sceneDestination, world->scenes[portal.sceneDestination].stencilMask, portalProjectionMat, portalsDepth - 1);
   }
 }
 
@@ -424,7 +409,7 @@ void drawSceneWithPortals(World* world, u32 sceneIndex, u32 stencilMask, u32 por
   // draw scene
   drawScene(world, sceneIndex, stencilMask);
   // draw portals
-  drawPortals(world, world->currentSceneIndex, stencilMask, portalsDepth);
+  drawPortals(world, world->currentSceneIndex, stencilMask, world->UBOs.projectionViewModelUbo.projection, portalsDepth);
 }
 
 void updateEntities(World* world) {
@@ -593,8 +578,6 @@ void initPortalScene(World* world) {
   world->player.setPolarPos(-PiOverTwo32, 12.0f);
 
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-  glClearDepthf(1.0f);
-  glClearStencil(0x00);
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LEQUAL);
   glLineWidth(3.0f);
@@ -606,7 +589,7 @@ void initPortalScene(World* world) {
   // Universal shaders
   {
     world->skyboxShader = createShaderProgram(skyboxVertexShaderFileLoc, skyboxFragmentShaderFileLoc);
-    world->stencilShader = createShaderProgram(posVertexShaderFileLoc, debugColorFragmentShaderFileLoc);
+    world->stencilShader = createShaderProgram(posVertexShaderFileLoc, stencilFragmentShaderFileLoc);
     world->clearDepthShader = createShaderProgram(posVertexShaderFileLoc, clearDepthFragmentShaderFileLoc);
   }
 
@@ -829,6 +812,8 @@ void drawPortalScene(World* world) {
   world->UBOs.projectionViewModelUbo.view = cameraMat;
 
   // draw
+  glClearDepthf(1.0f);
+  glClearStencil(0x00);
   glStencilMask(0xFF);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 

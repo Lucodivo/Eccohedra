@@ -264,8 +264,8 @@ WorldInfo originalWorld() {
   dodecahedronScene.portals.reserve(1);
   dodecahedronScene.portals.push_back({
       0,
-      vec2{-1.0, 0},
-      vec3{0.0f, 4.0f, 1.5},
+      vec2{1.0, 0},
+      vec3{0.0f, 5.0f, 1.5},
       vec3{3, 0.5f, 3},
       true,
       5,
