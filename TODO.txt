@@ -31,5 +31,8 @@ Modularization:
 Refactoring:
     - purge raw texture/model assets from the repo and store them somewhere else to be downloaded separately.
     - Remove json from baked assets (does not *currently*
+README:
+    - include portal scene
+    - improve upon the building process
 Bugs(?):
     - Exiting a scene seems to sometimes show a frame or two of the users home screen wallpaper

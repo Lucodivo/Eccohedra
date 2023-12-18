@@ -92,4 +92,3 @@ private:
     return result;
   }
 };
-

@@ -45,8 +45,8 @@ using namespace noop;
 #include "shader_program.h"
 #include "model.h"
 #include "camera.h"
-#include "gl_util.cpp"
+#include "gl_util.h"
 
-#include "vertex_attributes.cpp"
-#include "rotation_sensor_helper.cpp"
-#include "portal_scene.cpp"
+#include "vertex_attributes.h"
+#include "rotation_sensor_helper.h"
+#include "portal_scene.h"
