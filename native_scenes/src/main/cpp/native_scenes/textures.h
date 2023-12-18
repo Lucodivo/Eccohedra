@@ -1,11 +1,5 @@
 #pragma once
 
-enum FramebufferCreationFlags {
-  FramebufferCreate_NoValue = 0,
-  FramebufferCreate_NoDepthStencil = 1 << 0,
-  FramebufferCreate_color_sRGB = 1 << 1,
-};
-
 internal_func inline void bindActiveTexture(s32 activeIndex, GLuint textureId, GLenum target) {
   glActiveTexture(GL_TEXTURE0 + activeIndex);
   glBindTexture(target, textureId);

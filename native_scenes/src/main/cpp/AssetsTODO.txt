@@ -10,6 +10,6 @@
 - I don't believe I need to use JSON for my baked assets at all...
     - They should just be compiled into the binary as raw strings.
     - Would allow us to remove nlohmann Json as a dependency for the application
-- Remove lz4 dependency from the Android application. This project depends on the
-- Using the asset_baker might be overkill but there's no reason we need to manually be reading shaders through AAssetManager
+- Remove lz4 dependency from the Android application.
+- Using the asset_baker might be overkill but there's no reason we need to manually be reading shaders through AAssetManager.
 - asset_baker cache should take into consideration the assetlib version number and potentially the baker's own version?

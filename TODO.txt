@@ -1,43 +1,35 @@
-Improve iterative process:
-
-Optimization ideas:
-- Gate scene
+== Scene Improvements ==
+Gate Scene:
     - Calm Sea and Polluted Earth skybox textures can be downscaled to match
         - Tried downscaling and didn't look great...
         - Potentially use ASTC NxM compression for larger (or all) textures?
             - [Android developer guid says support is lower than ETC2 but I don't believe it affects](https://developer.android.com/guide/playcore/asset-delivery/texture-compression) but I don't believe that will affect anyone who might run this app.
     - No need to load all textures/models at once. Can load just the Gate scene textures and only other scene(s) visible. Then load others in background.
-
-Modularization ideas:
-- matrices library (NoopMath.kt) could be set up to be pulled from a maven repository instead of manually embedded into the project
-- Use Asset-Baker to validate and bake shader files to strings
-    - Consider minifying glsl code in the baking process to reduce bytes going to the GPU
-        - https://github.com/laurentlb/Shader_Minifier
-    - Failed attempts to were attempted using glslang/glslangValidator/glslc and CMake
-- Shaders can be pre-compiled by the users device on the startup of the app (or first run) to the specifications of that device.
-    - This prevents the need for further compilation of GLSL
-    - search terms: GL_OES_get_program_binary
-
-Scene improvements:
-- Mandelbrot scene
-    - Increase max zoom
-        - Best potential solution seems to be utilizing Perturbation Theory.
-        - Failed attempts were made at trying to emulate higher floating point precision in the fragment shader.
-
-- Gate scene
     - Gate casting shadow onto self?
     - input sensitivity is different when changing theta/radius depending on whether the app is running in portrait mode or landscape (maybe desired? requires testing.)
     * pinch to zoom
-
-- Menger prison
+    - Use a vantage point for portals when determining whether it might be visible (based on the portal it is being drawn in)
+    - Stencil shader should not have a fragment stage
+    - drawscenewithportals recursion could be more cohesive
+Mandelbrot Scene:
+    - Increase max zoom
+        - Best potential solution seems to be utilizing Perturbation Theory.
+        - Failed attempts were made at trying to emulate higher floating point precision in the fragment shader.
+Menger Prison:
     - If user "crashes" reset scene
 
-Overall Improvements:
-
-
+== Overall Improvements ==
+Modularization:
+    - matrices library (NoopMath.kt) could be set up to be pulled from a maven repository instead of manually embedded into the project
+    - Use Asset-Baker to validate and bake shader files to strings
+        - Consider minifying glsl code in the baking process to reduce bytes going to the GPU
+            - https://github.com/laurentlb/Shader_Minifier
+        - Failed attempts to were attempted using glslang/glslangValidator/glslc and CMake
+    - Shaders can be pre-compiled by the users device on the startup of the app (or first run) to the specifications of that device.
+        - This prevents the need for further compilation of GLSL
+        - search terms: GL_OES_get_program_binary
 Refactoring:
-- purge raw texture/model assets from the repo and store them somewhere else to be downloaded separately.
-- Remove json from baked assets (does not *currently*
-
+    - purge raw texture/model assets from the repo and store them somewhere else to be downloaded separately.
+    - Remove json from baked assets (does not *currently*
 Bugs(?):
-- Exiting a scene seems to sometimes show a frame or two of the users home screen wallpaper
+    - Exiting a scene seems to sometimes show a frame or two of the users home screen wallpaper
