@@ -325,7 +325,7 @@ void onWindowInit(android_app *app, Engine *engine) {
   if (app->window != nullptr) {
     {
       updateGLSurface(&engine->glEnv, app->window);
-      updateSceneWindow(&engine->sceneState.world, engine->glEnv.surface.width,
+      updatePortalSceneWindow(&engine->sceneState.world, engine->glEnv.surface.width,
                         engine->glEnv.surface.height);
       engine->initializing = false;
     }

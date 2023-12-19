@@ -56,7 +56,6 @@ struct Portal {
 };
 
 struct Scene {
-  // TODO: should the scene keep track of its own index in the worlds?
   Entity entities[16];
   u32 entityCount;
   Portal portals[MAX_PORTALS];
@@ -66,7 +65,6 @@ struct Scene {
   u32 posLightCount;
   vec4 ambientLightColorAndPower;
   GLuint skyboxTexture;
-  u8 stencilMask;
   std::string title;
   std::string skyboxFileName;
 };
@@ -144,7 +142,6 @@ u32 addNewScene(World* world, const char* title) {
   *scene = { 0 };
   scene->title = title;
   assert(world->sceneCount < STENCIL_MASK_BITS);
-  scene->stencilMask = 1 << world->sceneCount;
   world->sceneCount++;
   return sceneIndex;
 }
@@ -204,40 +201,50 @@ u32 addNewModel(World* world, const char* modelFileLoc) {
   return modelIndex;
 }
 
-// TODO: pass projection matrix as pointer
-void drawPortals(World* world, const u32 sceneIndex, const mat4 projectionMat, const u32 sceneMask, const u32 sceneDepth, const u32 portalsMaxDepth){
-  if(sceneDepth == portalsMaxDepth) { return; }
+void drawPortals(World *world, const u32 sceneIndex,
+                 const vec3 vantagePoint,
+                 const mat4 &projectionMat,
+                 const u32 portalsMaxDepth,
+                 const u32 portalDepth = 0,
+                 const u32 sceneMask = CLEAR_STENCIL_VALUE) {
+  if(portalDepth == portalsMaxDepth) { return; }
 
   Scene* scene = world->scenes + sceneIndex;
-  mat4 focusPortalAdjustmentModelMat = scale_mat4(vec3{1.0f, PORTAL_BACKING_BOX_DEPTH, 1.0f}) * translate_mat4({0.0f, 0.5f, 0.0f});
+  mat4 focusPortalAdjustmentModelMat =
+          scale_mat4(vec3{1.0f, PORTAL_BACKING_BOX_DEPTH, 1.0f}) *
+          translate_mat4({0.0f, 0.5f, 0.0f});
   vec2 playerViewDir = -(world->player.pos.xyz.xy / world->player.pos.radius);
 
   bool portalMightBeOnScreens[MAX_PORTALS];
   mat4 portalModelMats[MAX_PORTALS];
   VertexAtt* portalVertAtts[MAX_PORTALS];
+  vec3 portalVantagePoint[MAX_PORTALS];
 
   glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
   glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, projection), sizeof(mat4), &projectionMat);
   glColorMask(false, false, false, false);
-  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
   glStencilFunc(GL_EQUAL, sceneMask, 0xFF);
   glUseProgram(world->stencilShader.id);
 
-  // draw portal quads to depth buffer to resolve potential overlap
+  // draw portal quads to depth buffer
   for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
     const Portal &portal = scene->portals[portalIndex];
     vec2 portalNormalPerp = vec2{portal.normal[1], -portal.normal[0]};
     f32 halfPortalWidth = portal.dimens[0] * 0.5f;
     vec2 centerToSide = (portalNormalPerp * halfPortalWidth);
 
+    vec2 portalToVantagePoint = vantagePoint.xy - portal.centerPosition.xy;
     vec2 portalToPlayer = world->player.pos.xyz.xy - portal.centerPosition.xy;
     vec2 playerToPortal = -portalToPlayer;
     // Player assumed to always face the origin. The radius is assumed to never be zero.
-    bool playerInFrontOfPortal = similarDirection(portalToPlayer, portal.normal);
-    bool playerLookingInDirOfPortal = similarDirection(playerViewDir, playerToPortal + centerToSide) ||
-                                      similarDirection(playerViewDir, playerToPortal - centerToSide);
+    bool playerInFrontOfPortal = similarDirection(portalToVantagePoint, portal.normal);
+    vec2 playerToPortalSide1 = playerToPortal + centerToSide;
+    vec2 playerToPortalSide2 = playerToPortal - centerToSide;
+    bool playerLookingInDirOfPortal = similarDirection(playerViewDir, playerToPortalSide1) ||
+                                      similarDirection(playerViewDir, playerToPortalSide2);
     portalMightBeOnScreens[portalIndex] = playerInFrontOfPortal && playerLookingInDirOfPortal;
     if(!portalMightBeOnScreens[portalIndex]) continue;
+    portalVantagePoint[portalIndex] = portal.centerPosition;
     bool portalMightBeInFocus = world->currentSceneIndex == sceneIndex &&
                                 abs(dot(portalToPlayer, portalNormalPerp)) < halfPortalWidth;
 
@@ -251,7 +258,7 @@ void drawPortals(World* world, const u32 sceneIndex, const mat4 projectionMat, c
   }
 
   u8 portalMask = sceneMask + 1;
-  u8 portalDepth = sceneDepth + 1;
+  u8 innerPortalDepth = portalDepth + 1;
   for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
     if(!portalMightBeOnScreens[portalIndex]) continue;
     const Portal& portal = scene->portals[portalIndex];
@@ -285,9 +292,8 @@ void drawPortals(World* world, const u32 sceneIndex, const mat4 projectionMat, c
                                obliquePerspective(world->display.fov, world->display.aspect, near, far, portalNormal_viewSpace, portalCenterPos_viewSpace);
 
     glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, projection), sizeof(mat4), &portalProjectionMat);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
     drawScene(world, portal.sceneDestination, portalMask);
-    drawPortals(world, portal.sceneDestination, portalProjectionMat, portalMask, portalDepth, portalsMaxDepth);
+    drawPortals(world, portal.sceneDestination, portalVantagePoint[portalIndex], portalProjectionMat, portalsMaxDepth, innerPortalDepth, portalMask);
 
     { // remove stencil for portal
       glColorMask(false, false, false, false);
@@ -302,9 +308,8 @@ void drawPortals(World* world, const u32 sceneIndex, const mat4 projectionMat, c
       glColorMask(true, true, true, true);
     }
   }
-  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
   glColorMask(true, true, true, true);
-  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+  glStencilFunc(GL_ALWAYS, 0xFF, 0xFF);
 }
 
 void drawScene(World* world, const u32 sceneIndex, u32 sceneMask) {
@@ -319,7 +324,6 @@ void drawScene(World* world, const u32 sceneIndex, u32 sceneMask) {
     mat4 identityMat4 = identity_mat4();
     glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
     glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &identityMat4);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
     drawTriangles(world->commonVertAtts.cube(true));
   }
 
@@ -330,19 +334,16 @@ void drawScene(World* world, const u32 sceneIndex, u32 sceneMask) {
 
     // NOTE: The lights are on a single double ended array where directional lights are added to the beginning
     // and directional lights are added to the end.
-    // TODO: If LightUniform and Light struct for class were the same we could do a simple memcpy
     world->UBOs.multiLightUbo.dirLightCount = scene->dirLightCount;
     for(u32 i = 0; i < scene->dirLightCount; ++i) {
       world->UBOs.multiLightUbo.dirPosLightStack[i].colorAndPower = scene->dirPosLightStack[i].colorAndPower;
       world->UBOs.multiLightUbo.dirPosLightStack[i].pos.xyz = scene->dirPosLightStack[i].pos;
-      // TODO: W component of pos currently undefined and potentially dangerous. Determine if it can be used.
     }
 
     world->UBOs.multiLightUbo.posLightCount = scene->posLightCount;
     for(u32 i = 0; i < scene->posLightCount; ++i) {
       world->UBOs.multiLightUbo.dirPosLightStack[maxLights - i].colorAndPower = scene->dirPosLightStack[maxLights - i].colorAndPower;
       world->UBOs.multiLightUbo.dirPosLightStack[maxLights - i].pos.xyz = scene->dirPosLightStack[maxLights - i].pos;
-      // TODO: W component of pos currently undefined and potentially dangerous. Determine if it can be used.
     }
 
     world->UBOs.multiLightUbo.ambientLight = scene->ambientLightColorAndPower;
@@ -360,7 +361,6 @@ void drawScene(World* world, const u32 sceneIndex, u32 sceneMask) {
 
     glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
     glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &modelMatrix);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glUseProgram(shader.id);
     if(shader.noiseTextureId != TEXTURE_ID_NO_TEXTURE) {
@@ -400,7 +400,6 @@ void drawScene(World* world, const u32 sceneIndex, u32 sceneMask) {
 
     glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
     glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &modelMatrix);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glUseProgram(shader.id);
     if(shader.noiseTextureId != TEXTURE_ID_NO_TEXTURE) {
@@ -428,13 +427,26 @@ void drawScene(World* world, const u32 sceneIndex, u32 sceneMask) {
 }
 
 // Fuse this properly with drawPortals()
-void drawSceneWithPortals(World* world, u32 sceneIndex, u32 portalsMaxDepth)
+void drawCurrentScene(World* world)
 {
-  // draw scene
-  u8 sceneMask = CLEAR_STENCIL_VALUE;
-  drawScene(world, sceneIndex, CLEAR_STENCIL_VALUE);
-  // draw portals
-  drawPortals(world, world->currentSceneIndex, world->UBOs.projectionViewModelUbo.projection, sceneMask, 0, portalsMaxDepth);
+    // draw
+    u8 sceneMask = CLEAR_STENCIL_VALUE;
+    glClearDepthf(1.0f);
+    glClearStencil(sceneMask);
+    glStencilMask(0xFF);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    // universal matrices in UBO
+    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.fragUboId);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(FragUBO), &world->UBOs.fragUbo);
+    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, offsetof(ProjectionViewModelUBO, model), &world->UBOs.projectionViewModelUbo);
+
+    // draw scene
+    drawScene(world, world->currentSceneIndex, sceneMask);
+
+    // draw portals
+    drawPortals(world, world->currentSceneIndex, world->player.pos.xyz, world->UBOs.projectionViewModelUbo.projection, 2);
 }
 
 void updateEntities(World* world) {
@@ -584,8 +596,7 @@ void loadWorld(World* world) {
   return;
 }
 
-// TODO: Come up with better name
-void updateSceneWindow(World* world, u32 width, u32 height) {
+void updatePortalSceneWindow(World* world, u32 width, u32 height) {
   world->display.fov = 45.f;
   world->display.width = width;
   world->display.height = height;
@@ -640,7 +651,6 @@ void initPortalScene(World* world) {
     glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.multiLightUboId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(MultiLightUBO), NULL, GL_DYNAMIC_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, multiLightUBOBindingIndex, world->UBOs.multiLightUboId, 0, sizeof(MultiLightUBO));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
   }
 
   world->stopWatch = StopWatch();
@@ -660,7 +670,6 @@ void collisionDetectionAndCorrection(World* world, PlayerPosition desiredPositio
   const f32 outerBoundingSphereRadius = 75.0f;
 
   if(world->currentSceneIndex == 0) { // if gate scene...
-    // TODO: check for collisions with the gate's columns
     const vec2 quarterFoldedXY = vec2{abs(correctedPlayerPos.pos.xyz[0]), abs(correctedPlayerPos.pos.xyz[1])};
     const vec2 columnXY = vec2{1.768f, 1.768 };
     const f32 columnRadius = 0.5f;
@@ -836,20 +845,7 @@ void drawPortalScene(World* world) {
   mat4 cameraMat = getViewMat(frameCamera);
   world->UBOs.projectionViewModelUbo.view = cameraMat;
 
-  // draw
-  glClearDepthf(1.0f);
-  glClearStencil(CLEAR_STENCIL_VALUE);
-  glStencilMask(0xFF);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-  // universal matrices in UBO
-  glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.fragUboId);
-  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(FragUBO), &world->UBOs.fragUbo);
-
-  glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
-  glBufferSubData(GL_UNIFORM_BUFFER, 0, offsetof(ProjectionViewModelUBO, model), &world->UBOs.projectionViewModelUbo);
-
-  drawSceneWithPortals(world, world->currentSceneIndex, 2);
+    drawCurrentScene(world);
 }
 
 void deinitPortalScene(World* world) {

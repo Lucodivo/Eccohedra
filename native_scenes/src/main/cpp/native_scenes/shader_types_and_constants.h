@@ -34,6 +34,7 @@ u32 multiLightUBOBindingIndex = 2;
 struct LightUniform {
   vec4 colorAndPower; // NOTE: fourth component used for light power
   vec4 pos; // NOTE: fourth component for padding, currently un-defined
+// TODO: w component of pos currently undefined and potentially dangerous. Determine if it can be used.
 };
 struct MultiLightUBO {
   vec4 ambientLight;
