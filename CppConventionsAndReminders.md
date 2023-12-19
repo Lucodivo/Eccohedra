@@ -1,6 +1,7 @@
-### Guidelines
-Disclaimer: Guidelines are a suggested general way of doing things. There are many reasons to break rules. 
-These are no exception.
+### Conventions
+These are not the best way to do these. These are *a* way to do things. The conventions are followed
+because consistency within a codebase is a desirable trait. These conventions are *not* followed because
+there is no better way to do things.
 
 #### Function arguments: Pointer or reference?
 - Although it may seem arbitrary, choosing a reference or a pointer can change the perception of what 
@@ -9,6 +10,14 @@ Preferably the calling site screams "This function may mutate your argument!" So
     - Does the function mutate the argument?
         - "Yes", "Maybe", or "Not now but I want to keep the possibilities open": The parameter should be a pointer.
         - "No": The parameter should be a reference to a constant value
+
+#### OpenGL
+- It is often a good idea to reverse many OpenGL state changes for predictability. However, there are
+  instances where it seems to add more bloat and hinder readability more than it is worth. With that in
+  mind there are instances where this project reconsiders keeping the state machine
+  so clean.
+    - *glBindBuffer(0)* adds bloat everywhere and is often avoided. Know what buffer
+      are writing to before calling *glBufferData()* or *glBufferSubData()*
 
 ### Wait... How does this work again?
 #### Const (and pointers)

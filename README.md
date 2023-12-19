@@ -39,9 +39,9 @@ This project is an extension of another project called [OpenGLScenes](https://gi
 - [Scene List & Scene Potential Architecture](SceneListAndScenePotentialArchitecture.md)
 - [Hilt](app/src/main/java/com/inasweaterpoorlyknit/learnopengl_androidport/di/Hilt.md)
   - Note: Hilt is documented for future use. If looking for examples, not much can be found here ATM.
-- [Native Code / JNI / NDK](app/src/main/cpp/AndroidNativeCode.md)
-- [C++ Guidelines & Reminders](app/src/main/cpp/CppGuidelinesAndReminders.md)
-- [How To Portals](native_scenes/src/main/cpp/native_scenes/HowToPortals.md)
+- [Native Code / JNI / NDK](AndroidNativeCode.md)
+- [C++ Conventions & Reminders](CppConventionsAndReminders.md)
+- [How To Portals](HowToPortals.md)
  
 ## Shaders
 GLSL shaders are loaded as raw resources and are currently located [here](app/src/main/res/raw). 
