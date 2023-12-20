@@ -11,6 +11,7 @@
 
 #define Pi32 3.14159265359f
 #define PiOverTwo32 1.57079632679f
+#define SqrtTwoOverTwo32 0.70710678119f
 #define Tau32 6.28318530717958647692f
 #define RadiansPerDegree (Pi32 / 180.0f)
 

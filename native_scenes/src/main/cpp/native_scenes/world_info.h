@@ -204,8 +204,8 @@ WorldInfo originalWorld() {
   tetrahedronScene.portals.reserve(1);
   tetrahedronScene.portals.push_back({
       0,
-      vec2{0, -1},
-      vec3{0, -10.0, 1.5},
+      vec2{0.0, -1.0},
+      vec3{-5.0, -1.0, 1.5},
       vec3{3, 0.5f, 3},
       true,
       5,
@@ -264,8 +264,8 @@ WorldInfo originalWorld() {
   dodecahedronScene.portals.reserve(1);
   dodecahedronScene.portals.push_back({
       0,
-      vec2{1.0, 0},
-      vec3{0.0f, 5.0f, 1.5},
+      vec2{-SqrtTwoOverTwo32, SqrtTwoOverTwo32},
+      vec3{-5.0f, 5.0f, 1.5},
       vec3{3, 0.5f, 3},
       true,
       5,
@@ -294,10 +294,10 @@ WorldInfo originalWorld() {
   icosahedronScene.portals.reserve(1);
   icosahedronScene.portals.push_back({
       0,
-      vec2{0, -1},
-      vec3{0, 1.5, 1.5},
+      vec2{-SqrtTwoOverTwo32, SqrtTwoOverTwo32},
+      vec3{5.0, 5.0, 1.5},
       vec3{3, 0.5f, 3},
-      false,
+      true,
       5,
       2
   });

@@ -7,6 +7,7 @@ Gate Scene:
     - No need to load all textures/models at once. Can load just the Gate scene textures and only other scene(s) visible. Then load others in background.
     - Gate casting shadow onto self?
     - input sensitivity is different when changing theta/radius depending on whether the app is running in portrait mode or landscape (maybe desired? requires testing.)
+    - Projection & View matrices can be multiplied and sent to the GPU as a single matrix
 Mandelbrot Scene:
     - Increase max zoom
         - Best potential solution seems to be utilizing Perturbation Theory.
@@ -28,6 +29,6 @@ Refactoring:
 README:
     - include portal scene
     - improve upon the building process
-    - edit HowToPortals.md after to accomidate change in method
+    - edit HowToPortals.md after to accommodate change in method
 Bugs(?):
     - Exiting a scene seems to sometimes show a frame or two of the users home screen wallpaper
