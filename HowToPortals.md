@@ -3,41 +3,37 @@
 ### Method Portal Definition
 - A doorway to a separate 3D environment or "scene"
 
-### Method Limitations
-- 1 bit is used per scene (potential portal destination)
-    - There are typically only 8 bpp in a stencil buffer, meaning that the current implementation is limited to 
-    8 scenes. Though one should be able to overcome these limitations by interpreting bits differently depending
-    on the context of the program.
-        - Ex: Given the context of the current scene, one can differ in interpretations of bits in the stencil buffer.
-        Instead of having some global meaning of each bit.
-
 ### Steps
-1) Draw geometry of current scene.
-2) Recursion Base Case: If we have reached our defined portal recursive depth, we have completed. End of algorithm.
-3) For each portal, draw them to the stencil buffer. Turning on the bit that represents the scene of that portals destination.
-   - In OpenGL, specific bits are turned on using... 
-        - glStencilOp(ref = 0xFF, stencilMask = portalSourceBitMask), which makes it so the stencil test is:  
-          0xFF & portalSourceBitMask == stencilBufferFragmentBits & portalSourceBitMask  
-          Which allows a portal to be drawn only in a place where the portals home scene bit has been written.
-        - glStencilMask(mask = portalDestinationBitMask), which limits the writing of bits to only the bit represented by portalDestinationBitMask.
-        - glStencilFunc(GL_KEEP, GL_KEEP, GL_REPLACE), which writes glStencilOp's ref (0xFF) ANDed with glStencilMasks's bits to the stencil buffer only when a 
-          fragment passes both the depth and stencil tests. The result is turning on the destination scene's bit and leaving other bits unaffected.
-4) For each portal, redraw them to the stencil buffer, taking advantage of the depth buffer now handling overlapping portals,
-  and turn off all bits that do not represent the scene of the portal's destination.
-   - In OpenGL, specific bits are turned off using...
-        - glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO), which says if we pass the stencil tests and the depth test, we want to zero all the bits.
-        - glStencilMask(mask = ~portalDestinationBitMask), which limits the zeroing to all but the destination scene's bit.
-5) For each portal, redraw them in a way that clears the depth buffer for the region covered by the portal.
-   - In OpenGL, specific depth bits are cleared using...
-         - glStencilFunc(GL_EQUAL, 0xFF, portalDestinationBitMask), which makes the stencil test only pass where the portalsDestinationBit has been set
-         - glDepthFunc(GL_ALWAYS), which makes the depth test always pass
-         - gl_FragDepth = 1.0f, which always writes the depth of the fragment to the furthest value (this is GLSL code set in the fragment shader)
-6) For each portal...
-    1) Create a unique oblique projection matrix made specifically for the portal and supply it to the renderer.
-    2) Draw geometry of scene beyond portal using the oblique projection matrix
-    3) Recursive Step: Go to step 2 for the scene beyond this portal.
-
-### NOTES 
+1) Clear stencil buffer to *portal_base_mask*. 
+    - *portal_base_mask* is some value in the range of [1, (2<sup>n</sup> - *max_portal_recursion* - 1)]
+      - *n* is the number of bits per pixel in the stencil buffer.
+      - *max_protal_recursion* is the maximum depth of portals within portals that you wish for your renderer support.
+2) Draw geometry of current scene.
+3) Recursion Base Case: If the current level of recursion is equal to *max_portal_recursion*, do nothing and pop one level 
+    of recursion, returning to the recursive step that lead us here or ending the algorithm all together if *max_portal_recursion*
+    is equal to zero. If we have not reached *max_portal_recursion*, continue to the next step.
+4) Draw each portal in the scene to the depth buffer. 
+   - Definitely do **NOT** draw to the stencil buffer. Drawing to color is find and can potentially help in debugging.
+5) For each portal in the scene...
+   1) Draw the portal to increment the stencil value by 1, where the portal's depth is both equal to that stored in
+        the depth buffer and the stencil is equal to *scene_current_mask*.
+      - *scene_current_mask* is equal to *portal_base_mask* plus the level of recursion (starting at level zero).
+   2) Draw the portal to clear the depth buffer, where the portal's stencil value is equal to *portal_current_mask*.
+      - *portal_current_mask* is *scene_current_mask* plus one. (produced by the increment of the last step)
+   3) Create a unique oblique projection matrix made specifically for the portal and supply it to the renderer. 
+      - The purpose of this projection matrix is to render only what is **beyond** a virtual window.
+        If the same projection matrix is used for the scene containing the portal, the "virtual window" will act 
+        simply as a sliver of another scene. The oblique projection matrix clips any geometry between the camera and the
+        portal, preventing anything in the scene beyond the portal to rendered in front of the portal.
+      - See [references](#References) for an in-depth general explanation of an oblique projection matrix.
+      - See function [*obliquePerspective*](shared_cpp/noop_math/noop_math.cpp#L1095) in project source for this 
+         project's implementation.
+   4) Draw geometry of scene beyond portal using the oblique projection matrix, where the stencil value is equal
+     to *portal_current_mask*.
+   5) Recursive Step: Start at step 2 for the scene beyond the portal. This increments the level of recursion by one.
+   6) Draw the portal to clear the stencil value to zero.
+6) END: Pop one level of recursion, returning to the recursive step that lead us here. Or, if *scene_current_mask* equals
+    *portal_base_mask*, the algorithm is complete and there is no work left to be done.
 
 #### How Does This Work Again?: OpenGL's Stencil Buffer
 - glEnable/Disable(GL_STENCIL_TEST) enable and disable not only testing for the stencil but also writing to it.
