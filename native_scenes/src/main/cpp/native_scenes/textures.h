@@ -28,7 +28,6 @@ void load2DTexture(const char* imgLocation, u32* textureId, bool flipImageVert =
   std::string textureDir = "textures/";
   std::string assetPath = textureDir + imgLocation + ".tx";
 
-  // TODO: Investigate what can be done, if anything, to load cubemap assets faster
   assets::AssetFile textureAssetFile;
   {
     assets::loadAssetFile(assetManager_GLOBAL, assetPath.c_str(), &textureAssetFile);
@@ -107,6 +106,4 @@ void loadCubeMapTexture(const char* fileName, GLuint* textureId) {
     glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, compressionFormat, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_RIGHT));
     glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, compressionFormat, cubeMapInfo.faceWidth, cubeMapInfo.faceHeight, 0, cubeMapInfo.faceSize, cubeMapInfo.faceData(cubeMapData, SKYBOX_FACE_LEFT));
   }
-
-  // TODO: Can you generate compressed mipmaps?
 }

@@ -266,7 +266,7 @@ WorldInfo originalWorld() {
       0,
       vec2{-SqrtTwoOverTwo32, SqrtTwoOverTwo32},
       vec3{-5.0f, 5.0f, 1.5},
-      vec3{3, 0.5f, 3},
+      vec3{3, 0.5f, 6},
       true,
       5,
       2
@@ -295,8 +295,8 @@ WorldInfo originalWorld() {
   icosahedronScene.portals.push_back({
       0,
       vec2{-SqrtTwoOverTwo32, SqrtTwoOverTwo32},
-      vec3{5.0, 5.0, 1.5},
-      vec3{3, 0.5f, 3},
+      vec3{7.5, 7.5, 1.5},
+      vec3{6, 0.5f, 3},
       true,
       5,
       2

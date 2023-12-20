@@ -226,7 +226,7 @@ void drawPortals(World *world, const u32 sceneIndex,
   glStencilFunc(GL_EQUAL, sceneMask, 0xFF);
   glUseProgram(world->vertexStageOnlyShader.id);
 
-  // draw portal quads to depth buffer
+  // draw portal quads to depth buffer to properly handle occlusion amongst portals
   for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
     const Portal &portal = scene->portals[portalIndex];
     vec2 portalNormalPerp = vec2{portal.normal[1], -portal.normal[0]};
@@ -268,7 +268,7 @@ void drawPortals(World *world, const u32 sceneIndex,
     glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, projection), sizeof(mat4), &projectionMat);
     glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &portalModelMat);
     glColorMask(false, false, false, false);
-    { // turn on stencil mask bit for scene behind portal in the stencil buffer
+    { // increment stencil mask to desired value for portal
       glUseProgram(world->vertexStageOnlyShader.id);
       glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
       glDepthFunc(GL_EQUAL);
@@ -276,7 +276,7 @@ void drawPortals(World *world, const u32 sceneIndex,
       drawTriangles(portalVertAtt);
       glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     }
-    { // clear depth buffer where the portals exists
+    { // clear depth buffer where the stencil for the portal was drawn
       glDepthFunc(GL_ALWAYS);
       glUseProgram(world->clearDepthShader.id);
       glStencilFunc(GL_EQUAL, portalMask, 0xFF);
@@ -295,7 +295,7 @@ void drawPortals(World *world, const u32 sceneIndex,
     drawScene(world, portal.sceneDestination, portalMask);
     drawPortals(world, portal.sceneDestination, portalVantagePoint[portalIndex], portalProjectionMat, portalsMaxDepth, innerPortalDepth, portalMask);
 
-    { // remove stencil for portal
+    { // Clear stencil value after everything has been drawn
       glColorMask(false, false, false, false);
       glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
       glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, projection), sizeof(mat4), &projectionMat);
@@ -313,18 +313,13 @@ void drawPortals(World *world, const u32 sceneIndex,
 }
 
 void drawScene(World* world, const u32 sceneIndex, u32 sceneMask) {
-  glStencilFunc(GL_EQUAL, sceneMask, 0xFF);
-
   Scene* scene = world->scenes + sceneIndex;
 
-  if(scene->skyboxTexture != TEXTURE_ID_NO_TEXTURE) { // draw skybox if one exists
-    glUseProgram(world->skyboxShader.id);
+  glStencilFunc(GL_EQUAL, sceneMask, 0xFF);
+
+  if(scene->skyboxTexture != TEXTURE_ID_NO_TEXTURE) {
     bindActiveTextureCubeMap(skyboxActiveTextureIndex, scene->skyboxTexture);
     setSamplerCube(world->skyboxShader.id, skyboxTexUniformName, skyboxActiveTextureIndex);
-    mat4 identityMat4 = identity_mat4();
-    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
-    glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &identityMat4);
-    drawTriangles(world->commonVertAtts.cube(true));
   }
 
   // update scene light uniform buffer object
@@ -352,39 +347,43 @@ void drawScene(World* world, const u32 sceneIndex, u32 sceneMask) {
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(MultiLightUBO), &world->UBOs.multiLightUbo);
   }
 
+  struct LOCAL_FUNCS {
+    static void drawModel(World* world, const ShaderProgram& shader, const Model& model, const mat4& modelMat) {
+      glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
+      glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &modelMat);
+
+      glUseProgram(shader.id);
+      if(shader.noiseTextureId != TEXTURE_ID_NO_TEXTURE) {
+        bindActiveTextureSampler2d(noiseActiveTextureIndex, shader.noiseTextureId);
+        setSampler2D(shader.id, noiseTexUniformName, noiseActiveTextureIndex);
+      }
+      // TODO: Should some of this logic be moved to drawModel()?
+      for(u32 meshIndex = 0; meshIndex < model.meshCount; ++meshIndex) {
+        Mesh* mesh = model.meshes + meshIndex;
+        if(mesh->textureData.baseColor[3] != 0.0f) {
+          setUniform(shader.id, baseColorUniformName, mesh->textureData.baseColor.xyz);
+        }
+        if(mesh->textureData.albedoTextureId != TEXTURE_ID_NO_TEXTURE) {
+          bindActiveTextureSampler2d(albedoActiveTextureIndex, mesh->textureData.albedoTextureId);
+          setSampler2D(shader.id, albedoTexUniformName, albedoActiveTextureIndex);
+        }
+        if(mesh->textureData.normalTextureId != TEXTURE_ID_NO_TEXTURE) {
+          bindActiveTextureSampler2d(normalActiveTextureIndex, mesh->textureData.normalTextureId);
+          setSampler2D(shader.id, normalTexUniformName, normalActiveTextureIndex);
+        }
+
+        drawTriangles(&mesh->vertexAtt);
+      }
+    }
+  };
+
   // draw entities
   for(u32 sceneEntityIndex = 0; sceneEntityIndex < scene->entityCount; ++sceneEntityIndex) {
     Entity* entity = &scene->entities[sceneEntityIndex];
     ShaderProgram shader = world->shaders[entity->shaderIndex];
-
-    mat4 modelMatrix = scaleRotTrans_mat4(entity->scaleXYZ, vec3{0.0f, 0.0f, 1.0f}, entity->yaw, entity->posXYZ);
-
-    glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
-    glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &modelMatrix);
-
-    glUseProgram(shader.id);
-    if(shader.noiseTextureId != TEXTURE_ID_NO_TEXTURE) {
-      bindActiveTextureSampler2d(noiseActiveTextureIndex, shader.noiseTextureId);
-      setSampler2D(shader.id, noiseTexUniformName, noiseActiveTextureIndex);
-    }
     Model model = world->models[entity->modelIndex];
-    // TODO: Should some of this logic be moved to drawModel()?
-    for(u32 meshIndex = 0; meshIndex < model.meshCount; ++meshIndex) {
-      Mesh* mesh = model.meshes + meshIndex;
-      if(mesh->textureData.baseColor[3] != 0.0f) {
-        setUniform(shader.id, baseColorUniformName, mesh->textureData.baseColor.xyz);
-      }
-      if(mesh->textureData.albedoTextureId != TEXTURE_ID_NO_TEXTURE) {
-        bindActiveTextureSampler2d(albedoActiveTextureIndex, mesh->textureData.albedoTextureId);
-        setSampler2D(shader.id, albedoTexUniformName, albedoActiveTextureIndex);
-      }
-      if(mesh->textureData.normalTextureId != TEXTURE_ID_NO_TEXTURE) {
-        bindActiveTextureSampler2d(normalActiveTextureIndex, mesh->textureData.normalTextureId);
-        setSampler2D(shader.id, normalTexUniformName, normalActiveTextureIndex);
-      }
-
-      drawTriangles(&mesh->vertexAtt);
-    }
+    mat4 modelMatrix = scaleRotTrans_mat4(entity->scaleXYZ, vec3{0.0f, 0.0f, 1.0f}, entity->yaw, entity->posXYZ);
+    LOCAL_FUNCS::drawModel(world, shader, model, modelMatrix);
   }
 
   // draw portal backs
@@ -393,36 +392,19 @@ void drawScene(World* world, const u32 sceneIndex, u32 sceneMask) {
     if(portal.backingModelIndex == WORLD_INFO_NO_INDEX) { continue; }
     ShaderProgram shader = world->shaders[portal.backingShaderIndex];
     Model model = world->models[portal.backingModelIndex];
-
     f32 yaw = atan2(portal.normal[1], portal.normal[0]) + PiOverTwo32;
     vec3 portalBackOffset = Vec3(-(0.5 * portal.dimens[1]) * portal.normal, 0.0f);
     mat4 modelMatrix = scaleRotTrans_mat4(portal.dimens, vec3{0.0f, 0.0f, 1.0f}, yaw, portal.centerPosition + portalBackOffset);
+    LOCAL_FUNCS::drawModel(world, shader, model, modelMatrix);
+  }
 
+  // draw skybox if one exists
+  if(scene->skyboxTexture != TEXTURE_ID_NO_TEXTURE) {
+    glUseProgram(world->skyboxShader.id);
+    const mat4 identityMat4 = identity_mat4();
     glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
-    glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &modelMatrix);
-
-    glUseProgram(shader.id);
-    if(shader.noiseTextureId != TEXTURE_ID_NO_TEXTURE) {
-      bindActiveTextureSampler2d(noiseActiveTextureIndex, shader.noiseTextureId);
-      setSampler2D(shader.id, noiseTexUniformName, noiseActiveTextureIndex);
-    }
-    // TODO: Should some of this logic be moved to drawModel()?
-    for(u32 meshIndex = 0; meshIndex < model.meshCount; ++meshIndex) {
-      Mesh* mesh = model.meshes + meshIndex;
-      if(mesh->textureData.baseColor[3] != 0.0f) {
-        setUniform(shader.id, baseColorUniformName, mesh->textureData.baseColor.xyz);
-      }
-      if(mesh->textureData.albedoTextureId != TEXTURE_ID_NO_TEXTURE) {
-        bindActiveTextureSampler2d(albedoActiveTextureIndex, mesh->textureData.albedoTextureId);
-        setSampler2D(shader.id, albedoTexUniformName, albedoActiveTextureIndex);
-      }
-      if(mesh->textureData.normalTextureId != TEXTURE_ID_NO_TEXTURE) {
-        bindActiveTextureSampler2d(normalActiveTextureIndex, mesh->textureData.normalTextureId);
-        setSampler2D(shader.id, normalTexUniformName, normalActiveTextureIndex);
-      }
-
-      drawTriangles(&mesh->vertexAtt);
-    }
+    glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &identityMat4);
+    drawTriangles(world->commonVertAtts.cube(true));
   }
 }
 
@@ -497,7 +479,7 @@ void cleanupWorld(World* world) {
 
 void loadWorld(World* world) {
   // TODO: all of the indices work is superfluous in the current state of loading a world
-  // TODO: further reduce the unnecessary logic
+  //  further reduce the unnecessary logic
   LOGI("Loading native Portal Scene...");
 
   WorldInfo worldInfo = originalWorld();
