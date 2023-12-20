@@ -9,7 +9,7 @@ This project is an extension of another project called [OpenGLScenes](https://gi
 	- Rendering technique: Traditional rasterization
 	- Slowly rotating cube that displays itself on itself indefinitely
 	- Scroll/Flick horizontally to rotate cube about the up-axis
-	- Scroll vertically to move towards or away from the cube
+	- Scroll vertically or pinch to move towards or away from the cube
 	- Tap to rapidly change background color
 
 - Infinite Capsules Scene
@@ -18,44 +18,62 @@ This project is an extension of another project called [OpenGLScenes](https://gi
 	- Rotation sensor influences view & forward movement direction
 	- Tap screen to re-spawn light source as a forward moving object in front of you
 	- Tap & hold to increase forward travel speed
+	- "Crashing" into capsules resets all state
 
 - Mandelbrot Set Scene
 	- Rendering technique: Specialized fragment shader
 	- Mandelbrot Set rendered in real-time
 	- Supports panning, zooming, and rotating
 
-- Menger Prison Scene (Raymarching)
+- Menger Prison Scene
 	- Rendering technique: Raymarching
 	- Move forward through an infinitely repeating 5th iteration Menger Sponge
 	- Rotation sensor influences view & forward movement direction
 	- Tap & hold to increase forward travel speed
+	- "Crashing" into Menger prison resets all state
+
+- Gate Scene 
+  - Rendering technique: Traditional rasterization with specialized projection matrices
+  - Scroll/Flick horizontally to orbit around points of interest
+  - Scroll vertically or pinch to move towards or away points of interest
+  - Navigate through portals to explore 5 different scenes
+  - Scrolling albedo/noise textures create interesting object materials
 
 - Information/Settings Page
 	- Toggle dark mode
 	- Adjust Menger Prison Scene resolution scaling
 	- Adjust Mandelbrot Set Scene accent color
 
-## Documents
+## Documentation
 - [Scene List & Scene Potential Architecture](SceneListAndScenePotentialArchitecture.md)
 - [Hilt](app/src/main/java/com/inasweaterpoorlyknit/learnopengl_androidport/di/Hilt.md)
   - Note: Hilt is documented for future use. If looking for examples, not much can be found here ATM.
 - [Native Code / JNI / NDK](AndroidNativeCode.md)
 - [C++ Conventions & Reminders](CppConventionsAndReminders.md)
 - [How To Portals](HowToPortals.md)
- 
-## Shaders
+
+## Kotlin Scenes 
+### Shaders
 GLSL shaders are loaded as raw resources and are currently located [here](app/src/main/res/raw). 
 The positives of loading as a raw resource is that we get autocomplete functionality and compile-time checking for shaders. 
-The drawbacks is that organization is hard, as sub-folders are not allowed in *res/raw* and naming convention of files is fairly restricted. 
+The drawbacks are that organization is hard, as sub-folders are not allowed in *res/raw* and naming convention of files is fairly restricted. 
 On top of that, filetypes are obscured as the file extensions do not show in a raw resource's ID (ex: *R.raw.uv_coord_vertex_shader*). 
 These issues make moving shaders to the asset folder quite appealing. But, for now, this project enjoys compile-time checkin and autocomplete.
 
-## Math
-Any 3D math in this project should be assumed to be using a left-handed coordinate system with +Z pointing forward and +Y pointing up, unless stated otherwise.
-For Kotlin, [kotlin-graphics/glm](https://github.com/kotlin-graphics/glm) was previously used for matrices/vectors but it contained maven dependencies that were unavailable despite no version change on my end. A custom Kotlin matrix math module was created in its stead.
-All matrices are stored in column-major.
+## Native C++ Scenes
 
-## Building (⚠IN PROGRESS⚠)
+### Asset Baker
+This project contains source code for an asset-baker tool. This tool is used to bade assets required by the native scenes 
+(textures, models, shaders). It massages data and exports files in a format that reduces the amount of work needed between
+reading an asset and uploading it to the GPU.
+
+## Math
+Any 3D math in this project should be assumed to be using a left-handed coordinate system with +Z pointing forward and 
++Y pointing up, unless stated otherwise. For Kotlin, [kotlin-graphics/glm](https://github.com/kotlin-graphics/glm) was 
+previously used for matrices/vectors but it contained maven dependencies that were unavailable despite no version change
+on my end. A custom Kotlin matrix math module was created in its stead. All matrices are stored in column-major.
+
+## Building
 All the following information is under the assumption the project is being built within Android Studio.  
 
 - Ensure you have the correct CMake installed by going to *Tools > SDK Manager > SDK Tools > CMake*
@@ -76,8 +94,13 @@ All the following information is under the assumption the project is being built
   - asset_baker has hardcoded directories that will work smoothly as long as asset_baker is runs in the root
   	directory of the entire Android project.
   - asset_baker uses a cache system that will re-bake items that have been modified since last they were baked.
-  - asset_baker relies has a dependency on [AMD's Compressinator](https://github.com/GPUOpen-Tools/compressonator) static libraries. Unfortunately, this must be compiled or found yourself.
-    - (⚠IN PROGRESS⚠)
+  - asset_baker relies has a dependency on [AMD's Compressonator](https://github.com/GPUOpen-Tools/compressonator) static 
+     libraries. Unfortunately, this must be compiled or found yourself. Fortunately, if you have access to Visual Studio,
+  	 the repository makes it fairly simple.
+    - load the Visual Studio project in Compressonator/vs2019
+    - build x64 Release and Debug versions of the static library *compressonatorlib* (Compressonator_MD) 
+    - ensure *target_link_libraries* for executable *asset_baker* in [asset_baker's CMakeLists.txt](asset_baker/CMakeLists.txt)
+       correctly links to the location of the newly compiled compressonator static libraries.
 
 ## Screenshots
 
