@@ -7,16 +7,10 @@ Gate Scene:
     - No need to load all textures/models at once. Can load just the Gate scene textures and only other scene(s) visible. Then load others in background.
     - Gate casting shadow onto self?
     - input sensitivity is different when changing theta/radius depending on whether the app is running in portrait mode or landscape (maybe desired? requires testing.)
-    * pinch to zoom
-    - Use a vantage point for portals when determining whether it might be visible (based on the portal it is being drawn in)
-    - Stencil shader should not have a fragment stage
-    - drawscenewithportals recursion could be more cohesive
 Mandelbrot Scene:
     - Increase max zoom
         - Best potential solution seems to be utilizing Perturbation Theory.
         - Failed attempts were made at trying to emulate higher floating point precision in the fragment shader.
-Menger Prison:
-    - If user "crashes" reset scene
 
 == Overall Improvements ==
 Modularization:
@@ -30,7 +24,7 @@ Modularization:
         - search terms: GL_OES_get_program_binary
 Refactoring:
     - purge raw texture/model assets from the repo and store them somewhere else to be downloaded separately.
-    - Remove json from baked assets (does not *currently*
+    - Remove json from baked assets (does not *currently*)
 README:
     - include portal scene
     - improve upon the building process

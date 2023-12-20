@@ -107,7 +107,7 @@ struct World
   } inputHistory;
   ShaderProgram shaders[16];
   ShaderProgram skyboxShader;
-  ShaderProgram stencilShader;
+  ShaderProgram vertexStageOnlyShader;
   ShaderProgram clearDepthShader;
   CommonVertAtts commonVertAtts;
   u32 shaderCount;
@@ -224,7 +224,7 @@ void drawPortals(World *world, const u32 sceneIndex,
   glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, projection), sizeof(mat4), &projectionMat);
   glColorMask(false, false, false, false);
   glStencilFunc(GL_EQUAL, sceneMask, 0xFF);
-  glUseProgram(world->stencilShader.id);
+  glUseProgram(world->vertexStageOnlyShader.id);
 
   // draw portal quads to depth buffer
   for(u32 portalIndex = 0; portalIndex < scene->portalCount; portalIndex++) {
@@ -269,7 +269,7 @@ void drawPortals(World *world, const u32 sceneIndex,
     glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &portalModelMat);
     glColorMask(false, false, false, false);
     { // turn on stencil mask bit for scene behind portal in the stencil buffer
-      glUseProgram(world->stencilShader.id);
+      glUseProgram(world->vertexStageOnlyShader.id);
       glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
       glDepthFunc(GL_EQUAL);
       glStencilFunc(GL_EQUAL, sceneMask, 0xFF);
@@ -300,7 +300,7 @@ void drawPortals(World *world, const u32 sceneIndex,
       glBindBuffer(GL_UNIFORM_BUFFER, world->UBOs.projectionViewModelUboId);
       glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, projection), sizeof(mat4), &projectionMat);
       glBufferSubData(GL_UNIFORM_BUFFER, offsetof(ProjectionViewModelUBO, model), sizeof(mat4), &portalModelMat);
-      glUseProgram(world->stencilShader.id);
+      glUseProgram(world->vertexStageOnlyShader.id);
       glStencilOp(GL_KEEP, GL_ZERO, GL_ZERO);
       glStencilFunc(GL_EQUAL, portalMask, 0xFF);
       drawTriangles(portalVertAtt);
@@ -489,7 +489,7 @@ void cleanupWorld(World* world) {
   memset(world->models, 0, sizeof(Model) * world->modelCount);
 
   deleteShaderPrograms(world->shaders, world->shaderCount);
-  deleteShaderPrograms(&world->stencilShader, 1);
+  deleteShaderPrograms(&world->vertexStageOnlyShader, 1);
   deleteShaderPrograms(&world->skyboxShader, 1);
 
   *world = {0};
@@ -625,8 +625,8 @@ void initPortalScene(World* world) {
   // Universal shaders
   {
     world->skyboxShader = createShaderProgram(skyboxVertexShaderFileLoc, skyboxFragmentShaderFileLoc);
-    world->stencilShader = createShaderProgram(posVertexShaderFileLoc, stencilFragmentShaderFileLoc);
-    world->clearDepthShader = createShaderProgram(posVertexShaderFileLoc, clearDepthFragmentShaderFileLoc);
+    world->vertexStageOnlyShader = createShaderProgram(posVertShaderFileLoc, stencilFragmentShaderFileLoc);
+    world->clearDepthShader = createShaderProgram(posNormVertShaderFileLoc, clearDepthFragmentShaderFileLoc);
   }
 
   // UBOs
