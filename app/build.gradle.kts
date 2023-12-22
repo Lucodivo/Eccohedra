@@ -18,7 +18,7 @@ android {
         applicationId = "com.inasweaterpoorlyknit.learnopengl_androidport"
         minSdk = 24
         targetSdk = 33
-        versionCode = 14
+        versionCode = 16
         versionName = "1.2.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
