@@ -4,6 +4,8 @@ This project is an extension of another project called [OpenGLScenes](https://gi
 
 [Available on Google Play](https://play.google.com/store/apps/details?id=com.inasweaterpoorlyknit.learnopengl_androidport)
 
+[Recording of app in action](https://www.youtube.com/watch?v=aROX7WxakuQ)
+
 ## App Features
 - Infinite Cube Scene
 	- Rendering technique: Traditional rasterization

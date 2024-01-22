@@ -30,11 +30,11 @@ android {
             }
         }
         release {
-/*
+            // NOTE: this can make builds faster but absolutely cannot be present when creating a signed bundle
+            //  destined for the Play Store.
             ndk {
                 abiFilters += listOf("arm64-v8a")
             }
-*/
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
