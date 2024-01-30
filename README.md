@@ -1,4 +1,4 @@
-# OpenGL Scenes (Android)
+# Scenes (Android)
 
 This project is an extension of another project called [OpenGLScenes](https://github.com/Lucodivo/OpenGLScenes). The main purpose is as a graphics playground for OpenGL on Android. 
 
@@ -114,3 +114,23 @@ All the following information is under the assumption the project is being built
 ![Mandelbrot Scene](https://github.com/Lucodivo/RepoSampleImages/blob/master/OpenGLScenes/Android/Mandelbrot.png)
 ![MengerPrison Scene](https://github.com/Lucodivo/RepoSampleImages/blob/master/OpenGLScenes/Android/MengerPrison.png)
 ![Gate Portal Scene](https://github.com/Lucodivo/RepoSampleImages/blob/master/OpenGLScenes/Android/GatePortal.png)
+
+## Special Thanks
+
+### Dependencies
+- [stb by Sean Barrett](https://github.com/nothings/stb)
+
+### Model Textures
+- [FreePBR](https://freepbr.com/)
+
+### Environment Skyboxes
+- [Calm Sea and Polluted Earth by Cuinn Herrick](https://opengameart.org/content/xonotic-skyboxes)
+- [Cave by 3delyvisions](https://opengameart.org/content/elyvisions-skyboxes)
+- [Yellow Cloudy by Spiney](https://opengameart.org/content/cloudy-skyboxes)
+- [Interstellar by Jockum Skoglund (hipshot)](https://opengameart.org/content/interstellar-skybox)
+
+### Educational Resources
+- [Oblique View Frustum Depth Projection and Clipping by Eric Lengyel](http://www.terathon.com/lengyel/Lengyel-Oblique.pdf)
+- [How scrolling textures gave Super Mario Galaxy 2 its charm by Jasper](https://www.youtube.com/watch?v=8rCRsOLiO7k)
+- [Learn OpenGL by Joey de Vries](https://learnopengl.com/)
+- [VkGuide by Victor Blanco](https://vkguide.dev/docs/extra-chapter/asset_system/)
