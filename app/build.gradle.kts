@@ -88,7 +88,7 @@ android {
 dependencies {
     val kotlinCompilerVersion: String by rootProject.extra
 
-    implementation(project(":matrices"))
+    implementation("com.github.lucodivo:NoopMathKt:v0.2.4-alpha")
     implementation(project(":native_scenes"))
 
     // all binary .jar dependencies in libs folder listOf(NONE CURRENTLY)
