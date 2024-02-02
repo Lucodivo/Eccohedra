@@ -22,7 +22,6 @@ target_include_directories(asset_baker PUBLIC
         ${EXT_DIR}/tinyobjloader
         ${SHARED_CPP}
         ${SHARED_CPP}/assetlib
-        ${SHARED_CPP}/noop_math
         ${COMPRESSONATOR_DIR}/cmp_compressonatorlib
 )
 target_link_libraries(
@@ -33,7 +32,6 @@ target_link_libraries(
         assetlib
         json
         lz4
-        noop_math
         debug ${COMPRESSONATOR_DIR}/build/Debug_MD/x64/Compressonator_MDd.lib optimized ${COMPRESSONATOR_DIR}/build/Release_MD/x64/Compressonator_MD.lib)
 
 # stb
@@ -72,14 +70,6 @@ target_sources(lz4 PRIVATE
 )
 target_include_directories(lz4 PUBLIC ${EXT_DIR}/lz4 )
 
-# noop_math
-add_library(noop_math STATIC)
-target_sources(noop_math PRIVATE
-        ${SHARED_CPP}/noop_math/noop_math.h
-        ${SHARED_CPP}/noop_math/noop_math.cpp
-)
-target_include_directories(noop_math PRIVATE ${SHARED_CPP})
-
 # assetlib
 set(ASSETLIB_DIR ${SHARED_CPP}/assetlib)
 add_library (assetlib STATIC
@@ -93,9 +83,5 @@ target_include_directories(assetlib PRIVATE
         ${EXT_DIR}
         ${EXT_DIR}/lz4
         ${EXT_DIR}/nlohmann
-        ${SHARED_CPP}/noop_math
         ${SHARED_CPP}
 )
-
-#TODO: Attaching noop_math tests to asset_baker is unintuitive but currently the easiest/best option. Rethink this later.
-add_subdirectory(${SHARED_CPP}/noop_math/tests ${SHARED_CPP}/noop_math/tests/build)

@@ -5,7 +5,7 @@ set(COMMON_NATIVE_INCLUDE
         ${ANDROID_CPP}
         ${SHARED_CPP}
         ${SHARED_CPP}/assetlib
-        ${SHARED_CPP}/noop_math
+        ${EXT_DIR}/noopmath
 )
 set(COMMON_NATIVE_LIBS
         native_app_glue
@@ -13,7 +13,7 @@ set(COMMON_NATIVE_LIBS
         GLESv3
         ${log-lib}
         ${android-lib}
-        noop_math
+        noopmath
         assetlib
 )
 target_include_directories(gate-scene PRIVATE
@@ -22,6 +22,7 @@ target_include_directories(gate-scene PRIVATE
         ${EXT_DIR}/stb
         ${EXT_DIR}/nlohmann
         ${EXT_DIR}/lz4
+        ${EXT_DIR}/noopmath
 )
 target_link_libraries(gate-scene
         ${COMMON_NATIVE_LIBS}

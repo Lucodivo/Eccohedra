@@ -23,10 +23,14 @@ namespace fs = std::filesystem;
 #include "model_asset.h"
 using namespace assets;
 
-#include "noop_math.h"
-using namespace noop;
-
 #define assert_release(expression) ((void)0)
+
+#define Min(x, y) (x < y ? x : y)
+
+b32 epsilonComparison(f32 a, f32 b, f32 epsilon) {
+  f32 diff = a - b;
+  return (diff <= epsilon && diff >= -epsilon);
+}
 
 struct {
   const char* texture = ".tx";
@@ -721,7 +725,7 @@ bool fileUpToDate(const std::unordered_map<std::string, AssetBakeCachedItem> &ca
 
   f64 lastModified = lastModifiedTimeStamp(file);
 
-  bool upToDate = epsilonComparison(lastModified, cachedItem->second.originalFileLastModified);
+  bool upToDate = epsilonComparison(lastModified, cachedItem->second.originalFileLastModified, 0.001f);
 
   if(upToDate) {
     printf("Asset file \"%s\" is up-to-date\n", fileName.c_str());

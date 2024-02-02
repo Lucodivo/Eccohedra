@@ -57,11 +57,11 @@ target_sources(lz4 PRIVATE
 target_include_directories(lz4 PUBLIC ${EXT_DIR}/lz4 )
 
 # noop_math
-add_library(noop_math STATIC)
-target_sources(noop_math PRIVATE
-        ${SHARED_CPP}/noop_math/noop_math.cpp
+add_library(noopmath STATIC)
+target_sources(noopmath PRIVATE
+        ${EXT_DIR}/noopmath/noop_math.cpp
 )
-target_include_directories(noop_math PRIVATE ${SHARED_CPP})
+target_include_directories(noopmath PRIVATE ${EXT_DIR}/noopmath)
 
 # assetlib
 add_library (assetlib STATIC)
