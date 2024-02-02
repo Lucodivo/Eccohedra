@@ -78,6 +78,12 @@ on my end. A custom Kotlin matrix math module was created in its stead. All matr
 ## Building
 All the following information is under the assumption the project is being built within Android Studio.  
 
+- If you downloaded the project directly from github or are missing the noopmath submodule somehow, run the following git
+  commands in the root directory of the project.
+
+      git submodule init
+      git submodule update
+
 - Ensure you have the correct CMake installed by going to *Tools > SDK Manager > SDK Tools > CMake*
   - Ensure in the *SDK Manager > SDK Tools* has the "Show Package Details" option checked to allow downloading specific CMake versions.
   - The CMake version required for this project is specified in *native_scenes/build.gradle.kts* 

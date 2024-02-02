@@ -26,7 +26,6 @@ class Camera(position: Vec3 = Vec3(0.0f, 0.0f, 0.0f)) {
         // Calculate camera up vector
         val yAxis = zAxis.cross(xAxis)
 
-        // In glm we access elements as mat[col][row] due to column-major layout
         val translation = Mat4(
             1.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 0.0f,

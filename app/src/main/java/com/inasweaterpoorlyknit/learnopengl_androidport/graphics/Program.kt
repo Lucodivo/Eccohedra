@@ -51,6 +51,4 @@ class Program(context: Context, @RawRes vertexShaderResId: Int, @RawRes fragment
     fun setUniform(name: String, value: Mat2) = glUniformMatrix2fv(glGetUniformLocation(id, name), 1, false, value.elements, 0)
     fun setUniform(name: String, value: Mat3) = glUniformMatrix3fv(glGetUniformLocation(id, name), 1, false, value.elements, 0)
     fun setUniform(name: String, value: Mat4) = glUniformMatrix4fv(glGetUniformLocation(id, name), 1, false, value.elements, 0)
-
-    fun setUniformVec3Array(name: String, value: FloatArray, count: Int = value.size / 3){ glUniform3fv(glGetUniformLocation(id, name), count, value, 0) }
 }
