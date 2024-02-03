@@ -104,15 +104,15 @@ inline void setUniform(GLuint shaderId, const std::string& name, const float* fl
 }
 
 inline void setUniform(GLuint shaderId, const std::string& name, const vec2& vector2) {
-  setUniform(shaderId, name, vector2[0], vector2[1]);
+  glUniform2fv(glGetUniformLocation(shaderId, name.c_str()), 1, vector2.values);
 }
 
 inline void setUniform(GLuint shaderId, const std::string& name, const vec3& vector3) {
-  setUniform(shaderId, name, vector3[0], vector3[1], vector3[2]);
+  glUniform3fv(glGetUniformLocation(shaderId, name.c_str()), 1, vector3.values);
 }
 
 inline void setUniform(GLuint shaderId, const std::string& name, const vec4& vector4) {
-  setUniform(shaderId, name, vector4[0], vector4[1], vector4[2], vector4[3]);
+  glUniform4fv(glGetUniformLocation(shaderId, name.c_str()), 1, vector4.values);
 }
 
 inline void bindBlockIndex(GLuint shaderId, const std::string& name, u32 index) {

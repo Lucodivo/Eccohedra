@@ -32,15 +32,15 @@ class Camera(position: Vec3 = Vec3(0.0f, 0.0f, 0.0f)) {
             0.0f, 0.0f, 1.0f, 0.0f,
             -position.x, -position.y, -position.z, 1.0f)
 
-        val rotation = Mat4(
+        val measure = Mat4(
             xAxis.x, yAxis.x, zAxis.x, 0.0f,
             xAxis.y, yAxis.y, zAxis.y, 0.0f,
             xAxis.z, yAxis.z, zAxis.z, 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f)
 
-        // Return lookAt matrix as combination of translation and rotation matrix
-        // Remember to read from right to left (first translation then rotation)
-        return rotation * translation
+        // Return lookAt matrix as combination of translation and measure matrix
+        // Remember to read from right to left (first translation then measure)
+        return measure * translation
     }
 
     fun moveForward(unitsForward: Float) {
