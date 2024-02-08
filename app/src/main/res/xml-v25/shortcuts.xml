@@ -21,7 +21,7 @@
         <intent
             android:action="android.intent.action.VIEW"
             android:targetPackage="com.inasweaterpoorlyknit.learnopengl_androidport"
-            android:targetClass="com.inasweaterpoorlyknit.learnopengl_androidport.ui.InfoActivity">
+            android:targetClass="com.inasweaterpoorlyknit.learnopengl_androidport.ui.SettingsActivity">
         </intent>
     </shortcut>
 </shortcuts>

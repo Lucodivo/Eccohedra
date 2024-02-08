@@ -6,13 +6,13 @@ import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import com.inasweaterpoorlyknit.learnopengl_androidport.R
 
-class InfoActivity : AppCompatActivity() {
+class SettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.fragment_container)
         supportFragmentManager.commit {
             setReorderingAllowed(true) // recommended for FragmentTransactions if able
-            replace<InfoFragment>(R.id.fragment_container)
+            replace<SettingsFragment>(R.id.fragment_container)
         }
     }
 }

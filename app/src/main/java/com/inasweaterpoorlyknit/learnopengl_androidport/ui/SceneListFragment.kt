@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -74,7 +75,7 @@ class SceneListFragment: Fragment() {
                     activityViewModel.onInfoPress()
                 }
         ) {
-            Icon(ScenesIcons.Info, contentDescription = "Info Icon", modifier = Modifier.padding(vertical = headerIconVertPadding))
+            Icon(ScenesIcons.Settings, contentDescription = "Info Icon", modifier = Modifier.padding(vertical = headerIconVertPadding))
         }
     }
 

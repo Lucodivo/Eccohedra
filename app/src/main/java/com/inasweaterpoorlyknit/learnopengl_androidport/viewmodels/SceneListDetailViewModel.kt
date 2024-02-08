@@ -11,7 +11,7 @@ import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.Infinite
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.InfiniteCubeScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MandelbrotScene
 import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MengerPrisonScene
-import com.inasweaterpoorlyknit.learnopengl_androidport.ui.InfoActivity
+import com.inasweaterpoorlyknit.learnopengl_androidport.ui.SettingsActivity
 import com.inasweaterpoorlyknit.learnopengl_androidport.ui.ListItemData
 import com.inasweaterpoorlyknit.learnopengl_androidport.ui.ListItemDataI
 
@@ -119,7 +119,7 @@ class SceneListDetailViewModel : ViewModel() {
     }
 
     fun onInfoPress() {
-        _startActivityRequest.value = InfoActivity::class.java
+        _startActivityRequest.value = SettingsActivity::class.java
     }
 
     val listItemData: List<ListItemDataI>

@@ -13,7 +13,7 @@ import com.inasweaterpoorlyknit.learnopengl_androidport.graphics.scenes.MengerPr
 import com.inasweaterpoorlyknit.learnopengl_androidport.setMandelbrotColorIndex
 import com.inasweaterpoorlyknit.learnopengl_androidport.setMengerSpongeResolutionIndex
 
-class InfoViewModel(application: Application) : AndroidViewModel(application) {
+class SettingsViewModel(application: Application) : AndroidViewModel(application) {
 
     private val scenesApp = application as OpenGLScenesApplication
     private val sharedPreferences = application.getSharedPreferences()

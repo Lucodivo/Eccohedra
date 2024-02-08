@@ -39,6 +39,7 @@
     </string>
 
     <!-- Info Screen -->
+    <string name="about">About</string>
     <string name="info">Info</string>
     <string name="scenes">Scenes</string>
     <string name="source">Source</string>
