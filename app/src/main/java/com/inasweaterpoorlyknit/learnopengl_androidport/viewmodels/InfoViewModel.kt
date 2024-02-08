@@ -33,8 +33,8 @@ class InfoViewModel(application: Application) : AndroidViewModel(application) {
     fun getMengerSpongeResolutionIndex(): Int = sharedPreferences.getMengerSpongeResolutionIndex()
     fun getMandelbrotColorIndex(): Int = sharedPreferences.getMandelbrotColorIndex()
 
-    fun onContactPress() { _webRequest.value = "https://lucodivo.github.io/about.html" }
-    fun onSourcePress() { _webRequest.value = "https://github.com/Lucodivo/OpenGLScenes_Android" }
+    fun onContactPress() { _webRequest.value = "https://lucodivo.github.io" }
+    fun onSourcePress() { _webRequest.value = "https://github.com/Lucodivo/ScenesMobile" }
     fun onNightModeToggle(newState: Boolean) = scenesApp.setDarkMode(newState)
     fun onMengerPrisonResolutionSelected(index: Int) = sharedPreferences.setMengerSpongeResolutionIndex(index)
     fun onMandelbrotColorSelected(index: Int) = sharedPreferences.setMandelbrotColorIndex(index)

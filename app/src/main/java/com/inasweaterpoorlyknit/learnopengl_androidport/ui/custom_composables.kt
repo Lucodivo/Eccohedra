@@ -6,14 +6,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Switch
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,7 +36,8 @@ val ScenesIcons = Icons.Rounded
 @Composable
 fun ScenesListItem(shape: Shape = MaterialTheme.shapes.large, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Surface(
-        elevation = 1.dp,
+        tonalElevation = 1.dp,
+        shadowElevation = 1.dp,
         shape = shape,
         content = content,
         modifier = modifier
@@ -122,14 +123,14 @@ fun ListItemDropdown(titleText: String, items: Array<String>, initSelectedIndex:
     }
     DropdownMenu(expanded = expanded.value, onDismissRequest = { expanded.value = !expanded.value }) {
         items.forEachIndexed { index, s ->
-            DropdownMenuItem(onClick = {
+            val selectedDecoration = if (index == selectedIndex.value) "  $selectedDecorationText" else ""
+            DropdownMenuItem(
+                text = { Text(text = s + selectedDecoration) },
+                onClick = {
                 onItemClicked(index)
                 selectedIndex.value = index
                 expanded.value = false
-            }) {
-                val selectedDecoration = if (index == selectedIndex.value) "  $selectedDecorationText" else ""
-                Text(text = s + selectedDecoration)
-            }
+            })
         }
     }
 }

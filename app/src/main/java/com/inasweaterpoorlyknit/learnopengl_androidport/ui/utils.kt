@@ -8,8 +8,16 @@ import android.os.Build
 import android.view.View
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.fragment.app.Fragment
 
 fun Activity.openWebPage(url: String) {
+    val webpage: Uri =
+        Uri.parse(url)
+    val intent = Intent(Intent.ACTION_VIEW, webpage)
+    startActivity(intent)
+}
+
+fun Fragment.openWebPage(url: String) {
     val webpage: Uri =
         Uri.parse(url)
     val intent = Intent(Intent.ACTION_VIEW, webpage)

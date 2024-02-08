@@ -14,9 +14,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -49,11 +49,11 @@ class SceneListFragment: Fragment() {
 
     @Composable
     fun HomeList(itemDataList: List<ListItemDataI>) {
-        OpenGLScenesTheme(this) {
+        OpenGLScenesTheme {
             LazyColumn(
                 contentPadding = PaddingValues(vertical = halfListPadding),
                 modifier = Modifier
-                    .background(color = MaterialTheme.colors.background)
+                    .background(color = MaterialTheme.colorScheme.background)
                     .fillMaxSize()
             ) {
                 item {

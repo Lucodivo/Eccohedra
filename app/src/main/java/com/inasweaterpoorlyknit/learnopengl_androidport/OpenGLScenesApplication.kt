@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.content.res.Configuration
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.google.android.material.color.DynamicColors
 
 // TODO: Hilt
 //@HiltAndroidApp
@@ -18,6 +19,7 @@ class OpenGLScenesApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        DynamicColors.applyToActivitiesIfAvailable(this)
 
         sharedPreferences = getSharedPreferences()
 

@@ -1,53 +1,46 @@
 package com.inasweaterpoorlyknit.learnopengl_androidport.ui.theme
 
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.darkColors
-import androidx.compose.material.lightColors
+import android.os.Build
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.LifecycleOwner
-import com.inasweaterpoorlyknit.learnopengl_androidport.OpenGLScenesApplication
 
-private val LightColorPalette = lightColors(
+private val LightColorScheme = lightColorScheme(
     primary = Blue100,
     onPrimary = Color.Black,
     background = Grayscale4,
     surface = Grayscale5,
-    /* Other default colors to override
-    primaryVariant = RosyBrown2,
-    secondary = ,
-    secondaryVariant = ,
-    onSecondary = ,
-    onBackground = Color.Black,
-    onSurface = Color.Black,
-    */
 )
 
-private val DarkColorPalette = darkColors(
+private val DarkColorScheme = darkColorScheme(
     primary = Blue100_dark,
     onPrimary = Color.Black,
     background = Grayscale1,
-    surface = Grayscale0,
+    surface = Grayscale0
 )
 
 @Composable
 fun OpenGLScenesTheme(
-    lifeCycleOwner: LifecycleOwner,
+    useDarkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val darkMode = remember { mutableStateOf(true) }
-    val app = LocalContext.current.applicationContext
-    if(app is OpenGLScenesApplication) { // this check is only necessary for compose preview
-        app.darkMode.observe(lifeCycleOwner) {
-            darkMode.value = it
+    val context = LocalContext.current
+    val colorScheme = when {
+        (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
+            if (useDarkTheme) dynamicDarkColorScheme(context)
+            else dynamicLightColorScheme(context)
         }
+        useDarkTheme -> DarkColorScheme
+        else -> LightColorScheme
     }
-
     MaterialTheme(
-        colors = if (darkMode.value) DarkColorPalette else LightColorPalette,
+        colorScheme = colorScheme,
         typography = Typography,
         shapes = Shapes,
         content = content
