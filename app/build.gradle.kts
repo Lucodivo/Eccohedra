@@ -15,6 +15,7 @@ plugins {
 android {
     compileSdk = 34
     ndkVersion = "25.2.9519653"
+    namespace = "com.inasweaterpoorlyknit.scenes"
 
     defaultConfig {
         applicationId = "com.inasweaterpoorlyknit.learnopengl_androidport"
@@ -23,6 +24,7 @@ android {
         versionCode = 16
         versionName = "1.2.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        signingConfig = signingConfigs.getByName("debug")
 
         compileOptions {
             sourceCompatibility(JavaVersion.VERSION_1_8)
@@ -59,9 +61,6 @@ android {
                 )
             }
         }
-
-        namespace = "com.inasweaterpoorlyknit.learnopengl_androidport"
-        signingConfig = signingConfigs.getByName("debug")
     }
 
     buildTypes {

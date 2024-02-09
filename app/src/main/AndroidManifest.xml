@@ -3,20 +3,20 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
-        android:name=".OpenGLScenesApplication"
+        android:name=".ScenesApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.LearnOpenGLScenes"
+        android:theme="@style/Theme.Scenes"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning"
         android:configChanges="uiMode">
         <activity
             android:name=".ui.SceneListDetailActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"
-            android:theme="@style/Theme.LearnOpenGLScenes.NoActionBar">
+            android:theme="@style/Theme.Scenes.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

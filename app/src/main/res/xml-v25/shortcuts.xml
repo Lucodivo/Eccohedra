@@ -5,10 +5,11 @@
         android:icon="@drawable/app_shortcut"
         android:shortcutShortLabel="@string/gate_shortcut_short"
         android:shortcutLongLabel="@string/gate_shortcut_long">
+        <!-- targetPackage is equal to applicationId in the app build.gradle.kts, *NOT* necessarily the package of the application code -->
         <intent
             android:action="com.inasweaterpoorlyknit.scenes.action.VIEW_GATE_SCENE"
             android:targetPackage="com.inasweaterpoorlyknit.learnopengl_androidport"
-            android:targetClass="com.inasweaterpoorlyknit.learnopengl_androidport.graphics.GateNativeActivity">
+            android:targetClass="com.inasweaterpoorlyknit.scenes.graphics.GateNativeActivity">
         </intent>
     </shortcut>
     <shortcut
@@ -17,10 +18,11 @@
         android:icon="@drawable/info_page"
         android:shortcutShortLabel="@string/info_shortcut_short"
         android:shortcutLongLabel="@string/info_shortcut_long">
+        <!-- targetPackage is equal to applicationId in the app build.gradle.kts, *NOT* necessarily the package of the application code -->
         <intent
             android:action="com.inasweaterpoorlyknit.scenes.action.VIEW_SETTINGS"
             android:targetPackage="com.inasweaterpoorlyknit.learnopengl_androidport"
-            android:targetClass="com.inasweaterpoorlyknit.learnopengl_androidport.ui.SceneListDetailActivity"
+            android:targetClass="com.inasweaterpoorlyknit.scenes.ui.SceneListDetailActivity"
             android:data="scenes://view_settings">
         </intent>
     </shortcut>
