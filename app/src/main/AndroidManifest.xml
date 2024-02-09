@@ -13,12 +13,6 @@
         tools:ignore="AllowBackup,GoogleAppIndexingWarning"
         android:configChanges="uiMode">
         <activity
-            android:name=".ui.SettingsActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true"
-            android:theme="@style/Theme.LearnOpenGLScenes.NoActionBar">
-        </activity>
-        <activity
             android:name=".ui.SceneListDetailActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"

@@ -18,14 +18,10 @@
             app:popExitAnim="@android:anim/fade_out" />
         <action
             android:id="@+id/action_sceneListFragment_to_sceneFragment"
-            app:destination="@id/sceneFragment"
-            app:exitAnim="@android:anim/fade_out"
-            app:popExitAnim="@android:anim/fade_out" />
+            app:destination="@id/sceneFragment" />
         <action
             android:id="@+id/action_sceneListFragment_to_gateNativeActivity"
-            app:destination="@id/gateNativeActivity"
-            app:exitAnim="@android:anim/fade_out"
-            app:popExitAnim="@android:anim/fade_out" />
+            app:destination="@id/gateNativeActivity" />
     </fragment>
     <fragment
         android:id="@+id/sceneFragment"
@@ -34,7 +30,9 @@
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.inasweaterpoorlyknit.learnopengl_androidport.ui.SettingsFragment"
-        android:label="Settings" />
+        android:label="Settings">
+        <deepLink app:uri="scenes://view_settings" />
+    </fragment>
     <activity
         android:id="@+id/gateNativeActivity"
         android:name="com.inasweaterpoorlyknit.learnopengl_androidport.graphics.GateNativeActivity"

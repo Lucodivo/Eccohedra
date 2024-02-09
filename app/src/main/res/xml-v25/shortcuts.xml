@@ -6,10 +6,9 @@
         android:shortcutShortLabel="@string/gate_shortcut_short"
         android:shortcutLongLabel="@string/gate_shortcut_long">
         <intent
-            android:action="android.intent.action.VIEW"
+            android:action="com.inasweaterpoorlyknit.scenes.action.VIEW_GATE_SCENE"
             android:targetPackage="com.inasweaterpoorlyknit.learnopengl_androidport"
             android:targetClass="com.inasweaterpoorlyknit.learnopengl_androidport.graphics.GateNativeActivity">
-            <!-- <extra android:name="extraID" android:value="extravalue" /> -->
         </intent>
     </shortcut>
     <shortcut
@@ -19,9 +18,10 @@
         android:shortcutShortLabel="@string/info_shortcut_short"
         android:shortcutLongLabel="@string/info_shortcut_long">
         <intent
-            android:action="android.intent.action.VIEW"
+            android:action="com.inasweaterpoorlyknit.scenes.action.VIEW_SETTINGS"
             android:targetPackage="com.inasweaterpoorlyknit.learnopengl_androidport"
-            android:targetClass="com.inasweaterpoorlyknit.learnopengl_androidport.ui.SettingsActivity">
+            android:targetClass="com.inasweaterpoorlyknit.learnopengl_androidport.ui.SceneListDetailActivity"
+            android:data="scenes://view_settings">
         </intent>
     </shortcut>
 </shortcuts>
