@@ -8,7 +8,6 @@ import android.view.MotionEvent
 class SceneSurfaceView(context: Context, private val scene: Scene) : GLSurfaceView(context) {
 
     init {
-        // We have at least ES 3.0
         setEGLContextClientVersion(3)
         setRenderer(this.scene)
     }

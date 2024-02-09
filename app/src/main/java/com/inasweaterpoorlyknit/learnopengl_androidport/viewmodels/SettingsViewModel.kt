@@ -23,18 +23,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             "${(MengerPrisonScene.resolutionFactorOptions[it] * 100.0f).toInt()}%"
         }
         val mandelbrotColors: Array<String> = Array(MandelbrotScene.colors.size) { MandelbrotScene.colors[it].name }
+        val websiteUrl = "https://lucodivo.github.io"
+        val sourceUrl = "https://github.com/Lucodivo/ScenesMobile"
     }
 
     private val _webRequest = MutableLiveData<String>()
-    val webRequest: LiveData<String>
-        get() = _webRequest
 
-    fun getDarkMode(): Boolean = (scenesApp.darkMode.value ?: true)
     fun getMengerSpongeResolutionIndex(): Int = sharedPreferences.getMengerSpongeResolutionIndex()
     fun getMandelbrotColorIndex(): Int = sharedPreferences.getMandelbrotColorIndex()
 
-    fun onContactPress() { _webRequest.value = "https://lucodivo.github.io" }
-    fun onSourcePress() { _webRequest.value = "https://github.com/Lucodivo/ScenesMobile" }
     fun onNightModeToggle(newState: Boolean) = scenesApp.setDarkMode(newState)
     fun onMengerPrisonResolutionSelected(index: Int) = sharedPreferences.setMengerSpongeResolutionIndex(index)
     fun onMandelbrotColorSelected(index: Int) = sharedPreferences.setMandelbrotColorIndex(index)

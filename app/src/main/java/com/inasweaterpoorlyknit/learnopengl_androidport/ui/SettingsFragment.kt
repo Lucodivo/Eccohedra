@@ -39,109 +39,109 @@ class SettingsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        activityViewModel.webRequest.observe(viewLifecycleOwner) { openWebPage(it) }
         return ComposeView(requireContext()).apply {
             setContent {
                 SettingsList(
                     mengerResolutionIndex = activityViewModel.getMengerSpongeResolutionIndex(),
                     mandelbrotColorIndex = activityViewModel.getMandelbrotColorIndex(),
-                    onContactPress = { activityViewModel.onContactPress() },
-                    onSourcePress = { activityViewModel.onSourcePress() },
+                    onContactPress = { openWebPage(SettingsViewModel.websiteUrl) },
+                    onSourcePress = { openWebPage(SettingsViewModel.sourceUrl) },
                     onMandelbrotColorSelect = { activityViewModel.onMandelbrotColorSelected(it) },
                     onMengerPrisonResolutionSelect = { activityViewModel.onMengerPrisonResolutionSelected(it) })
             }
         }
     }
-}
 
-@Preview
-@Composable
-fun SettingsListPreview() {
-    SettingsList(MengerPrisonScene.defaultResolutionIndex, MandelbrotScene.defaultColorIndex)
-}
+    @Preview
+    @Composable
+    fun SettingsListPreview() {
+        SettingsList(MengerPrisonScene.defaultResolutionIndex, MandelbrotScene.defaultColorIndex)
+    }
 
-@Composable
-fun SettingsList(mengerResolutionIndex: Int = MengerPrisonScene.defaultResolutionIndex,
-                 mandelbrotColorIndex: Int = MandelbrotScene.defaultColorIndex,
-                 onContactPress: () -> Unit = {},
-                 onSourcePress: () -> Unit = {},
-                 onMandelbrotColorSelect: (Int) -> Unit = {},
-                 onMengerPrisonResolutionSelect: (Int) -> Unit = {}){
-    OpenGLScenesTheme() {
-        LazyColumn(
-            contentPadding = PaddingValues(vertical = halfListPadding),
-            modifier = Modifier
-                .background(color = MaterialTheme.colorScheme.background)
-                .fillMaxSize()
-        ) {
-            // About Header
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.info),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = listItemFontSize,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .padding(all = listItemTextPadding)
-                        .fillMaxWidth()
-                )
-            }
-
-            // Author Contact
-            item {
-                ScenesListItem {
-                    ListItemTextWithRightIcon(
-                        "Connor Alexander Haskins", icon = ScenesIcons.Web,
-                        modifier = Modifier.clickable { onContactPress() })
+    @Composable
+    fun SettingsList(mengerResolutionIndex: Int = MengerPrisonScene.defaultResolutionIndex,
+                     mandelbrotColorIndex: Int = MandelbrotScene.defaultColorIndex,
+                     onContactPress: () -> Unit = {},
+                     onSourcePress: () -> Unit = {},
+                     onMandelbrotColorSelect: (Int) -> Unit = {},
+                     onMengerPrisonResolutionSelect: (Int) -> Unit = {}){
+        OpenGLScenesTheme() {
+            LazyColumn(
+                contentPadding = PaddingValues(vertical = halfListPadding),
+                modifier = Modifier
+                    .background(color = MaterialTheme.colorScheme.background)
+                    .fillMaxSize()
+            ) {
+                // About Header
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.info),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontSize = listItemFontSize,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .padding(all = listItemTextPadding)
+                            .fillMaxWidth()
+                    )
                 }
-            }
 
-            // Source Code
-            item {
-                ScenesListItem {
-                    ListItemTextWithRightIcon(text = stringResource(R.string.source), icon = ScenesIcons.Code,
-                        modifier = Modifier.clickable { onSourcePress() })
+                // Author Contact
+                item {
+                    ScenesListItem {
+                        ListItemTextWithRightIcon(
+                            "Connor Alexander Haskins", icon = ScenesIcons.Web,
+                            modifier = Modifier.clickable { onSourcePress() })
+                    }
                 }
-            }
 
-            // Settings Header
-            item {
-                Spacer(modifier = Modifier.height(40.dp))
-                Text(
-                    text = stringResource(R.string.settings),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = listItemFontSize,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .padding(all = listItemTextPadding)
-                        .fillMaxWidth()
-                )
-            }
-
-            // Menger Prison Resolution
-            item {
-                ScenesListItem {
-                    ListItemDropdown(
-                        titleText = stringResource(R.string.menger_sponge_resolution),
-                        items = SettingsViewModel.mengerPrisonResolutions,
-                        initSelectedIndex = mengerResolutionIndex,
-                        selectedDecorationText = "🎞"
-                    ){ onMengerPrisonResolutionSelect(it) }
+                // Source Code
+                item {
+                    ScenesListItem {
+                        ListItemTextWithRightIcon(text = stringResource(R.string.source), icon = ScenesIcons.Code,
+                            modifier = Modifier.clickable { onSourcePress() })
+                    }
                 }
-            }
 
-            // Mandelbrot Color
-            item {
-                ScenesListItem {
-                    ListItemDropdown(
-                        titleText = stringResource(R.string.mandelbrot_color),
-                        items = SettingsViewModel.mandelbrotColors,
-                        initSelectedIndex = mandelbrotColorIndex,
-                        selectedDecorationText = "🖌"
-                    ){ onMandelbrotColorSelect(it) }
+                // Settings Header
+                item {
+                    Spacer(modifier = Modifier.height(40.dp))
+                    Text(
+                        text = stringResource(R.string.settings),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontSize = listItemFontSize,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .padding(all = listItemTextPadding)
+                            .fillMaxWidth()
+                    )
+                }
+
+                // Menger Prison Resolution
+                item {
+                    ScenesListItem {
+                        ListItemDropdown(
+                            titleText = stringResource(R.string.menger_sponge_resolution),
+                            items = SettingsViewModel.mengerPrisonResolutions,
+                            initSelectedIndex = mengerResolutionIndex,
+                            selectedDecorationText = "🎞"
+                        ){ onMengerPrisonResolutionSelect(it) }
+                    }
+                }
+
+                // Mandelbrot Color
+                item {
+                    ScenesListItem {
+                        ListItemDropdown(
+                            titleText = stringResource(R.string.mandelbrot_color),
+                            items = SettingsViewModel.mandelbrotColors,
+                            initSelectedIndex = mandelbrotColorIndex,
+                            selectedDecorationText = "🖌"
+                        ){ onMandelbrotColorSelect(it) }
+                    }
                 }
             }
         }
     }
 }
+

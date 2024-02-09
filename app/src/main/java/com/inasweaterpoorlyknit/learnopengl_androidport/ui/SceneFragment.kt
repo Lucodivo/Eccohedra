@@ -28,7 +28,6 @@ class SceneFragment: Fragment() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-
     val context = requireContext()
     sceneSurfaceView = SceneSurfaceView(context, activityViewModel.sceneCreator(context));
   }

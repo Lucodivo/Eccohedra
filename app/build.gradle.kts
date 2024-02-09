@@ -5,6 +5,8 @@ plugins {
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
 
+    id("androidx.navigation.safeargs.kotlin")
+
     // TODO: Hilt
 //    id("kotlin-kapt")
 //    id("dagger.hilt.android.plugin") - uncomment to bring Hilt back into project
@@ -104,6 +106,16 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.fragment:fragment-ktx:1.6.1")
+
+    // Navigation
+    val navVersion = "2.7.7"
+    implementation("androidx.navigation:navigation-fragment-ktx:$navVersion")
+    implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
+    implementation("androidx.navigation:navigation-fragment-ktx:$navVersion")
+    implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
+    implementation("androidx.navigation:navigation-dynamic-features-fragment:$navVersion")
+    androidTestImplementation("androidx.navigation:navigation-testing:$navVersion")
+    implementation("androidx.navigation:navigation-compose:$navVersion")
 
     // Compose
     implementation("androidx.activity:activity-compose:1.8.2") // Integration with activities

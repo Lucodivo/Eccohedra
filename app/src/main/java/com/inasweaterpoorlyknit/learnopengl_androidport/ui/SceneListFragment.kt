@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,7 +27,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.navigation.fragment.findNavController
 import com.inasweaterpoorlyknit.learnopengl_androidport.ui.theme.OpenGLScenesTheme
+import com.inasweaterpoorlyknit.learnopengl_androidport.viewmodels.ListItemDataI
 import com.inasweaterpoorlyknit.learnopengl_androidport.viewmodels.SceneListDetailViewModel
 
 class SceneListFragment: Fragment() {
@@ -43,13 +44,14 @@ class SceneListFragment: Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                HomeList(activityViewModel.listItemData)
+                SceneList()
             }
         }
     }
 
+    @Preview
     @Composable
-    fun HomeList(itemDataList: List<ListItemDataI>) {
+    fun SceneList() {
         OpenGLScenesTheme {
             LazyColumn(
                 contentPadding = PaddingValues(vertical = halfListPadding),
@@ -60,8 +62,19 @@ class SceneListFragment: Fragment() {
                 item {
                     SettingsHeader()
                 }
-                items(itemDataList) { listItemData ->
-                    HomeListItem(listItemData)
+                items(SceneListDetailViewModel.sceneListItems) { listItemData ->
+                    SceneListItem(listItemData) {
+                        activityViewModel.itemSelected(listItemData)
+                        val directions = SceneListFragmentDirections.actionSceneListFragmentToSceneFragment()
+                        findNavController().navigate(directions)
+                    }
+                }
+                items(SceneListDetailViewModel.nativeSceneListItems) { listItemData ->
+                    SceneListItem(listItemData) {
+                        activityViewModel.itemSelected(listItemData)
+                        val directions = SceneListFragmentDirections.actionSceneListFragmentToGateNativeActivity()
+                        findNavController().navigate(directions)
+                    }
                 }
             }
         }
@@ -72,7 +85,8 @@ class SceneListFragment: Fragment() {
         ScenesListItem(
             modifier = Modifier
                 .clickable {
-                    activityViewModel.onInfoPress()
+                    val directions = SceneListFragmentDirections.actionSceneListFragmentToSettingsFragment()
+                    findNavController().navigate(directions)
                 }
         ) {
             Icon(ScenesIcons.Settings, contentDescription = "Info Icon", modifier = Modifier.padding(vertical = headerIconVertPadding))
@@ -80,11 +94,11 @@ class SceneListFragment: Fragment() {
     }
 
     @Composable
-    fun HomeListItem(listItemData: ListItemDataI) {
+    fun SceneListItem(listItemData: ListItemDataI, onClick: () -> Unit) {
         ScenesListItem(
             modifier = Modifier
                 .clickable {
-                    activityViewModel.itemSelected(listItemData)
+                    onClick()
                 }
         ) {
                 Image(
@@ -96,11 +110,5 @@ class SceneListFragment: Fragment() {
                         .fillMaxWidth()
                 )
         }
-    }
-
-    @Preview
-    @Composable
-    fun HomeListPreview() {
-        HomeList(SceneListDetailViewModel.listItemDataForComposePreview)
     }
 }

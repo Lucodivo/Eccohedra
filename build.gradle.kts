@@ -13,6 +13,7 @@ buildscript {
 
     dependencies {
         val kotlinCompilerVersion: String by rootProject.extra
+        val navVersion = "2.7.7"
 
         classpath("com.android.tools.build:gradle:8.1.1")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinCompilerVersion}")
@@ -20,6 +21,7 @@ buildscript {
         classpath("com.google.gms:google-services:4.3.15")
         classpath("com.google.firebase:firebase-crashlytics-gradle:2.9.9")
 
+        classpath("androidx.navigation:navigation-safe-args-gradle-plugin:$navVersion")
         // TODO: Hilt
         //classpath("com.google.dagger:hilt-android-gradle-plugin:2.40.1")
     }
