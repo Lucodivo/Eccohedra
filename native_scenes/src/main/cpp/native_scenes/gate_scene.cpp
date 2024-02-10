@@ -41,21 +41,13 @@ struct Engine {
 };
 
 static void update(Engine *engine);
-
 static void drawFrame(Engine *engine);
-
 static s32 handleInput(android_app *app, AInputEvent *event);
-
 static void handleAndroidCmd(android_app *app, s32 cmd);
-
 void glDeinit(GLEnvironment *glEnv);
-
 void closeActivity(ANativeActivity *activity);
-
 void onTerminate(Engine *engine);
-
 void onResume(android_app *app, Engine *engine);
-
 void onPause(Engine *engine);
 
 /**
@@ -69,7 +61,6 @@ void android_main(android_app *app) {
   app->userData = &engine;
   app->onAppCmd = handleAndroidCmd;
   app->onInputEvent = handleInput;
-
 
   {
     assetManager_GLOBAL = app->activity->assetManager;
@@ -173,7 +164,7 @@ static s32 handleInput(android_app *app, AInputEvent *event) {
         case AINPUT_SOURCE_TOUCHSCREEN: {
           u32 pointerCount = AMotionEvent_getPointerCount(event);
           int action = AKeyEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK;
-          if(pointerCount == 1) { // prepare pan input
+          if(pointerCount == 1) {
             vec2 pointerPos = vec2{AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0)};
             switch (action) {
               case AMOTION_EVENT_ACTION_DOWN: {
@@ -291,9 +282,7 @@ static s32 handleInput(android_app *app, AInputEvent *event) {
                 break;
               }
             }
-          } else {
-            // TODO: Pause all input if there are more than 2 pointers providing motion events.
-          }
+          } else {} // Do nothing if more than 2 pointers providing motion events.
           return 1;
         }
         default: {
