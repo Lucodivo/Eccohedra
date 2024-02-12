@@ -6,9 +6,10 @@ import android.content.res.Configuration
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.material.color.DynamicColors
+import com.airbnb.mvrx.Mavericks
+import dagger.hilt.android.HiltAndroidApp
 
-// TODO: Hilt
-//@HiltAndroidApp
+@HiltAndroidApp
 class ScenesApplication : Application() {
 
     private val _darkMode = MutableLiveData<Boolean>()
@@ -20,6 +21,7 @@ class ScenesApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         DynamicColors.applyToActivitiesIfAvailable(this)
+        Mavericks.initialize(this)
 
         sharedPreferences = getSharedPreferences()
 

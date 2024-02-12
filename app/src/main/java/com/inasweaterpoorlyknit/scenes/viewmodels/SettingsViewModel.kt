@@ -1,37 +1,57 @@
 package com.inasweaterpoorlyknit.scenes.viewmodels
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
-import com.inasweaterpoorlyknit.scenes.ScenesApplication
-import com.inasweaterpoorlyknit.scenes.getMandelbrotColorIndex
-import com.inasweaterpoorlyknit.scenes.getMengerSpongeResolutionIndex
-import com.inasweaterpoorlyknit.scenes.getSharedPreferences
 import com.inasweaterpoorlyknit.scenes.graphics.scenes.MandelbrotScene
 import com.inasweaterpoorlyknit.scenes.graphics.scenes.MengerPrisonScene
-import com.inasweaterpoorlyknit.scenes.setMandelbrotColorIndex
-import com.inasweaterpoorlyknit.scenes.setMengerSpongeResolutionIndex
+import com.inasweaterpoorlyknit.scenes.repositories.SharedPreferencesRepository
+import com.airbnb.mvrx.MavericksState
+import com.airbnb.mvrx.MavericksViewModel
+import com.airbnb.mvrx.MavericksViewModelFactory
+import com.airbnb.mvrx.hilt.AssistedViewModelFactory
+import com.airbnb.mvrx.hilt.hiltMavericksViewModelFactory
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 
-class SettingsViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val scenesApp = application as ScenesApplication
-    private val sharedPreferences = application.getSharedPreferences()
-
+// TODO: Get the proper initial values for the Setting State somehow from the SharedPreferencesRepository
+data class SettingsState(
+    val mengerResolutionIndex: Int = MengerPrisonScene.DEFAULT_RESOLUTION_INDEX,
+    val mandelbrotColorIndex: Int = MandelbrotScene.DEFAULT_COLOR_INDEX,
+) : MavericksState {
     companion object {
-        val mengerPrisonResolutions: Array<String> = Array(MengerPrisonScene.resolutionFactorOptions.size) {
+        val mengerResolutionStrings: Array<String> = Array(MengerPrisonScene.resolutionFactorOptions.size) {
             "${(MengerPrisonScene.resolutionFactorOptions[it] * 100.0f).toInt()}%"
         }
         val mandelbrotColors: Array<String> = Array(MandelbrotScene.colors.size) { MandelbrotScene.colors[it].name }
         val websiteUrl = "https://lucodivo.github.io"
         val sourceUrl = "https://github.com/Lucodivo/ScenesMobile"
     }
+}
 
-    private val _webRequest = MutableLiveData<String>()
+class SettingsViewModel @AssistedInject constructor(
+    @Assisted state: SettingsState,
+    private val sharedPreferencesRepo: SharedPreferencesRepository,
+) : MavericksViewModel<SettingsState>(state) {
+    @AssistedFactory
+    interface Factory : AssistedViewModelFactory<SettingsViewModel, SettingsState> {
+        override fun create(state: SettingsState): SettingsViewModel
+    }
+    companion object : MavericksViewModelFactory<SettingsViewModel, SettingsState> by hiltMavericksViewModelFactory()
 
-    fun getMengerSpongeResolutionIndex(): Int = sharedPreferences.getMengerSpongeResolutionIndex()
-    fun getMandelbrotColorIndex(): Int = sharedPreferences.getMandelbrotColorIndex()
+    init {
+        setState{ copy(
+            mengerResolutionIndex = sharedPreferencesRepo.getMengerSpongeResolutionIndex(),
+            mandelbrotColorIndex = sharedPreferencesRepo.getMandelbrotColorIndex()
+        )}
+    }
 
-    fun onNightModeToggle(newState: Boolean) = scenesApp.setDarkMode(newState)
-    fun onMengerPrisonResolutionSelected(index: Int) = sharedPreferences.setMengerSpongeResolutionIndex(index)
-    fun onMandelbrotColorSelected(index: Int) = sharedPreferences.setMandelbrotColorIndex(index)
+    fun onMengerPrisonResolutionSelected(index: Int) {
+        sharedPreferencesRepo.setMengerSpongeResolutionIndex(index)
+        // TODO: get live updates from repository instead?
+        setState{ copy(mengerResolutionIndex = index) }
+    }
+    fun onMandelbrotColorSelected(index: Int) {
+        sharedPreferencesRepo.setMandelbrotColorIndex(index)
+        // TODO: get live updates from repository instead?
+        setState { copy(mandelbrotColorIndex = index) }
+    }
 }

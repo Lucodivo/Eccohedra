@@ -26,8 +26,8 @@ fun SharedPreferences.setDarkMode(darkMode: Boolean) = edit().putBoolean(SharedP
 fun SharedPreferences.setCachedSystemDarkMode(systemDarkMode: Boolean = true) = edit().putBoolean(SharedPrefKeys.cachedSystemDarkMode, systemDarkMode).apply()
 fun SharedPreferences.getCachedSystemDarkMode(default: Boolean = true) = getBoolean(SharedPrefKeys.cachedSystemDarkMode, default)
 
-fun SharedPreferences.getMengerSpongeResolutionIndex(default: Int = MengerPrisonScene.defaultResolutionIndex) = getInt(SharedPrefKeys.mengerPrisonResolutionIndex, default)
+fun SharedPreferences.getMengerSpongeResolutionIndex(default: Int = MengerPrisonScene.DEFAULT_RESOLUTION_INDEX) = getInt(SharedPrefKeys.mengerPrisonResolutionIndex, default)
 fun SharedPreferences.setMengerSpongeResolutionIndex(resIndex: Int) = edit().putInt(SharedPrefKeys.mengerPrisonResolutionIndex, resIndex).apply()
 
-fun SharedPreferences.getMandelbrotColorIndex(default: Int = MandelbrotScene.defaultColorIndex) = getInt(SharedPrefKeys.mandelbrotScene, default)
+fun SharedPreferences.getMandelbrotColorIndex(default: Int = MandelbrotScene.DEFAULT_COLOR_INDEX) = getInt(SharedPrefKeys.mandelbrotScene, default)
 fun SharedPreferences.setMandelbrotColorIndex(colorIndex: Int) = edit().putInt(SharedPrefKeys.mandelbrotScene, colorIndex).apply()

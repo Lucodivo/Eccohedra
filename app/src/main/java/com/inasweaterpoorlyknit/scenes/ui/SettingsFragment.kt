@@ -18,6 +18,7 @@ import androidx.compose.material.icons.rounded.Web
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
@@ -25,29 +26,35 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import com.airbnb.mvrx.compose.collectAsState
+import com.airbnb.mvrx.compose.mavericksViewModel
 import com.inasweaterpoorlyknit.scenes.R
 import com.inasweaterpoorlyknit.scenes.graphics.scenes.MandelbrotScene
 import com.inasweaterpoorlyknit.scenes.graphics.scenes.MengerPrisonScene
 import com.inasweaterpoorlyknit.scenes.ui.theme.OpenGLScenesTheme
+import com.inasweaterpoorlyknit.scenes.viewmodels.SettingsState
 import com.inasweaterpoorlyknit.scenes.viewmodels.SettingsViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class SettingsFragment : Fragment() {
-    private val activityViewModel: SettingsViewModel by activityViewModels()
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
+                val settingsViewModel: SettingsViewModel = mavericksViewModel()
+                val mengerResolutionIndex by settingsViewModel.collectAsState(SettingsState::mengerResolutionIndex)
+                val mandelbrotColorIndex by settingsViewModel.collectAsState(SettingsState::mandelbrotColorIndex)
+
                 SettingsList(
-                    mengerResolutionIndex = activityViewModel.getMengerSpongeResolutionIndex(),
-                    mandelbrotColorIndex = activityViewModel.getMandelbrotColorIndex(),
-                    onContactPress = { openWebPage(SettingsViewModel.websiteUrl) },
-                    onSourcePress = { openWebPage(SettingsViewModel.sourceUrl) },
-                    onMandelbrotColorSelect = { activityViewModel.onMandelbrotColorSelected(it) },
-                    onMengerPrisonResolutionSelect = { activityViewModel.onMengerPrisonResolutionSelected(it) })
+                    mengerResolutionIndex = mengerResolutionIndex,
+                    mandelbrotColorIndex = mandelbrotColorIndex,
+                    onContactPress = { openWebPage(SettingsState.websiteUrl) },
+                    onSourcePress = { openWebPage(SettingsState.sourceUrl) },
+                    onMandelbrotColorSelect = { settingsViewModel.onMandelbrotColorSelected(it) },
+                    onMengerPrisonResolutionSelect = { settingsViewModel.onMengerPrisonResolutionSelected(it) })
             }
         }
     }
@@ -55,12 +62,12 @@ class SettingsFragment : Fragment() {
     @Preview
     @Composable
     fun SettingsListPreview() {
-        SettingsList(MengerPrisonScene.defaultResolutionIndex, MandelbrotScene.defaultColorIndex)
+        SettingsList(MengerPrisonScene.DEFAULT_RESOLUTION_INDEX, MandelbrotScene.DEFAULT_COLOR_INDEX)
     }
 
     @Composable
-    fun SettingsList(mengerResolutionIndex: Int = MengerPrisonScene.defaultResolutionIndex,
-                     mandelbrotColorIndex: Int = MandelbrotScene.defaultColorIndex,
+    fun SettingsList(mengerResolutionIndex: Int = MengerPrisonScene.DEFAULT_RESOLUTION_INDEX,
+                     mandelbrotColorIndex: Int = MandelbrotScene.DEFAULT_COLOR_INDEX,
                      onContactPress: () -> Unit = {},
                      onSourcePress: () -> Unit = {},
                      onMandelbrotColorSelect: (Int) -> Unit = {},
@@ -91,7 +98,7 @@ class SettingsFragment : Fragment() {
                     ScenesListItem {
                         ListItemTextWithRightIcon(
                             "Connor Alexander Haskins", icon = ScenesIcons.Web,
-                            modifier = Modifier.clickable { onSourcePress() })
+                            modifier = Modifier.clickable { onContactPress() })
                     }
                 }
 
@@ -122,7 +129,7 @@ class SettingsFragment : Fragment() {
                     ScenesListItem {
                         ListItemDropdown(
                             titleText = stringResource(R.string.menger_sponge_resolution),
-                            items = SettingsViewModel.mengerPrisonResolutions,
+                            items = SettingsState.mengerResolutionStrings,
                             initSelectedIndex = mengerResolutionIndex,
                             selectedDecorationText = "🎞"
                         ){ onMengerPrisonResolutionSelect(it) }
@@ -134,7 +141,7 @@ class SettingsFragment : Fragment() {
                     ScenesListItem {
                         ListItemDropdown(
                             titleText = stringResource(R.string.mandelbrot_color),
-                            items = SettingsViewModel.mandelbrotColors,
+                            items = SettingsState.mandelbrotColors,
                             initSelectedIndex = mandelbrotColorIndex,
                             selectedDecorationText = "🖌"
                         ){ onMandelbrotColorSelect(it) }

@@ -7,9 +7,8 @@ plugins {
 
     id("androidx.navigation.safeargs.kotlin")
 
-    // TODO: Hilt
-//    id("kotlin-kapt")
-//    id("dagger.hilt.android.plugin") - uncomment to bring Hilt back into project
+    id("kotlin-kapt")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -92,9 +91,6 @@ dependencies {
     implementation("com.github.lucodivo:NoopMathKt:v0.2.4-alpha")
     implementation(project(":native_scenes"))
 
-    // all binary .jar dependencies in libs folder listOf(NONE CURRENTLY)
-//    implementation fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar")))
-
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlinCompilerVersion}")
 
@@ -125,6 +121,11 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0") // Integration with ViewModel
     //androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.1.1") // UI Tests
 
+    // MvRx
+    implementation("com.airbnb.android:mavericks:3.0.9")
+    implementation("com.airbnb.android:mavericks-hilt:3.0.9")
+    implementation("com.airbnb.android:mavericks-compose:3.0.9")
+
     // analytics
     implementation(platform("com.google.firebase:firebase-bom:32.2.3"))
     implementation("com.google.firebase:firebase-crashlytics-ktx")
@@ -136,7 +137,15 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
     // Hilt (Dependency Injection)
-    // TODO: Hilt
-//    implementation("com.google.dagger:hilt-android:2.38.1")
-//    kapt("com.google.dagger:hilt-compiler:2.38.1")
+    implementation("com.google.dagger:hilt-android:2.50")
+    kapt("com.google.dagger:hilt-compiler:2.50")
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.50")
+    kaptAndroidTest("com.google.dagger:hilt-compiler:2.50")
+    testImplementation("com.google.dagger:hilt-android-testing:2.50")
+    kaptTest("com.google.dagger:hilt-compiler:2.50")
+}
+
+// Allow references to generated code
+kapt {
+    correctErrorTypes = true
 }

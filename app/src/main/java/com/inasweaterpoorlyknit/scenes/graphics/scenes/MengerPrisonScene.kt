@@ -24,13 +24,13 @@ data class Resolution (
 class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.OnSharedPreferenceChangeListener {
     companion object {
         // TODO: Consider linking box/container dimen to uniform?
-        const val repeatedContainerDimen = 40.0f
+        const val REPEATED_CONTAINER_DIMEN = 40.0f
 
-        private object uniform {
-            const val iterations = "iterations"
-            const val viewPortResolution = "viewPortResolution"
-            const val rayOrigin = "rayOrigin"
-            const val cameraRotationMat = "cameraRotationMat"
+        private object UniformNames {
+            const val ITERATIONS = "iterations"
+            const val VIEW_PORT_RESOLUTION = "viewPortResolution"
+            const val RAY_ORIGIN = "rayOrigin"
+            const val CAMERA_ROTATION_MAT = "cameraRotationMat"
         }
 
         val resolutionFactorOptions = arrayOf(
@@ -41,12 +41,12 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
             1.0f/2.0f,
             1.0f,
         )
-        const val defaultResolutionIndex = 3
+        const val DEFAULT_RESOLUTION_INDEX = 3
 
-        private const val maxIterations = 5
+        private const val MAX_ITERATIONS = 5
         private val defaultCameraForward = Vec3(0.0f, 0.0f, 1.0f)
-        private const val cameraNormalSpeed = 0.5f
-        private const val cameraFastSpeed = 1.5f
+        private const val CAMERA_SPEED_NORMAL = 0.5f
+        private const val CAMERA_SPEED_FAST = 1.5f
     }
 
     private lateinit var mengerPrisonProgram: Program
@@ -91,7 +91,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         glClearColor(Vec3(0.5f, 0.0f, 0.0f))
 
         mengerPrisonProgram.use()
-        mengerPrisonProgram.setUniform(uniform.iterations, maxIterations)
+        mengerPrisonProgram.setUniform(UniformNames.ITERATIONS, MAX_ITERATIONS)
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
@@ -103,7 +103,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         offscreenFramebuffer = initializeFrameBuffer(resolution.width, resolution.height)
 
         mengerPrisonProgram.use()
-        mengerPrisonProgram.setUniform(uniform.viewPortResolution, resolution.width.toFloat(), resolution.height.toFloat())
+        mengerPrisonProgram.setUniform(UniformNames.VIEW_PORT_RESOLUTION, resolution.width.toFloat(), resolution.height.toFloat())
     }
 
     private fun initResolutions(width: Int, height: Int) {
@@ -132,10 +132,10 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         // Update scene
         val rotationMat = rotationSensorHelper.getRotationMatrix(sceneOrientation)
         cameraForward = rotationMat * defaultCameraForward
-        val cameraSpeed = if(actionDown) cameraFastSpeed else cameraNormalSpeed
+        val cameraSpeed = if(actionDown) CAMERA_SPEED_FAST else CAMERA_SPEED_NORMAL
         cameraPos += cameraForward * cameraSpeed * deltaTime.toFloat()
         // prevent floating point values from growing to unreasonable values
-        cameraPos %= repeatedContainerDimen
+        cameraPos %= REPEATED_CONTAINER_DIMEN
 
         // check for collision
         val cameraDistToPrison = sdMengerPrison(cameraPos)
@@ -149,7 +149,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
             offscreenFramebuffer.delete()
             offscreenFramebuffer = initializeFrameBuffer(resolution.width, resolution.height)
             prevFrameResolutionIndex = currentResolutionIndex
-            mengerPrisonProgram.setUniform(uniform.viewPortResolution, resolution.width.toFloat(), resolution.height.toFloat())
+            mengerPrisonProgram.setUniform(UniformNames.VIEW_PORT_RESOLUTION, resolution.width.toFloat(), resolution.height.toFloat())
         }
 
         // draw to offscreen framebuffer
@@ -158,8 +158,8 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         glClear(GL_COLOR_BUFFER_BIT)
 
         mengerPrisonProgram.use()
-        mengerPrisonProgram.setUniform(uniform.rayOrigin, cameraPos)
-        mengerPrisonProgram.setUniform(uniform.cameraRotationMat, rotationMat)
+        mengerPrisonProgram.setUniform(UniformNames.RAY_ORIGIN, cameraPos)
+        mengerPrisonProgram.setUniform(UniformNames.CAMERA_ROTATION_MAT, rotationMat)
         glDrawElements(GL_TRIANGLES, frameBufferQuadNumVertices, GL_UNSIGNED_INT, 0 /* offset in the EBO */)
 
         // blit rendered image onto onscreen buffer, scaling with "blocky"/"point" sampling where needed
@@ -204,8 +204,8 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
     private fun resolveResolutionIndex(sharedPreferences: SharedPreferences): Int {
         val newResolutionIndex = sharedPreferences.getMengerSpongeResolutionIndex()
         if(newResolutionIndex < 0 || newResolutionIndex >= resolutionFactorOptions.size) {
-            sharedPreferences.setMengerSpongeResolutionIndex(defaultResolutionIndex)
-            return defaultResolutionIndex
+            sharedPreferences.setMengerSpongeResolutionIndex(DEFAULT_RESOLUTION_INDEX)
+            return DEFAULT_RESOLUTION_INDEX
         }
         return newResolutionIndex
     }
@@ -220,7 +220,7 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
         var mengerPrisonDist = sdCross(prisonRay, Vec3(halfBoxDimen))
         if (mengerPrisonDist > hitDist) return mengerPrisonDist // use dist of biggest crosses as bounding volume
         var scale = 1.0f
-        for (i in 0 until maxIterations) {
+        for (i in 0 until MAX_ITERATIONS) {
             val boxedWorldDimen: Float = boxDimen / scale
             val posShiftVal = boxedWorldDimen * 0.5f
             val posShift = Vec3(posShiftVal, posShiftVal, posShiftVal)

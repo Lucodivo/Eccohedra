@@ -24,12 +24,12 @@ import kotlin.math.pow
 class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.OnScaleGestureListener, SharedPreferences.OnSharedPreferenceChangeListener {
 
     companion object {
-        private object uniform {
-            const val viewPortResolution = "viewPortResolution"
-            const val accentColor = "accentColor"
-            const val zoom = "zoom"
-            const val centerOffset = "centerOffset"
-            const val rotationMat = "rotationMat"
+        private object UniformNames {
+            const val VIEW_PORT_RESOLUTION = "viewPortResolution"
+            const val ACCENT_COLOR = "accentColor"
+            const val ZOOM = "zoom"
+            const val CENTER_OFFSET = "centerOffset"
+            const val ROTATION_MAT = "rotationMat"
         }
 
         data class AccentColor(val name: String, val accentColor: Vec3)
@@ -38,11 +38,11 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
             AccentColor("🟢", Vec3(0.0f, 1.0f, 0.0f)), // pastel blue/pink
             AccentColor("🔵", Vec3(0.0f, 0.0f, 1.0f)), // pink/purple
         )
-        const val defaultColorIndex = 0
+        const val DEFAULT_COLOR_INDEX = 0
 
-        private const val minZoom: Double = .25 // 1 means that we can see -0.5 to 0.5 in the minimum dimension
-        private const val maxZoom: Double = 130000.0 // TODO: Expand max if zoom is every expanded beyond current capabilities
-        private const val baseZoom: Double = minZoom
+        private const val MIN_ZOOM: Double = .25 // 1 means that we can see -0.5 to 0.5 in the minimum dimension
+        private const val MAX_ZOOM: Double = 130000.0 // TODO: Expand max if zoom is every expanded beyond current capabilities
+        private const val BASE_ZOOM: Double = MIN_ZOOM
     }
 
     object frameBuffer {
@@ -55,7 +55,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
     private lateinit var mandelbrotProgram: Program
     private var quadVAO: Int = -1
 
-    private var zoom = baseZoom
+    private var zoom = BASE_ZOOM
     private var centerOffset = dVec2(0.0, 0.0) //Vec2HighP(-1.70, 0.0)
     private var frameRotationMatrix = Mat2(1f)
     private var inputSinceLastDraw = true
@@ -123,8 +123,8 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
 
         mandelbrotProgram.use()
         glBindVertexArray(quadVAO)
-        mandelbrotProgram.setUniform(uniform.viewPortResolution, windowWidth.toFloat(), windowHeight.toFloat())
-        mandelbrotProgram.setUniform(uniform.accentColor, colors[accentColorsIndex].accentColor)
+        mandelbrotProgram.setUniform(UniformNames.VIEW_PORT_RESOLUTION, windowWidth.toFloat(), windowHeight.toFloat())
+        mandelbrotProgram.setUniform(UniformNames.ACCENT_COLOR, colors[accentColorsIndex].accentColor)
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
@@ -134,7 +134,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         pixelsPerUnit = min(windowWidth, windowHeight).toDouble()
 
         mandelbrotProgram.use()
-        mandelbrotProgram.setUniform(uniform.viewPortResolution, width.toFloat(), height.toFloat())
+        mandelbrotProgram.setUniform(UniformNames.VIEW_PORT_RESOLUTION, width.toFloat(), height.toFloat())
 
         setupDrawBuffer()
     }
@@ -219,9 +219,9 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
 
             glClear(GL_COLOR_BUFFER_BIT)
 
-            mandelbrotProgram.setUniform(uniform.zoom, zoom.toFloat())
-            mandelbrotProgram.setUniform(uniform.centerOffset, centerOffset.x.toFloat(), centerOffset.y.toFloat())
-            mandelbrotProgram.setUniform(uniform.rotationMat, frameRotationMatrix)
+            mandelbrotProgram.setUniform(UniformNames.ZOOM, zoom.toFloat())
+            mandelbrotProgram.setUniform(UniformNames.CENTER_OFFSET, centerOffset.x.toFloat(), centerOffset.y.toFloat())
+            mandelbrotProgram.setUniform(UniformNames.ROTATION_MAT, frameRotationMatrix)
             glDrawElements(GL_TRIANGLES, frameBufferQuadNumVertices, GL_UNSIGNED_INT, 0) // offset in the EBO
 
             inputSinceLastDraw = false
@@ -310,14 +310,14 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
     private fun resolveColorIndex(sharedPreferences: SharedPreferences): Int {
         val newColorIndex = sharedPreferences.getMandelbrotColorIndex()
         if(newColorIndex < 0 || newColorIndex >= colors.size) {
-            sharedPreferences.setMandelbrotColorIndex(defaultColorIndex)
-            return defaultColorIndex
+            sharedPreferences.setMandelbrotColorIndex(DEFAULT_COLOR_INDEX)
+            return DEFAULT_COLOR_INDEX
         }
         return newColorIndex
     }
 
     private fun scaleZoom(factor: Float) {
-        zoom = clamp(zoom * factor, minZoom, maxZoom)
+        zoom = clamp(zoom * factor, MIN_ZOOM, MAX_ZOOM)
     }
 
     override fun onScale(detector: ScaleGestureDetector): Boolean {
