@@ -1,7 +1,6 @@
 package com.inasweaterpoorlyknit.scenes.graphics.scenes
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.opengl.GLES32.*
 import android.util.Log
 import android.view.GestureDetector
@@ -14,14 +13,14 @@ import com.inasweaterpoorlyknit.Vec3
 import com.inasweaterpoorlyknit.dVec2
 import com.inasweaterpoorlyknit.scenes.*
 import com.inasweaterpoorlyknit.scenes.graphics.*
+import com.inasweaterpoorlyknit.scenes.repositories.SharedPreferencesRepository
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 import kotlin.math.min
 import kotlin.math.pow
 
-
-class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.OnScaleGestureListener, SharedPreferences.OnSharedPreferenceChangeListener {
+class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.OnScaleGestureListener {
 
     companion object {
         private object UniformNames {
@@ -76,6 +75,13 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
     private val rotateGestureDetector = RotateGestureDetector()
 
     init {
+        val sharedPreferencesRepository = SharedPreferencesRepository(context)
+        val existingColorIndex = sharedPreferencesRepository.getMandelbrotColorIndex()
+        accentColorsIndex = if(existingColorIndex < 0 || existingColorIndex >= colors.size) {
+            sharedPreferencesRepository.setMandelbrotColorIndex(DEFAULT_COLOR_INDEX)
+            DEFAULT_COLOR_INDEX
+        } else { existingColorIndex }
+
         scaleGestureDetector = ScaleGestureDetector(context, this)
         scaleGestureDetector.isQuickScaleEnabled = false // Default implementation of quick scaling feels awful
         gestureDetector = GestureDetector(context, object : GestureDetector.OnGestureListener {
@@ -102,9 +108,6 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
                 return true
             }
         })
-        val sharedPreferences = context.getSharedPreferences()
-        accentColorsIndex = sharedPreferences.getMandelbrotColorIndex()
-        sharedPreferences.registerOnSharedPreferenceChangeListener(this)
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
@@ -297,23 +300,6 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
                 return super.onTouchEvent(event)
             }
         }
-    }
-
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
-        // NOTE: This could become costly if SharedPreferences are being edited all the time
-        if(key == SharedPrefKeys.mandelbrotScene) {
-            accentColorsIndex = resolveColorIndex(sharedPreferences)
-        }
-    }
-
-    // Ensuring index is never out of bounds
-    private fun resolveColorIndex(sharedPreferences: SharedPreferences): Int {
-        val newColorIndex = sharedPreferences.getMandelbrotColorIndex()
-        if(newColorIndex < 0 || newColorIndex >= colors.size) {
-            sharedPreferences.setMandelbrotColorIndex(DEFAULT_COLOR_INDEX)
-            return DEFAULT_COLOR_INDEX
-        }
-        return newColorIndex
     }
 
     private fun scaleZoom(factor: Float) {

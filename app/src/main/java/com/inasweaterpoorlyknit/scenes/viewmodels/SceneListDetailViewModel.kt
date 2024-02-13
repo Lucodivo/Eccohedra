@@ -3,11 +3,9 @@ package com.inasweaterpoorlyknit.scenes.viewmodels
 import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import com.airbnb.mvrx.MavericksState
+import com.airbnb.mvrx.MavericksViewModel
 import com.inasweaterpoorlyknit.scenes.R
-import com.inasweaterpoorlyknit.scenes.graphics.GateNativeActivity
 import com.inasweaterpoorlyknit.scenes.graphics.Scene
 import com.inasweaterpoorlyknit.scenes.graphics.scenes.InfiniteCapsulesScene
 import com.inasweaterpoorlyknit.scenes.graphics.scenes.InfiniteCubeScene
@@ -26,90 +24,68 @@ data class ListItemData(
     @StringRes override val descTextResId: Int
 ) : ListItemDataI
 
-class SceneListDetailViewModel : ViewModel() {
+class KotlinSceneListItemData(
+    private val listItemData: ListItemDataI,
+    val sceneCreator: (context: Context) -> Scene,
+) : ListItemDataI by listItemData
 
-    private val _startActivityRequest = MutableLiveData<Class<*>>()
-    val startActivityRequest: LiveData<Class<*>>
-        get() = _startActivityRequest
-
-    private lateinit var _sceneCreator : (Context) -> Scene
-    val sceneCreator: (Context) -> Scene
-        get() = _sceneCreator
-
-    init {
-        //debugScene(::InfiniteCapsulesScene)
-        //debugNativeScene(BlueSceneNativeActivity::class.java)
-    }
-
-    // NOTE: Call this in init() to jump right into a scene for debugging
-    fun debugScene(sceneConstructor: (Context) -> Scene) {
-        _sceneCreator = sceneConstructor
-    }
-
-    // NOTE: Call this in init() to jump right into a scene for debugging
-    fun debugNativeScene(nativeScene: Class<*>) {
-        _startActivityRequest.value = nativeScene
-    }
-
-    companion object {
-        private class KotlinProgramListItemData(val listItemData: ListItemData,
-                                                val sceneCreator: (context: Context) -> Scene)
-            : ListItemDataI by listItemData
-
-        private class NativeProgramListItemData(val listItemData: ListItemData,
-                                                val nativeActivity: Class<*>)
-            : ListItemDataI by listItemData
-
-        private val sceneListItemData = listOf(
-            KotlinProgramListItemData(
-                ListItemData(
-                imageResId = R.drawable.infinite_cube_2720_1440,
-                displayTextResId = R.string.infinite_cube_scene_title,
-                descTextResId = R.string.infinite_cube_thumbnail_description),
-                sceneCreator = ::InfiniteCubeScene),
-            KotlinProgramListItemData(
-                ListItemData(
-                imageResId = R.drawable.infinite_capsules_2720_1440,
-                displayTextResId = R.string.infinite_capsules_scene_title,
-                descTextResId = R.string.infinite_capsules_thumbnail_description),
-                sceneCreator = ::InfiniteCapsulesScene),
-            KotlinProgramListItemData(
-                ListItemData(
-                imageResId = R.drawable.mandelbrot_2720_1440,
-                displayTextResId = R.string.mandelbrot_scene_title,
-                descTextResId = R.string.mandelbrot_thumbnail_description),
-                sceneCreator = ::MandelbrotScene),
-            KotlinProgramListItemData(
-                ListItemData(
-                imageResId = R.drawable.menger_prison_2720_1440,
-                displayTextResId = R.string.menger_prison_scene_title,
-                descTextResId = R.string.menger_prison_thumbnail_description),
-                sceneCreator = ::MengerPrisonScene),
-        )
-        val sceneListItems: List<ListItemDataI>
-            get() = sceneListItemData
-
-        private val nativeSceneListItemData = listOf(
-            NativeProgramListItemData(
-                ListItemData(
-                    imageResId = R.drawable.gate_2720_1440,
-                    displayTextResId = R.string.gate_scene_title,
-                    descTextResId = R.string.gate_thumbnail_description),
-                nativeActivity = GateNativeActivity::class.java),
-        )
-        val nativeSceneListItems: List<ListItemDataI>
-            get() = nativeSceneListItemData
-    }
-
-    fun itemSelected(item: ListItemDataI) {
-        when(item) {
-            is KotlinProgramListItemData -> {
-                // NOTE: Scene creator is a regular value, make sure to set it before any sort of LiveData to avoid any type of race conditions
-                _sceneCreator = item.sceneCreator
-            }
-            is NativeProgramListItemData -> {
-                // TODO
+data class SceneListData(val selectedSceneIndex: Int = 0) : MavericksState {
+    val sceneCreator : (Context) -> Scene
+        get() {
+            val selectedScene = kotlinScenesList[selectedSceneIndex]
+            return if(selectedScene is KotlinSceneListItemData) {
+                selectedScene.sceneCreator
+            } else {
+                ::MengerPrisonScene
             }
         }
+
+   companion object {
+       val kotlinScenesList: List<ListItemDataI> = listOf(
+           KotlinSceneListItemData(
+               ListItemData(
+                   imageResId = R.drawable.infinite_cube_2720_1440,
+                   displayTextResId = R.string.infinite_cube_scene_title,
+                   descTextResId = R.string.infinite_cube_thumbnail_description
+               ),
+               ::InfiniteCubeScene
+           ),
+           KotlinSceneListItemData(
+               ListItemData(
+                   imageResId = R.drawable.infinite_capsules_2720_1440,
+                   displayTextResId = R.string.infinite_capsules_scene_title,
+                   descTextResId = R.string.infinite_capsules_thumbnail_description
+               ),
+               ::InfiniteCapsulesScene
+           ),
+           KotlinSceneListItemData(
+               ListItemData(
+                   imageResId = R.drawable.mandelbrot_2720_1440,
+                   displayTextResId = R.string.mandelbrot_scene_title,
+                   descTextResId = R.string.mandelbrot_thumbnail_description
+               ),
+               ::MandelbrotScene
+           ),
+           KotlinSceneListItemData(
+               ListItemData(
+                   imageResId = R.drawable.menger_prison_2720_1440,
+                   displayTextResId = R.string.menger_prison_scene_title,
+                   descTextResId = R.string.menger_prison_thumbnail_description
+               ),
+               ::MengerPrisonScene
+           )
+       )
+       val gateScene = ListItemData(
+           imageResId = R.drawable.gate_2720_1440,
+           displayTextResId = R.string.gate_scene_title,
+           descTextResId = R.string.gate_thumbnail_description
+       )
+   }
+}
+
+class SceneListDetailViewModel(state: SceneListData) : MavericksViewModel<SceneListData>(state) {
+    fun itemSelected(itemIndex: Int) {
+        // NOTE: Scene creator is a regular value, make sure to set it before any sort of LiveData to avoid any type of race conditions
+        setState { copy(selectedSceneIndex = itemIndex) }
     }
 }

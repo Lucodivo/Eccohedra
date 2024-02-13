@@ -18,12 +18,10 @@ data class SettingsState(
     val mandelbrotColorIndex: Int = MandelbrotScene.DEFAULT_COLOR_INDEX,
 ) : MavericksState {
     companion object {
-        val mengerResolutionStrings: Array<String> = Array(MengerPrisonScene.resolutionFactorOptions.size) {
-            "${(MengerPrisonScene.resolutionFactorOptions[it] * 100.0f).toInt()}%"
-        }
-        val mandelbrotColors: Array<String> = Array(MandelbrotScene.colors.size) { MandelbrotScene.colors[it].name }
-        val websiteUrl = "https://lucodivo.github.io"
-        val sourceUrl = "https://github.com/Lucodivo/ScenesMobile"
+        val mengerResolutionStrings = MengerPrisonScene.resolutionFactorOptions.map{ "${(it * 100.0f).toInt()}%" }
+        val mandelbrotColors = MandelbrotScene.colors.map{ it.name }
+        const val WEBSITE_URL = "https://lucodivo.github.io"
+        const val SOURCE_URL = "https://github.com/Lucodivo/ScenesMobile"
     }
 }
 

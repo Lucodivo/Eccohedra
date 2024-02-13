@@ -111,7 +111,7 @@ fun ListItemSwitch(text: String, defaultState: Boolean, onClick: (Boolean) -> Un
 }
 
 @Composable
-fun ListItemDropdown(titleText: String, items: Array<String>, initSelectedIndex: Int, selectedDecorationText: String = "", onItemClicked: (index: Int) -> Unit) {
+fun ListItemDropdown(titleText: String, items: List<String>, initSelectedIndex: Int, selectedDecorationText: String = "", onItemClicked: (index: Int) -> Unit) {
     val expanded = remember { mutableStateOf(false) }
     val selectedIndex = remember { mutableStateOf(initSelectedIndex) }
     Row(horizontalArrangement = Arrangement.SpaceBetween,

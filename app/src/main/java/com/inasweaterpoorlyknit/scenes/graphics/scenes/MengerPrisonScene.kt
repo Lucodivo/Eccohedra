@@ -1,7 +1,6 @@
 package com.inasweaterpoorlyknit.scenes.graphics.scenes
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.opengl.GLES32.*
 import android.view.MotionEvent
 import com.inasweaterpoorlyknit.Vec2
@@ -12,6 +11,7 @@ import com.inasweaterpoorlyknit.min
 import com.inasweaterpoorlyknit.mod
 import com.inasweaterpoorlyknit.scenes.*
 import com.inasweaterpoorlyknit.scenes.graphics.*
+import com.inasweaterpoorlyknit.scenes.repositories.SharedPreferencesRepository
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -21,7 +21,8 @@ data class Resolution (
     val height: Int
 )
 
-class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.OnSharedPreferenceChangeListener {
+class MengerPrisonScene(context: Context) : Scene(context) {
+
     companion object {
         // TODO: Consider linking box/container dimen to uniform?
         const val REPEATED_CONTAINER_DIMEN = 40.0f
@@ -70,10 +71,13 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
     private val rotationSensorHelper = RotationSensorHelper()
 
     init {
-        val sharedPreferences = context.getSharedPreferences()
-        currentResolutionIndex = resolveResolutionIndex(sharedPreferences)
+        val sharedPreferencesRepository = SharedPreferencesRepository(context)
+        val existingResolutionIndex = sharedPreferencesRepository.getMengerSpongeResolutionIndex()
+        currentResolutionIndex = if(existingResolutionIndex < 0 || existingResolutionIndex >= resolutionFactorOptions.size) {
+            sharedPreferencesRepository.setMengerSpongeResolutionIndex(DEFAULT_RESOLUTION_INDEX)
+            DEFAULT_RESOLUTION_INDEX
+        } else { existingResolutionIndex }
         prevFrameResolutionIndex = currentResolutionIndex
-        sharedPreferences.registerOnSharedPreferenceChangeListener(this)
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
@@ -191,23 +195,6 @@ class MengerPrisonScene(context: Context) : Scene(context), SharedPreferences.On
                 super.onTouchEvent(event)
             }
         }
-    }
-
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
-        // NOTE: This could become costly if SharedPreferences are being edited all the time
-        if(key == SharedPrefKeys.mengerPrisonResolutionIndex) {
-            currentResolutionIndex = resolveResolutionIndex(sharedPreferences)
-        }
-    }
-
-    // Ensuring index is never out of bounds
-    private fun resolveResolutionIndex(sharedPreferences: SharedPreferences): Int {
-        val newResolutionIndex = sharedPreferences.getMengerSpongeResolutionIndex()
-        if(newResolutionIndex < 0 || newResolutionIndex >= resolutionFactorOptions.size) {
-            sharedPreferences.setMengerSpongeResolutionIndex(DEFAULT_RESOLUTION_INDEX)
-            return DEFAULT_RESOLUTION_INDEX
-        }
-        return newResolutionIndex
     }
 
     // below is code pulled from fragment shader to verify if camera has collided with the structure

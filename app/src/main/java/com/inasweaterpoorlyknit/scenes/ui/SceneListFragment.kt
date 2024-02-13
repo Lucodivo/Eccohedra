@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -26,17 +26,21 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import com.airbnb.mvrx.MavericksView
+import com.airbnb.mvrx.activityViewModel
 import com.inasweaterpoorlyknit.scenes.ui.theme.OpenGLScenesTheme
 import com.inasweaterpoorlyknit.scenes.viewmodels.ListItemDataI
+import com.inasweaterpoorlyknit.scenes.viewmodels.SceneListData
 import com.inasweaterpoorlyknit.scenes.viewmodels.SceneListDetailViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
-class SceneListFragment: Fragment() {
+@AndroidEntryPoint
+class SceneListFragment: Fragment(), MavericksView {
     private val headerIconVertPadding = 8.dp
     private val sceneListItemHeight = 200.dp
 
-    private val activityViewModel: SceneListDetailViewModel by activityViewModels()
+    private val viewModel: SceneListDetailViewModel by activityViewModel()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -44,14 +48,30 @@ class SceneListFragment: Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                SceneList()
+                SceneList(
+                    onSettingsSelected = {
+                        val directions = SceneListFragmentDirections.actionSceneListFragmentToSettingsFragment()
+                        findNavController().navigate(directions)
+                    },
+                    onKotlinSceneSelected = { listItemData ->
+                        viewModel.itemSelected(listItemData)
+                        val directions = SceneListFragmentDirections.actionSceneListFragmentToSceneFragment()
+                        findNavController().navigate(directions)
+                    },
+                    onGateSceneSelected = {
+                        val directions = SceneListFragmentDirections.actionSceneListFragmentToGateNativeActivity()
+                        findNavController().navigate(directions)
+                    }
+                )
             }
         }
     }
 
     @Preview
     @Composable
-    fun SceneList() {
+    fun SceneList(onSettingsSelected: () -> Unit = {},
+                  onKotlinSceneSelected: (Int) -> Unit = {},
+                  onGateSceneSelected: () -> Unit = {}){
         OpenGLScenesTheme {
             LazyColumn(
                 contentPadding = PaddingValues(vertical = halfListPadding),
@@ -60,36 +80,26 @@ class SceneListFragment: Fragment() {
                     .fillMaxSize()
             ) {
                 item {
-                    SettingsHeader()
-                }
-                items(SceneListDetailViewModel.sceneListItems) { listItemData ->
-                    SceneListItem(listItemData) {
-                        activityViewModel.itemSelected(listItemData)
-                        val directions = SceneListFragmentDirections.actionSceneListFragmentToSceneFragment()
-                        findNavController().navigate(directions)
+                    ScenesListItem(
+                        modifier = Modifier
+                            .clickable {
+                                onSettingsSelected()
+                            }
+                    ) {
+                        Icon(ScenesIcons.Settings, contentDescription = "Info Icon", modifier = Modifier.padding(vertical = headerIconVertPadding))
                     }
                 }
-                items(SceneListDetailViewModel.nativeSceneListItems) { listItemData ->
-                    SceneListItem(listItemData) {
-                        activityViewModel.itemSelected(listItemData)
-                        val directions = SceneListFragmentDirections.actionSceneListFragmentToGateNativeActivity()
-                        findNavController().navigate(directions)
+                itemsIndexed(SceneListData.kotlinScenesList) { index, item ->
+                    SceneListItem(item) {
+                        onKotlinSceneSelected(index)
+                    }
+                }
+                item {
+                    SceneListItem(SceneListData.gateScene) {
+                        onGateSceneSelected()
                     }
                 }
             }
-        }
-    }
-
-    @Composable
-    fun SettingsHeader() {
-        ScenesListItem(
-            modifier = Modifier
-                .clickable {
-                    val directions = SceneListFragmentDirections.actionSceneListFragmentToSettingsFragment()
-                    findNavController().navigate(directions)
-                }
-        ) {
-            Icon(ScenesIcons.Settings, contentDescription = "Info Icon", modifier = Modifier.padding(vertical = headerIconVertPadding))
         }
     }
 
@@ -111,4 +121,6 @@ class SceneListFragment: Fragment() {
                 )
         }
     }
+
+    override fun invalidate() {}
 }

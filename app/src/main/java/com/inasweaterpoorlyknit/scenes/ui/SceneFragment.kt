@@ -6,13 +6,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import com.airbnb.mvrx.MavericksView
+import com.airbnb.mvrx.activityViewModel
+import com.airbnb.mvrx.withState
 import com.inasweaterpoorlyknit.scenes.graphics.SceneSurfaceView
 import com.inasweaterpoorlyknit.scenes.viewmodels.SceneListDetailViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
-class SceneFragment: Fragment() {
+@AndroidEntryPoint
+class SceneFragment: Fragment(), MavericksView {
 
-  private val activityViewModel: SceneListDetailViewModel by activityViewModels()
+  private val viewModel: SceneListDetailViewModel by activityViewModel()
 
   private lateinit var sceneSurfaceView: SceneSurfaceView
 
@@ -29,7 +33,9 @@ class SceneFragment: Fragment() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     val context = requireContext()
-    sceneSurfaceView = SceneSurfaceView(context, activityViewModel.sceneCreator(context));
+    sceneSurfaceView = withState(viewModel){ state ->
+      SceneSurfaceView(context, state.sceneCreator(context))
+    }
   }
 
   override fun onCreateView(
@@ -48,4 +54,6 @@ class SceneFragment: Fragment() {
     super.onResume()
     sceneSurfaceView.onResume()
   }
+
+  override fun invalidate() {}
 }

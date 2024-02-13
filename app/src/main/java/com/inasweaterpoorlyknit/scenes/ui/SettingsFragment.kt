@@ -38,6 +38,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class SettingsFragment : Fragment() {
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -51,8 +52,8 @@ class SettingsFragment : Fragment() {
                 SettingsList(
                     mengerResolutionIndex = mengerResolutionIndex,
                     mandelbrotColorIndex = mandelbrotColorIndex,
-                    onContactPress = { openWebPage(SettingsState.websiteUrl) },
-                    onSourcePress = { openWebPage(SettingsState.sourceUrl) },
+                    onContactPress = { openWebPage(SettingsState.WEBSITE_URL) },
+                    onSourcePress = { openWebPage(SettingsState.SOURCE_URL) },
                     onMandelbrotColorSelect = { settingsViewModel.onMandelbrotColorSelected(it) },
                     onMengerPrisonResolutionSelect = { settingsViewModel.onMengerPrisonResolutionSelected(it) })
             }

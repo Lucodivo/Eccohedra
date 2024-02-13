@@ -122,9 +122,10 @@ dependencies {
     //androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.1.1") // UI Tests
 
     // MvRx
-    implementation("com.airbnb.android:mavericks:3.0.9")
-    implementation("com.airbnb.android:mavericks-hilt:3.0.9")
-    implementation("com.airbnb.android:mavericks-compose:3.0.9")
+    val mvrxVersion = "3.0.9"
+    implementation("com.airbnb.android:mavericks:$mvrxVersion")
+    implementation("com.airbnb.android:mavericks-hilt:$mvrxVersion")
+    implementation("com.airbnb.android:mavericks-compose:$mvrxVersion")
 
     // analytics
     implementation(platform("com.google.firebase:firebase-bom:32.2.3"))
