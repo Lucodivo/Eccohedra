@@ -1,6 +1,7 @@
 package com.inasweaterpoorlyknit.scenes.graphics
 
 import android.content.Context
+import android.content.res.Resources
 import android.opengl.GLES32.GL_LINK_STATUS
 import android.opengl.GLES32.glAttachShader
 import android.opengl.GLES32.glCreateProgram
@@ -30,13 +31,13 @@ import com.inasweaterpoorlyknit.Vec2
 import com.inasweaterpoorlyknit.Vec3
 import com.inasweaterpoorlyknit.Vec4
 
-class Program(context: Context, @RawRes vertexShaderResId: Int, @RawRes fragmentShaderResId: Int)
+class Program(resources: Resources, @RawRes vertexShaderResId: Int, @RawRes fragmentShaderResId: Int)
 {
     private val id: Int
 
     init {
-        val vertexShader = createVertexShader(context, vertexShaderResId)
-        val fragmentShader = createFragmentShader(context, fragmentShaderResId)
+        val vertexShader = createVertexShader(resources, vertexShaderResId)
+        val fragmentShader = createFragmentShader(resources, fragmentShaderResId)
 
         id = glCreateProgram()
         glAttachShader(id, vertexShader)

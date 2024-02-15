@@ -2,7 +2,6 @@ package com.inasweaterpoorlyknit.scenes.viewmodels
 
 import com.inasweaterpoorlyknit.scenes.graphics.scenes.MandelbrotScene
 import com.inasweaterpoorlyknit.scenes.graphics.scenes.MengerPrisonScene
-import com.inasweaterpoorlyknit.scenes.repositories.SharedPreferencesRepository
 import com.airbnb.mvrx.MavericksState
 import com.airbnb.mvrx.MavericksViewModel
 import com.airbnb.mvrx.MavericksViewModelFactory
@@ -12,9 +11,6 @@ import com.inasweaterpoorlyknit.scenes.repositories.UserPreferencesDataStoreRepo
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 // TODO: Get the proper initial values for the Setting State somehow from the SharedPreferencesRepository
 data class SettingsState(

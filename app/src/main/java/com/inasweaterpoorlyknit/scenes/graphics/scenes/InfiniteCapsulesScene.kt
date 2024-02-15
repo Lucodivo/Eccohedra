@@ -1,6 +1,7 @@
 package com.inasweaterpoorlyknit.scenes.graphics.scenes
 
 import android.content.Context
+import android.content.res.Resources
 import android.opengl.GLES30.glBindVertexArray
 import android.opengl.GLES32.GL_COLOR_BUFFER_BIT
 import android.opengl.GLES32.GL_TRIANGLES
@@ -18,7 +19,7 @@ import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class InfiniteCapsulesScene(context: Context) : Scene(context) {
+class InfiniteCapsulesScene(context: Context, private val resources: Resources, private val startingOrientation: Orientation) : Scene() {
 
     companion object {
         // TODO: Consider linking capsule/container dimen to uniform?
@@ -38,7 +39,7 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
 
     private var cameraPos = Vec3(0f, 1f, 0f)
     private var cameraForward = defaultCameraForward
-    private val rotationSensorHelper = RotationSensorHelper()
+    private val rotationSensorHelper = RotationSensorHelper(context)
     private lateinit var program: Program
     private var quadVAO: Int = -1
 
@@ -54,7 +55,6 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
     private var lightDistanceTraveled = 0f
     private val lightSpeed = 2f
 
-
     private val cameraSpeedNormal = .5f
     private val cameraSpeedFast = 2f
     private var cameraSpeed = cameraSpeedNormal
@@ -63,7 +63,7 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
     private val actionTimeFrame = .1f
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-        program = Program(context, R.raw.uv_coord_vertex_shader, R.raw.infinite_capsules_fragment_shader)
+        program = Program(resources, R.raw.uv_coord_vertex_shader, R.raw.infinite_capsules_fragment_shader)
 
         // setup vertex attributes for quad
         val quadVAOBuffer = IntBuffer.allocate(1)
@@ -106,7 +106,7 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
         val deltaTime = elapsedTime - lastFrameTime
         lastFrameTime = elapsedTime
 
-        var rotationMat = rotationSensorHelper.getRotationMatrix(sceneOrientation)
+        var rotationMat = rotationSensorHelper.getRotationMatrix(startingOrientation)
         moveCameraForward(rotationMat, (deltaTime * cameraSpeed).toFloat())
 
         if(sdScene(cameraPos, rotationMat) <= 0.0f) {
@@ -184,11 +184,11 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
     }
 
     override fun onAttach() {
-        rotationSensorHelper.init(context)
+        rotationSensorHelper.init()
     }
 
     override fun onDetach() {
-        rotationSensorHelper.deinit(context)
+        rotationSensorHelper.deinit()
     }
 
     private fun action() {
@@ -198,17 +198,15 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
         lightPosition = cameraPos + lightMoveDir
     }
 
-    override fun onTouchEvent(event: MotionEvent): Boolean {
+    override fun onTouchEvent(event: MotionEvent){
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 actionDownTime = systemTimeInSeconds()
-                return true
             }
             MotionEvent.ACTION_MOVE -> {
                 if(systemTimeInSeconds() - actionDownTime > actionTimeFrame) {
                     cameraSpeed = cameraSpeedFast
                 }
-                return true
             }
             MotionEvent.ACTION_UP -> {
                 if((systemTimeInSeconds() - actionDownTime) <= actionTimeFrame) {
@@ -216,11 +214,8 @@ class InfiniteCapsulesScene(context: Context) : Scene(context) {
                 } else {
                     cameraSpeed = cameraSpeedNormal
                 }
-                return true
             }
-            else -> {
-                return super.onTouchEvent(event)
-            }
+            else -> {}
         }
     }
 }

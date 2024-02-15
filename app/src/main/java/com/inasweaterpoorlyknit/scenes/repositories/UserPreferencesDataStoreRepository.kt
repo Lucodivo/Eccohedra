@@ -1,20 +1,19 @@
 package com.inasweaterpoorlyknit.scenes.repositories
 
 import android.content.Context
+import androidx.datastore.core.DataStore
 import com.inasweaterpoorlyknit.scenes.UserPreferences
-import com.inasweaterpoorlyknit.scenes.userPreferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class UserPreferencesDataStoreRepository(context: Context) {
-    private val userPreferencesDataStore = context.userPreferencesDataStore
+class UserPreferencesDataStoreRepository(private val dataStore: DataStore<UserPreferences>) {
 
-    val userPreferences: Flow<UserPreferences> = userPreferencesDataStore.data
+    val userPreferences: Flow<UserPreferences> = dataStore.data
     val mengerIndex: Flow<Int> = userPreferences.map { it.mengerIndex }
     val mandelbrotIndex: Flow<Int> = userPreferences.map { it.mandelbrotIndex }
 
     suspend fun setMengerIndex(index: Int) {
-        userPreferencesDataStore.updateData { currentSettings ->
+        dataStore.updateData { currentSettings ->
             currentSettings.toBuilder()
                 .setMengerIndex(index)
                 .build()
@@ -22,7 +21,7 @@ class UserPreferencesDataStoreRepository(context: Context) {
     }
 
     suspend fun setMandelbrotIndex(index: Int) {
-        userPreferencesDataStore.updateData { currentSettings ->
+        dataStore.updateData { currentSettings ->
             currentSettings.toBuilder()
                 .setMandelbrotIndex(index)
                 .build()

@@ -1,6 +1,7 @@
 package com.inasweaterpoorlyknit.scenes.graphics
 
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.BitmapFactory
 import android.opengl.GLES32.GL_COMPILE_STATUS
 import android.opengl.GLES32.GL_FRAGMENT_SHADER
@@ -30,7 +31,7 @@ import java.nio.IntBuffer
 
 // NOTE: OpenGL ES does not support geometry shaders
 
-fun loadTexture(context: Context, @RawRes resourceId: Int): Int {
+fun loadTexture(resources: Resources, @RawRes resourceId: Int): Int {
     val textureIntArray = IntArray(1)
     glGenTextures(1, textureIntArray, 0)
     val textureId = textureIntArray[0]
@@ -43,7 +44,7 @@ fun loadTexture(context: Context, @RawRes resourceId: Int): Int {
     options.inScaled = false   // No pre-scaling
 
     // Read in the resource
-    val bitmap = BitmapFactory.decodeResource(context.resources, resourceId, options) ?: throw RuntimeException("Error decoding image: ${context.resources.getResourceName(resourceId)}")
+    val bitmap = BitmapFactory.decodeResource(resources, resourceId, options) ?: throw RuntimeException("Error decoding image: ${resources.getResourceName(resourceId)}")
 
     val internalFormat: Int
     val externalFormat: Int
@@ -74,19 +75,19 @@ fun loadTexture(context: Context, @RawRes resourceId: Int): Int {
     return textureId
 }
 
-fun createVertexShader(context: Context, @RawRes shaderResourceId: Int): Int {
+fun createVertexShader(resources: Resources, @RawRes shaderResourceId: Int): Int {
     return try {
-        createVertexShader(getResourceRawFileAsString(context, shaderResourceId))
+        createVertexShader(getResourceRawFileAsString(resources, shaderResourceId))
     } catch (e: RuntimeException) {
-        throw RuntimeException("Error creating vertex shader: \n${context.resources.getResourceName(shaderResourceId)}\n${e.message}")
+        throw RuntimeException("Error creating vertex shader: \n${resources.getResourceName(shaderResourceId)}\n${e.message}")
     }
 }
 
-fun createFragmentShader(context: Context, @RawRes shaderResourceId: Int): Int {
+fun createFragmentShader(resources: Resources, @RawRes shaderResourceId: Int): Int {
     return try {
-        createFragmentShader(getResourceRawFileAsString(context, shaderResourceId))
+        createFragmentShader(getResourceRawFileAsString(resources, shaderResourceId))
     } catch (e: RuntimeException) {
-        throw RuntimeException("Error creating fragment shader: ${context.resources.getResourceName(shaderResourceId)}\n${e.message}")
+        throw RuntimeException("Error creating fragment shader: ${resources.getResourceName(shaderResourceId)}\n${e.message}")
     }
 }
 

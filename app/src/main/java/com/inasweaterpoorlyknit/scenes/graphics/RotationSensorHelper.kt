@@ -10,26 +10,18 @@ import android.widget.Toast
 import com.inasweaterpoorlyknit.Mat3
 import com.inasweaterpoorlyknit.scenes.R
 
-/*
- TODO: This helper never acknowledges that we are translating from Android supplied column-major matrices
-    into custom row-major matrices. Potential bugs/optimizations to be fixed/had.
-*/
-class RotationSensorHelper: SensorEventListener {
+class RotationSensorHelper(context: Context): SensorEventListener {
 
     private var firstSensorVals_rotationVector: FloatArray? = null
     private var lastSensorValues_rotationVector: FloatArray? = null
     private val scratchMat = FloatArray(3 * 3) // don't expect anything to be in here unless you just wrote to it
+    private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private val sensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
+    private val noRotationToast = Toast.makeText(context, R.string.no_rotation_sensor, Toast.LENGTH_LONG)
 
-    fun init(context: Context) {
-        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        val sensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
-
+    fun init() {
         // enable rotation sensor if available
-        if(sensor != null) {
-            sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)
-        } else {
-            Toast.makeText(context, R.string.no_rotation_sensor, Toast.LENGTH_LONG).show()
-        }
+        if(sensor != null) sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME) else noRotationToast.show()
     }
 
     fun reset() {
@@ -37,9 +29,8 @@ class RotationSensorHelper: SensorEventListener {
         lastSensorValues_rotationVector = null
     }
 
-    fun deinit(context: Context) {
+    fun deinit() {
         // Turn our sensor off on detached
-        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         sensorManager.unregisterListener(this)
         firstSensorVals_rotationVector = null
         lastSensorValues_rotationVector = null

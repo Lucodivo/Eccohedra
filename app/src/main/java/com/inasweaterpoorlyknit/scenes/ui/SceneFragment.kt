@@ -8,15 +8,21 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.airbnb.mvrx.MavericksView
 import com.airbnb.mvrx.activityViewModel
+import com.airbnb.mvrx.compose.mavericksViewModel
 import com.airbnb.mvrx.withState
 import com.inasweaterpoorlyknit.scenes.graphics.SceneSurfaceView
+import com.inasweaterpoorlyknit.scenes.repositories.UserPreferencesDataStoreRepository
 import com.inasweaterpoorlyknit.scenes.viewmodels.SceneListDetailViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class SceneFragment: Fragment(), MavericksView {
 
   private val viewModel: SceneListDetailViewModel by activityViewModel()
+
+  @Inject
+  lateinit var userPreferencesRepo: UserPreferencesDataStoreRepository
 
   private lateinit var sceneSurfaceView: SceneSurfaceView
 
@@ -34,7 +40,7 @@ class SceneFragment: Fragment(), MavericksView {
     super.onCreate(savedInstanceState)
     val context = requireContext()
     sceneSurfaceView = withState(viewModel){ state ->
-      SceneSurfaceView(context, state.sceneCreator(context))
+      SceneSurfaceView(context, state.sceneCreator(context, userPreferencesRepo))
     }
   }
 

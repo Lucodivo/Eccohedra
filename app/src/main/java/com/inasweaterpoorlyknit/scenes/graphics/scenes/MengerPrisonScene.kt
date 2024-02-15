@@ -1,6 +1,7 @@
 package com.inasweaterpoorlyknit.scenes.graphics.scenes
 
 import android.content.Context
+import android.content.res.Resources
 import android.opengl.GLES32.*
 import android.view.MotionEvent
 import com.inasweaterpoorlyknit.Vec2
@@ -9,8 +10,8 @@ import com.inasweaterpoorlyknit.abs
 import com.inasweaterpoorlyknit.max
 import com.inasweaterpoorlyknit.min
 import com.inasweaterpoorlyknit.mod
-import com.inasweaterpoorlyknit.scenes.common.clamp
 import com.inasweaterpoorlyknit.scenes.*
+import com.inasweaterpoorlyknit.scenes.common.clamp
 import com.inasweaterpoorlyknit.scenes.graphics.*
 import com.inasweaterpoorlyknit.scenes.repositories.UserPreferencesDataStoreRepository
 import kotlinx.coroutines.flow.firstOrNull
@@ -24,7 +25,8 @@ data class Resolution (
     val height: Int
 )
 
-class MengerPrisonScene(context: Context) : Scene(context) {
+class MengerPrisonScene(context: Context, private val userPreferencesRepo: UserPreferencesDataStoreRepository, private val resources: Resources, private val startingOrientation: Orientation) : Scene() {
+
     companion object {
         // TODO: Consider linking box/container dimen to uniform?
         const val REPEATED_CONTAINER_DIMEN = 40.0f
@@ -70,12 +72,10 @@ class MengerPrisonScene(context: Context) : Scene(context) {
 
     private var actionDown = false
 
-//    private val mainScope = MainScope() + CoroutineName("MengerPrisonScene")
-    private val rotationSensorHelper = RotationSensorHelper()
+    private val rotationSensorHelper = RotationSensorHelper(context)
 
     init {
-        // TODO: Refrain from using runBlocking{}
-        val userPreferencesRepo = UserPreferencesDataStoreRepository(context)
+        // TODO: Don't user runBlocking
         val userPrefMengerIndex = runBlocking { userPreferencesRepo.mengerIndex.firstOrNull() }
         userPrefMengerIndex?.let { index ->
             prevFrameResolutionIndex = currentResolutionIndex
@@ -84,7 +84,7 @@ class MengerPrisonScene(context: Context) : Scene(context) {
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-        mengerPrisonProgram = Program(context, R.raw.uv_coord_vertex_shader, R.raw.menger_prison_fragment_shader)
+        mengerPrisonProgram = Program(resources, R.raw.uv_coord_vertex_shader, R.raw.menger_prison_fragment_shader)
 
         // setup vertex attributes for quad
         val quadVAOBuffer = IntBuffer.allocate(1)
@@ -137,7 +137,7 @@ class MengerPrisonScene(context: Context) : Scene(context) {
         lastFrameTime = elapsedTime
 
         // Update scene
-        val rotationMat = rotationSensorHelper.getRotationMatrix(sceneOrientation)
+        val rotationMat = rotationSensorHelper.getRotationMatrix(startingOrientation)
         cameraForward = rotationMat * defaultCameraForward
         val cameraSpeed = if(actionDown) CAMERA_SPEED_FAST else CAMERA_SPEED_NORMAL
         cameraPos += cameraForward * cameraSpeed * deltaTime.toFloat()
@@ -177,27 +177,17 @@ class MengerPrisonScene(context: Context) : Scene(context) {
     }
 
     override fun onAttach() {
-        rotationSensorHelper.init(context)
+        rotationSensorHelper.init()
     }
 
     override fun onDetach() {
-        rotationSensorHelper.init(context)
+        rotationSensorHelper.init()
     }
 
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        return when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                actionDown = true
-                true
-            }
-            MotionEvent.ACTION_UP -> {
-                actionDown = false
-                true
-            }
-            else -> {
-                super.onTouchEvent(event)
-            }
-        }
+    override fun onTouchEvent(event: MotionEvent) = when (event.action) {
+        MotionEvent.ACTION_DOWN -> actionDown = true
+        MotionEvent.ACTION_UP -> actionDown = false
+        else -> {}
     }
 
     // below is code pulled from fragment shader to verify if camera has collided with the structure

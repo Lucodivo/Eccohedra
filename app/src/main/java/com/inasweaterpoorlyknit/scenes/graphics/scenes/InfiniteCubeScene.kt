@@ -1,6 +1,7 @@
 package com.inasweaterpoorlyknit.scenes.graphics.scenes
 
 import android.content.Context
+import android.content.res.Resources
 import android.opengl.GLES30.*
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -21,7 +22,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 // NOTE: DS means deciseconds
-class InfiniteCubeScene(context: Context) : Scene(context) {
+class InfiniteCubeScene(context: Context, private val resources: Resources, startingOrientation: Orientation) : Scene() {
 
     companion object {
         private const val cubeRotationAnglePerDS = .3125f * RadiansPerDegree
@@ -58,9 +59,9 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
         }
     }
 
-    private val camera = Camera(Vec3(0f, 0f, if (sceneOrientation.isLandscape()) -3f else -4f))
-    private val cameraForwardMax = if (sceneOrientation.isLandscape()) -1.5f else -2.15f
-    private val cameraForwardMin = if (sceneOrientation.isLandscape()) -5f else -10f
+    private val camera = Camera(Vec3(0f, 0f, if (startingOrientation.isLandscape()) -3f else -4f))
+    private val cameraForwardMax = if (startingOrientation.isLandscape()) -1.5f else -2.15f
+    private val cameraForwardMin = if (startingOrientation.isLandscape()) -5f else -10f
 
     // GL handles
     private lateinit var textureCropProgram: Program
@@ -95,7 +96,7 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
         }
 
         override fun onSingleTapUp(e: MotionEvent): Boolean {
-            pokeTimeColorOffset()
+            jumpTimeColorOffset()
             return true
         }
 
@@ -128,11 +129,10 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
         }
     })
 
-    private var scaleGestureDetector = ScaleGestureDetector(context, object :
-        ScaleGestureDetector.OnScaleGestureListener {
+    private val scaleGestureDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.OnScaleGestureListener {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
             // zoom
-            val spanDelta = detector.currentSpan - detector.previousSpan;
+            val spanDelta = detector.currentSpan - detector.previousSpan
             moveCameraForward(spanDelta * cameraForwardPinchScaleFactor)
 
             // pan
@@ -161,8 +161,8 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
 
     override fun onSurfaceCreated(unused: GL10, config: EGLConfig) {
         // TODO: We do not use normals and could consider avoiding unnecessary computation
-        cubeOutlineProgram = Program(context, R.raw.pos_norm_tex_vertex_shader, R.raw.discard_alpha_tex_fragment_shader)
-        textureCropProgram = Program(context, R.raw.pos_norm_tex_vertex_shader, R.raw.crop_center_square_tex_fragment_shader)
+        cubeOutlineProgram = Program(resources, R.raw.pos_norm_tex_vertex_shader, R.raw.discard_alpha_tex_fragment_shader)
+        textureCropProgram = Program(resources, R.raw.pos_norm_tex_vertex_shader, R.raw.crop_center_square_tex_fragment_shader)
 
         // setup vertex attribute objects for cube
         val cubeVAOBuffer = IntBuffer.allocate(1)
@@ -173,7 +173,7 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
         cubeVAO = cubeVAOBuffer[0]
 
         // Load cube outline texture and bind it
-        outlineTextureId = loadTexture(context, R.raw.cube_outline)
+        outlineTextureId = loadTexture(resources, R.raw.cube_outline)
         glActiveTexture(GL_TEXTURE0 + outlineTextureIndex)
         glBindTexture(GL_TEXTURE_2D, outlineTextureId)
         glActiveTexture(GL_TEXTURE0)
@@ -324,14 +324,13 @@ class InfiniteCubeScene(context: Context) : Scene(context) {
         camera.moveForward(scaledAndClampedPanY)
     }
 
-    fun pokeTimeColorOffset() {
+    fun jumpTimeColorOffset() {
         timeColorOffset += 100f
         if(timeColorOffset >= 1000f) timeColorOffset = 0f
     }
 
-    override fun onTouchEvent(event: MotionEvent): Boolean {
+    override fun onTouchEvent(event: MotionEvent) {
         scaleGestureDetector.onTouchEvent(event)
         if(!pinchInProgress) { gestureDetector.onTouchEvent(event) }
-        return true
     }
 }

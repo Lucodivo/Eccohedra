@@ -25,14 +25,13 @@ class RotateGestureDetector {
         currentGestureRotation = angleBetweenLines(pointer1.startingPos, pointer2.startingPos, pointer1.pos, pointer2.pos)
     }
 
-    fun onTouchEvent(event: MotionEvent): Boolean {
+    fun onTouchEvent(event: MotionEvent) {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 val eventPointerId = event.getPointerId(event.actionIndex)
                 pointer1.id = eventPointerId
                 pointer1.startingPos = Vec2(event.x, event.y)
                 pointer1.pos = Vec2(pointer1.startingPos.x, pointer1.startingPos.y)
-                return true
             }
             MotionEvent.ACTION_MOVE -> {
                 if (isActive) {
@@ -44,7 +43,6 @@ class RotateGestureDetector {
                         updateTotalRotation()
                     }
                 }
-                return true
             }
             MotionEvent.ACTION_UP -> {
                 val eventPointerId = event.getPointerId(event.actionIndex)
@@ -53,7 +51,6 @@ class RotateGestureDetector {
                 } else if(pointer2.id == eventPointerId) {
                     pointer2.id = MotionEvent.INVALID_POINTER_ID
                 }
-                return true
             }
             MotionEvent.ACTION_POINTER_DOWN -> {
                 val eventPointerId = event.getPointerId(event.actionIndex)
@@ -80,7 +77,6 @@ class RotateGestureDetector {
                         pointer2.startingPos = Vec2(pointer2.pos.x, pointer2.pos.y)
                     }
                 }
-                return true
             }
             MotionEvent.ACTION_POINTER_UP -> {
                 val eventPointerId = event.getPointerId(event.actionIndex)
@@ -98,9 +94,7 @@ class RotateGestureDetector {
                         previousLifetimeRotation += TWO_PI
                     }
                 }
-                return true
             }
-            else -> return false
         }
     }
 }

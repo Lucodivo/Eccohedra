@@ -1,9 +1,11 @@
 package com.inasweaterpoorlyknit.scenes.graphics.scenes
 
 import android.content.Context
+import android.content.res.Resources
 import android.opengl.GLES32.*
 import android.util.Log
 import android.view.GestureDetector
+import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import androidx.core.math.MathUtils.clamp
@@ -13,7 +15,7 @@ import com.inasweaterpoorlyknit.Vec3
 import com.inasweaterpoorlyknit.dVec2
 import com.inasweaterpoorlyknit.scenes.*
 import com.inasweaterpoorlyknit.scenes.graphics.*
-import com.inasweaterpoorlyknit.scenes.repositories.SharedPreferencesRepository
+import com.inasweaterpoorlyknit.scenes.graphics.scenes.MengerPrisonScene.Companion.resolutionFactorOptions
 import com.inasweaterpoorlyknit.scenes.repositories.UserPreferencesDataStoreRepository
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
@@ -23,7 +25,7 @@ import javax.microedition.khronos.opengles.GL10
 import kotlin.math.min
 import kotlin.math.pow
 
-class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.OnScaleGestureListener {
+class MandelbrotScene(context: Context, userPreferencesRepo: UserPreferencesDataStoreRepository, private val resources: Resources) : Scene() {
 
     companion object {
         private object UniformNames {
@@ -72,49 +74,57 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
     private var accentColorsIndex: Int = DEFAULT_COLOR_INDEX
     private var pixelsPerUnit: Double = 0.0
 
+    private fun scaleZoom(factor: Float) { zoom = clamp(zoom * factor, MIN_ZOOM, MAX_ZOOM) }
+
     // TODO: Consider handling all scenarios through custom RotateGestureDetector?
-    private var scaleGestureDetector: ScaleGestureDetector
-    private var gestureDetector: GestureDetector
+    private val scaleGestureDetector: ScaleGestureDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.OnScaleGestureListener {
+        override fun onScale(detector: ScaleGestureDetector): Boolean {
+            // zoom
+            scaleZoom(detector.scaleFactor)
+
+            // pan
+            val dx: Double = detector.focusX.toDouble() - prevScaleGestureFocus.x.toDouble()
+            val dy: Double = detector.focusY.toDouble() - prevScaleGestureFocus.y.toDouble()
+            prevScaleGestureFocus = Vec2(detector.focusX, detector.focusY)
+            pan(dx, dy)
+
+            return true
+        }
+        override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+            prevScaleGestureFocus = Vec2(detector.focusX, detector.focusY)
+            return true
+        }
+        override fun onScaleEnd(detector: ScaleGestureDetector) {
+            postPinchZoom_panFlushRequired = true
+        }
+    }).also{ it.isQuickScaleEnabled = true }
+
+    private var gestureDetector: GestureDetector = GestureDetector(context, object : SimpleOnGestureListener() {
+        override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+            doubleTapInProgress = false
+            return true
+        }
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            doubleTapInProgress = true
+            return true
+        }
+        override fun onDoubleTapEvent(e: MotionEvent): Boolean {
+            doubleTapInProgress = true
+            return true
+        }
+    })
     private val rotateGestureDetector = RotateGestureDetector()
 
     init {
-        // TODO: Refrain from using runBlocking{}
-        val userPreferencesRepo = UserPreferencesDataStoreRepository(context)
-        val userPrefMengerIndex = runBlocking { userPreferencesRepo.mengerIndex.firstOrNull() }
-        userPrefMengerIndex?.let { index ->
-            accentColorsIndex = clamp(index, 0, colors.size - 1)
+        // TODO: Don't use runBlocking
+        val userPrefMandelIndex = runBlocking { userPreferencesRepo.mandelbrotIndex.firstOrNull() }
+        userPrefMandelIndex?.let { index ->
+            accentColorsIndex = clamp(index, 0, resolutionFactorOptions.size - 1)
         }
-
-        scaleGestureDetector = ScaleGestureDetector(context, this)
-        scaleGestureDetector.isQuickScaleEnabled = false // Default implementation of quick scaling feels awful
-        gestureDetector = GestureDetector(context, object : GestureDetector.OnGestureListener {
-            override fun onDown(e: MotionEvent) = true
-            override fun onShowPress(e: MotionEvent){}
-            override fun onSingleTapUp(e: MotionEvent) = true
-            override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float) = true
-            override fun onLongPress(e: MotionEvent){}
-            override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float) = true
-        })
-        gestureDetector.setOnDoubleTapListener(object : GestureDetector.OnDoubleTapListener {
-            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-                doubleTapInProgress = false
-                return true
-            }
-
-            override fun onDoubleTap(e: MotionEvent): Boolean {
-                doubleTapInProgress = true
-                return true
-            }
-
-            override fun onDoubleTapEvent(e: MotionEvent): Boolean {
-                doubleTapInProgress = true
-                return true
-            }
-        })
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-        mandelbrotProgram = Program(context, R.raw.mandelbrot_vertex_shader, R.raw.mandelbrot_fragment_shader)
+        mandelbrotProgram = Program(resources, R.raw.mandelbrot_vertex_shader, R.raw.mandelbrot_fragment_shader)
 
         pixelsPerUnit = min(windowWidth, windowHeight).toDouble()
 
@@ -130,6 +140,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         mandelbrotProgram.use()
         glBindVertexArray(quadVAO)
         mandelbrotProgram.setUniform(UniformNames.VIEW_PORT_RESOLUTION, windowWidth.toFloat(), windowHeight.toFloat())
+        // TODO: Only set uniform if there is a change
         mandelbrotProgram.setUniform(UniformNames.ACCENT_COLOR, colors[accentColorsIndex].accentColor)
     }
 
@@ -239,6 +250,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         glBindFramebuffer(GL_READ_FRAMEBUFFER, givenReadFramebuffer)
     }
 
+
     private fun pan(deltaX: Double, deltaY: Double) {
         // y is negated because screen coordinates are positive going down
         var centerDelta = dVec2(deltaX / (zoom * pixelsPerUnit), -deltaY / (zoom * pixelsPerUnit))
@@ -254,23 +266,20 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
         )
     }
 
-    override fun onTouchEvent(event: MotionEvent): Boolean {
+    override fun onTouchEvent(event: MotionEvent) {
         inputSinceLastDraw = true
 
         rotateGestureDetector.onTouchEvent(event)
         scaleGestureDetector.onTouchEvent(event)
         gestureDetector.onTouchEvent(event)
 
-        if(scaleGestureDetector.isInProgress || rotateGestureDetector.isActive) {
-            return super.onTouchEvent(event)
-        }
+        if(scaleGestureDetector.isInProgress || rotateGestureDetector.isActive) return
 
         // single pointer gesture events
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 previousX = event.x
                 previousY = event.y
-                return true
             }
             MotionEvent.ACTION_MOVE -> {
                 val dx: Double = event.x.toDouble() - previousX.toDouble()
@@ -282,52 +291,21 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
                     // When one finger is pulled off of a pinch to zoom, that pinch to zoom event ends but the single finger event continues.
                     // The initial result causes a MotionEvent with a huge delta position. This aims to ignore this MotionEvent.
                     postPinchZoom_panFlushRequired = false
-                    return true
-                }
-
-                if(doubleTapInProgress) {
-                    // normalize delta y to be between 0 to 2
-                    val dyNormalized = (dy + windowHeight) / windowHeight
-                    val factor = dyNormalized.pow(4)
-                    scaleZoom(factor.toFloat())
                 } else {
-                    pan(dx, dy)
+                    if(doubleTapInProgress) {
+                        // normalize delta y to be between 0 to 2
+                        val dyNormalized = (dy + windowHeight) / windowHeight
+                        val factor = dyNormalized.pow(4)
+                        scaleZoom(factor.toFloat())
+                    } else {
+                        pan(dx, dy)
+                    }
                 }
-                return true
             }
             MotionEvent.ACTION_UP -> {
                 doubleTapInProgress = false
-                return true
             }
-            else -> {
-                return super.onTouchEvent(event)
-            }
+            else -> {}
         }
-    }
-
-    private fun scaleZoom(factor: Float) {
-        zoom = clamp(zoom * factor, MIN_ZOOM, MAX_ZOOM)
-    }
-
-    override fun onScale(detector: ScaleGestureDetector): Boolean {
-        // zoom
-        scaleZoom(detector.scaleFactor)
-
-        // pan
-        val dx: Double = detector.focusX.toDouble() - prevScaleGestureFocus.x.toDouble()
-        val dy: Double = detector.focusY.toDouble() - prevScaleGestureFocus.y.toDouble()
-        prevScaleGestureFocus = Vec2(detector.focusX, detector.focusY)
-        pan(dx, dy)
-
-        return true
-    }
-
-    override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
-        prevScaleGestureFocus = Vec2(detector.focusX, detector.focusY)
-        return true
-    }
-
-    override fun onScaleEnd(detector: ScaleGestureDetector) {
-        postPinchZoom_panFlushRequired = true
     }
 }

@@ -2,6 +2,7 @@ package com.inasweaterpoorlyknit.scenes.graphics
 
 import android.content.Context
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
+import android.content.res.Resources
 import android.util.Log
 import android.view.Surface
 import android.view.WindowManager
@@ -28,8 +29,8 @@ fun systemTimeInDeciseconds(): Double {
   return System.nanoTime().toDouble() / 100000000
 }
 
-fun getResourceRawFileAsString(context: Context, @RawRes id: Int): String {
-  val rawResInputStream = context.resources.openRawResource(id)
+fun getResourceRawFileAsString(resources: Resources, @RawRes id: Int): String {
+  val rawResInputStream = resources.openRawResource(id)
   val rawResAsString = java.util.Scanner(rawResInputStream).useDelimiter("\\A")
   val result = if (rawResAsString.hasNext()) rawResAsString.next() else ""
   rawResInputStream.close()
