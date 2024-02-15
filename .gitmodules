@@ -1,3 +1,3 @@
 [submodule "external/noopmath"]
-	path = external/noopmath
+	path = dependencies/noopmath
 	url = https://github.com/Lucodivo/noopmath

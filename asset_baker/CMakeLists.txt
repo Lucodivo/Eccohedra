@@ -7,7 +7,7 @@ if(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-get_filename_component(EXT_DIR "../external" ABSOLUTE)
+get_filename_component(EXT_DIR "../dependencies" ABSOLUTE)
 get_filename_component(SHARED_CPP "../shared_cpp" ABSOLUTE)
 set(COMPRESSONATOR_DIR "C:/developer/repos/compressonator")
 

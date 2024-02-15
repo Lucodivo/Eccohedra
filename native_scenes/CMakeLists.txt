@@ -10,7 +10,7 @@ get_filename_component(ANDROID_ROOT "../" ABSOLUTE)
 get_filename_component(ANDROID_CPP "src/main/cpp/" ABSOLUTE)
 get_filename_component(ANDROID_NATIVE_ASSETS "src/main/assets" ABSOLUTE)
 get_filename_component(ANDROID_NATIVE_APP_GLUE_DIR ${ANDROID_NDK}/sources/android/native_app_glue ABSOLUTE)
-set(EXT_DIR ${ANDROID_ROOT}/external)
+set(EXT_DIR ${ANDROID_ROOT}/dependencies)
 set(SHARED_CPP ${ANDROID_ROOT}/shared_cpp/)
 set(NATIVE_SHADERS_DIR ${ANDROID_NATIVE_ASSETS}/shaders)
 
