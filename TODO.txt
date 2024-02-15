@@ -36,9 +36,6 @@ README:
 Bugs(?):
     - Exiting a scene seems to sometimes show a frame or two of the users home screen wallpaper
 
-== Data Store ==
-- Migration / Defaults
-
 == Build Improvements ==
 - Migrate from Kapt to KSP
 - Optimize build variants for compilation speed

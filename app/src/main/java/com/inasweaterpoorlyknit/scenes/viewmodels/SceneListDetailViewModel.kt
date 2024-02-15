@@ -6,6 +6,7 @@ import androidx.annotation.StringRes
 import com.airbnb.mvrx.MavericksState
 import com.airbnb.mvrx.MavericksViewModel
 import com.inasweaterpoorlyknit.scenes.R
+import com.inasweaterpoorlyknit.scenes.graphics.RotationSensorHelper
 import com.inasweaterpoorlyknit.scenes.graphics.Scene
 import com.inasweaterpoorlyknit.scenes.graphics.orientation
 import com.inasweaterpoorlyknit.scenes.graphics.scenes.InfiniteCapsulesScene
@@ -28,11 +29,11 @@ data class ListItemData(
 
 class KotlinSceneListItemData(
     private val listItemData: ListItemDataI,
-    val sceneCreator: (context: Context, UserPreferencesDataStoreRepository) -> Scene,
+    val sceneCreator: (context: Context, UserPreferencesDataStoreRepository, RotationSensorHelper) -> Scene,
 ) : ListItemDataI by listItemData
 
 data class SceneListData(val selectedSceneIndex: Int = 0) : MavericksState {
-    val sceneCreator : (Context, UserPreferencesDataStoreRepository) -> Scene
+    val sceneCreator : (Context, UserPreferencesDataStoreRepository, RotationSensorHelper) -> Scene
         get() {
             val index = if(selectedSceneIndex > 0 && selectedSceneIndex < kotlinScenesList.size) selectedSceneIndex else 0
             return (kotlinScenesList[index] as KotlinSceneListItemData).sceneCreator
@@ -46,7 +47,7 @@ data class SceneListData(val selectedSceneIndex: Int = 0) : MavericksState {
                    displayTextResId = R.string.infinite_cube_scene_title,
                    descTextResId = R.string.infinite_cube_thumbnail_description
                )
-           ) { context, _ ->
+           ) { context, _, _ ->
                InfiniteCubeScene(context, context.resources, context.orientation)
            },
            KotlinSceneListItemData(
@@ -55,8 +56,8 @@ data class SceneListData(val selectedSceneIndex: Int = 0) : MavericksState {
                    displayTextResId = R.string.infinite_capsules_scene_title,
                    descTextResId = R.string.infinite_capsules_thumbnail_description
                )
-           ) { context, _ ->
-               InfiniteCapsulesScene(context, context.resources, context.orientation)
+           ) { context, _, rotationSensorHelper ->
+               InfiniteCapsulesScene(rotationSensorHelper, context.resources, context.orientation)
            },
            KotlinSceneListItemData(
                ListItemData(
@@ -64,7 +65,7 @@ data class SceneListData(val selectedSceneIndex: Int = 0) : MavericksState {
                    displayTextResId = R.string.mandelbrot_scene_title,
                    descTextResId = R.string.mandelbrot_thumbnail_description
                )
-           ) { context, userPreferencesRepo ->
+           ) { context, userPreferencesRepo, _ ->
                MandelbrotScene(context, userPreferencesRepo, context.resources)
            },
            KotlinSceneListItemData(
@@ -73,8 +74,8 @@ data class SceneListData(val selectedSceneIndex: Int = 0) : MavericksState {
                    displayTextResId = R.string.menger_prison_scene_title,
                    descTextResId = R.string.menger_prison_thumbnail_description
                )
-           ) { context, userPreferencesRepo ->
-               MengerPrisonScene(context, userPreferencesRepo, context.resources, context.orientation)
+           ) { context, userPreferencesRepo, rotationSensorHelper ->
+               MengerPrisonScene(rotationSensorHelper, userPreferencesRepo, context.resources, context.orientation)
            },
        )
        val gateScene = ListItemData(

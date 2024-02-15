@@ -10,6 +10,7 @@ import com.airbnb.mvrx.MavericksView
 import com.airbnb.mvrx.activityViewModel
 import com.airbnb.mvrx.compose.mavericksViewModel
 import com.airbnb.mvrx.withState
+import com.inasweaterpoorlyknit.scenes.graphics.RotationSensorHelper
 import com.inasweaterpoorlyknit.scenes.graphics.SceneSurfaceView
 import com.inasweaterpoorlyknit.scenes.repositories.UserPreferencesDataStoreRepository
 import com.inasweaterpoorlyknit.scenes.viewmodels.SceneListDetailViewModel
@@ -23,6 +24,8 @@ class SceneFragment: Fragment(), MavericksView {
 
   @Inject
   lateinit var userPreferencesRepo: UserPreferencesDataStoreRepository
+  @Inject
+  lateinit var rotationSensorHelper: RotationSensorHelper
 
   private lateinit var sceneSurfaceView: SceneSurfaceView
 
@@ -38,9 +41,10 @@ class SceneFragment: Fragment(), MavericksView {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    rotationSensorHelper.reset()
     val context = requireContext()
     sceneSurfaceView = withState(viewModel){ state ->
-      SceneSurfaceView(context, state.sceneCreator(context, userPreferencesRepo))
+      SceneSurfaceView(context, state.sceneCreator(context, userPreferencesRepo, rotationSensorHelper))
     }
   }
 

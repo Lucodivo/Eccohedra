@@ -25,7 +25,7 @@ data class Resolution (
     val height: Int
 )
 
-class MengerPrisonScene(context: Context, private val userPreferencesRepo: UserPreferencesDataStoreRepository, private val resources: Resources, private val startingOrientation: Orientation) : Scene() {
+class MengerPrisonScene(private val rotationSensorHelper: RotationSensorHelper, private val userPreferencesRepo: UserPreferencesDataStoreRepository, private val resources: Resources, private val startingOrientation: Orientation) : Scene() {
 
     companion object {
         // TODO: Consider linking box/container dimen to uniform?
@@ -71,8 +71,6 @@ class MengerPrisonScene(context: Context, private val userPreferencesRepo: UserP
     private var firstFrameTime: Double = -1.0
 
     private var actionDown = false
-
-    private val rotationSensorHelper = RotationSensorHelper(context)
 
     init {
         // TODO: Don't user runBlocking

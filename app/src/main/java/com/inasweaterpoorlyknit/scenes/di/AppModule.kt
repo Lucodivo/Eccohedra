@@ -7,6 +7,7 @@ import androidx.datastore.dataStoreFile
 import com.inasweaterpoorlyknit.scenes.di.InjectDispatcher.IO
 import com.inasweaterpoorlyknit.scenes.UserPreferences
 import com.inasweaterpoorlyknit.scenes.UserPreferencesSerializer
+import com.inasweaterpoorlyknit.scenes.graphics.RotationSensorHelper
 import com.inasweaterpoorlyknit.scenes.migrations.SharedPreferencesMigration
 import com.inasweaterpoorlyknit.scenes.repositories.UserPreferencesDataStoreRepository
 import dagger.Module
@@ -41,5 +42,9 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideUserPreferencesDataStoreRepository(dataStore: DataStore<UserPreferences>) = UserPreferencesDataStoreRepository(dataStore)
+    fun providesUserPreferencesDataStoreRepository(dataStore: DataStore<UserPreferences>) = UserPreferencesDataStoreRepository(dataStore)
+
+    @Provides
+    @Singleton
+    fun providesRotationSensorHelper(@ApplicationContext context: Context) = RotationSensorHelper(context)
 }

@@ -19,7 +19,7 @@ import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class InfiniteCapsulesScene(context: Context, private val resources: Resources, private val startingOrientation: Orientation) : Scene() {
+class InfiniteCapsulesScene(private val rotationSensorHelper: RotationSensorHelper, private val resources: Resources, private val startingOrientation: Orientation) : Scene() {
 
     companion object {
         // TODO: Consider linking capsule/container dimen to uniform?
@@ -39,7 +39,6 @@ class InfiniteCapsulesScene(context: Context, private val resources: Resources, 
 
     private var cameraPos = Vec3(0f, 1f, 0f)
     private var cameraForward = defaultCameraForward
-    private val rotationSensorHelper = RotationSensorHelper(context)
     private lateinit var program: Program
     private var quadVAO: Int = -1
 
