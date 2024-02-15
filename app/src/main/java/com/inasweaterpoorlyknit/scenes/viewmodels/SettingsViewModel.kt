@@ -8,9 +8,13 @@ import com.airbnb.mvrx.MavericksViewModel
 import com.airbnb.mvrx.MavericksViewModelFactory
 import com.airbnb.mvrx.hilt.AssistedViewModelFactory
 import com.airbnb.mvrx.hilt.hiltMavericksViewModelFactory
+import com.inasweaterpoorlyknit.scenes.repositories.UserPreferencesDataStoreRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 // TODO: Get the proper initial values for the Setting State somehow from the SharedPreferencesRepository
 data class SettingsState(
@@ -27,7 +31,7 @@ data class SettingsState(
 
 class SettingsViewModel @AssistedInject constructor(
     @Assisted state: SettingsState,
-    private val sharedPreferencesRepo: SharedPreferencesRepository,
+    private val userPreferencesRepo: UserPreferencesDataStoreRepository,
 ) : MavericksViewModel<SettingsState>(state) {
     @AssistedFactory
     interface Factory : AssistedViewModelFactory<SettingsViewModel, SettingsState> {
@@ -36,20 +40,18 @@ class SettingsViewModel @AssistedInject constructor(
     companion object : MavericksViewModelFactory<SettingsViewModel, SettingsState> by hiltMavericksViewModelFactory()
 
     init {
-        setState{ copy(
-            mengerResolutionIndex = sharedPreferencesRepo.getMengerSpongeResolutionIndex(),
-            mandelbrotColorIndex = sharedPreferencesRepo.getMandelbrotColorIndex()
-        )}
+        userPreferencesRepo.userPreferences.setOnEach { value ->
+            copy(
+                mengerResolutionIndex = value.mengerIndex,
+                mandelbrotColorIndex = value.mandelbrotIndex
+            )
+        }
     }
 
-    fun onMengerPrisonResolutionSelected(index: Int) {
-        sharedPreferencesRepo.setMengerSpongeResolutionIndex(index)
-        // TODO: get live updates from repository instead?
-        setState{ copy(mengerResolutionIndex = index) }
+    suspend fun onMengerPrisonResolutionSelected(index: Int) {
+        userPreferencesRepo.setMengerIndex(index)
     }
-    fun onMandelbrotColorSelected(index: Int) {
-        sharedPreferencesRepo.setMandelbrotColorIndex(index)
-        // TODO: get live updates from repository instead?
-        setState { copy(mandelbrotColorIndex = index) }
+    suspend fun onMandelbrotColorSelected(index: Int) {
+        userPreferencesRepo.setMandelbrotIndex(index)
     }
 }

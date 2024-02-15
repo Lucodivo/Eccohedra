@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.airbnb.mvrx.compose.collectAsState
 import com.airbnb.mvrx.compose.mavericksViewModel
 import com.inasweaterpoorlyknit.scenes.R
@@ -35,6 +36,7 @@ import com.inasweaterpoorlyknit.scenes.ui.theme.OpenGLScenesTheme
 import com.inasweaterpoorlyknit.scenes.viewmodels.SettingsState
 import com.inasweaterpoorlyknit.scenes.viewmodels.SettingsViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class SettingsFragment : Fragment() {
@@ -54,8 +56,8 @@ class SettingsFragment : Fragment() {
                     mandelbrotColorIndex = mandelbrotColorIndex,
                     onContactPress = { openWebPage(SettingsState.WEBSITE_URL) },
                     onSourcePress = { openWebPage(SettingsState.SOURCE_URL) },
-                    onMandelbrotColorSelect = { settingsViewModel.onMandelbrotColorSelected(it) },
-                    onMengerPrisonResolutionSelect = { settingsViewModel.onMengerPrisonResolutionSelected(it) })
+                    onMandelbrotColorSelect = { lifecycleScope.launch { settingsViewModel.onMandelbrotColorSelected(it) }},
+                    onMengerPrisonResolutionSelect = { lifecycleScope.launch { settingsViewModel.onMengerPrisonResolutionSelected(it) }})
             }
         }
     }
@@ -73,7 +75,7 @@ class SettingsFragment : Fragment() {
                      onSourcePress: () -> Unit = {},
                      onMandelbrotColorSelect: (Int) -> Unit = {},
                      onMengerPrisonResolutionSelect: (Int) -> Unit = {}){
-        OpenGLScenesTheme() {
+        OpenGLScenesTheme {
             LazyColumn(
                 contentPadding = PaddingValues(vertical = halfListPadding),
                 modifier = Modifier
@@ -98,16 +100,21 @@ class SettingsFragment : Fragment() {
                 item {
                     ScenesListItem {
                         ListItemTextWithRightIcon(
-                            "Connor Alexander Haskins", icon = ScenesIcons.Web,
-                            modifier = Modifier.clickable { onContactPress() })
+                            modifier = Modifier.clickable { onContactPress() },
+                            "Connor Alexander Haskins",
+                            icon = ScenesIcons.Web
+                        )
                     }
                 }
 
                 // Source Code
                 item {
                     ScenesListItem {
-                        ListItemTextWithRightIcon(text = stringResource(R.string.source), icon = ScenesIcons.Code,
-                            modifier = Modifier.clickable { onSourcePress() })
+                        ListItemTextWithRightIcon(
+                            modifier = Modifier.clickable { onSourcePress() },
+                            text = stringResource(R.string.source),
+                            icon = ScenesIcons.Code
+                        )
                     }
                 }
 
@@ -131,7 +138,7 @@ class SettingsFragment : Fragment() {
                         ListItemDropdown(
                             titleText = stringResource(R.string.menger_sponge_resolution),
                             items = SettingsState.mengerResolutionStrings,
-                            initSelectedIndex = mengerResolutionIndex,
+                            selectedIndex = mengerResolutionIndex,
                             selectedDecorationText = "🎞"
                         ){ onMengerPrisonResolutionSelect(it) }
                     }
@@ -143,7 +150,7 @@ class SettingsFragment : Fragment() {
                         ListItemDropdown(
                             titleText = stringResource(R.string.mandelbrot_color),
                             items = SettingsState.mandelbrotColors,
-                            initSelectedIndex = mandelbrotColorIndex,
+                            selectedIndex = mandelbrotColorIndex,
                             selectedDecorationText = "🖌"
                         ){ onMandelbrotColorSelect(it) }
                     }

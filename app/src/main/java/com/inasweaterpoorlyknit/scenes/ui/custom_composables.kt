@@ -34,7 +34,11 @@ val listItemTextPadding = 10.dp
 val ScenesIcons = Icons.Rounded
 
 @Composable
-fun ScenesListItem(shape: Shape = MaterialTheme.shapes.large, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+fun ScenesListItem(
+    modifier: Modifier = Modifier,
+    shape: Shape = MaterialTheme.shapes.large,
+    content: @Composable () -> Unit
+) {
     Surface(
         tonalElevation = 1.dp,
         shadowElevation = 1.dp,
@@ -47,7 +51,12 @@ fun ScenesListItem(shape: Shape = MaterialTheme.shapes.large, modifier: Modifier
 }
 
 @Composable
-fun ListItemText(text: String, textAlign: TextAlign = TextAlign.Center, color: Color = Color.Unspecified, modifier: Modifier = Modifier) {
+fun ListItemText(
+    modifier: Modifier = Modifier,
+    text: String,
+    textAlign: TextAlign = TextAlign.Center,
+    color: Color = Color.Unspecified
+) {
     Text(
         text = text,
         fontSize = listItemFontSize,
@@ -60,20 +69,30 @@ fun ListItemText(text: String, textAlign: TextAlign = TextAlign.Center, color: C
 }
 
 @Composable
-fun ListItemTextWithLeftIcon(text: String, textColor: Color = Color.Unspecified, icon: ImageVector, modifier: Modifier = Modifier) {
+fun ListItemTextWithLeftIcon(
+    modifier: Modifier = Modifier,
+    text: String,
+    textColor: Color = Color.Unspecified,
+    icon: ImageVector
+) {
     Row(horizontalArrangement = Arrangement.Center, modifier = modifier) {
         Icon(icon,
             contentDescription = icon.name,
             modifier = Modifier
                 .align(alignment = Alignment.CenterVertically))
-        ListItemText(text, color = textColor)
+        ListItemText(text = text, color = textColor)
     }
 }
 
 @Composable
-fun ListItemTextWithRightIcon(text: String, textColor: Color = Color.Unspecified, icon: ImageVector, modifier: Modifier = Modifier) {
+fun ListItemTextWithRightIcon(
+    modifier: Modifier = Modifier,
+    text: String,
+    textColor: Color = Color.Unspecified,
+    icon: ImageVector
+) {
     Row(horizontalArrangement = Arrangement.Center, modifier = modifier) {
-        ListItemText(text, color = textColor)
+        ListItemText(text = text, color = textColor)
         Icon(icon,
             contentDescription = icon.name,
             modifier = Modifier
@@ -111,24 +130,22 @@ fun ListItemSwitch(text: String, defaultState: Boolean, onClick: (Boolean) -> Un
 }
 
 @Composable
-fun ListItemDropdown(titleText: String, items: List<String>, initSelectedIndex: Int, selectedDecorationText: String = "", onItemClicked: (index: Int) -> Unit) {
+fun ListItemDropdown(titleText: String, items: List<String>, selectedIndex: Int, selectedDecorationText: String = "", onItemClicked: (index: Int) -> Unit) {
     val expanded = remember { mutableStateOf(false) }
-    val selectedIndex = remember { mutableStateOf(initSelectedIndex) }
     Row(horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier.clickable {
             expanded.value = !expanded.value
         }) {
         ListItemText(text = titleText, textAlign = TextAlign.Start)
-        ListItemText(text = "(${items[selectedIndex.value]})", textAlign = TextAlign.Start)
+        ListItemText(text = "(${items[selectedIndex]})", textAlign = TextAlign.Start)
     }
     DropdownMenu(expanded = expanded.value, onDismissRequest = { expanded.value = !expanded.value }) {
         items.forEachIndexed { index, s ->
-            val selectedDecoration = if (index == selectedIndex.value) "  $selectedDecorationText" else ""
+            val selectedDecoration = if (index == selectedIndex) "  $selectedDecorationText" else ""
             DropdownMenuItem(
                 text = { Text(text = s + selectedDecoration) },
                 onClick = {
                 onItemClicked(index)
-                selectedIndex.value = index
                 expanded.value = false
             })
         }

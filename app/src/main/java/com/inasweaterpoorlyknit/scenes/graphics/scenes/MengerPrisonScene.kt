@@ -9,9 +9,12 @@ import com.inasweaterpoorlyknit.abs
 import com.inasweaterpoorlyknit.max
 import com.inasweaterpoorlyknit.min
 import com.inasweaterpoorlyknit.mod
+import com.inasweaterpoorlyknit.scenes.common.clamp
 import com.inasweaterpoorlyknit.scenes.*
 import com.inasweaterpoorlyknit.scenes.graphics.*
-import com.inasweaterpoorlyknit.scenes.repositories.SharedPreferencesRepository
+import com.inasweaterpoorlyknit.scenes.repositories.UserPreferencesDataStoreRepository
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.runBlocking
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -22,7 +25,6 @@ data class Resolution (
 )
 
 class MengerPrisonScene(context: Context) : Scene(context) {
-
     companion object {
         // TODO: Consider linking box/container dimen to uniform?
         const val REPEATED_CONTAINER_DIMEN = 40.0f
@@ -55,8 +57,8 @@ class MengerPrisonScene(context: Context) : Scene(context) {
     private var offscreenFramebuffer = FrameBuffer()
 
     private lateinit var resolutions: Array<Resolution>
-    private var currentResolutionIndex: Int
-    private var prevFrameResolutionIndex: Int // informs us of a resolution change within onDrawFrame()
+    private var currentResolutionIndex: Int = DEFAULT_RESOLUTION_INDEX
+    private var prevFrameResolutionIndex: Int = DEFAULT_RESOLUTION_INDEX // informs us of a resolution change within onDrawFrame()
     private val resolution get() = resolutions[currentResolutionIndex]
 
     private var cameraPos = Vec3(0.0f, 0.0f, 0.0f)
@@ -68,16 +70,17 @@ class MengerPrisonScene(context: Context) : Scene(context) {
 
     private var actionDown = false
 
+//    private val mainScope = MainScope() + CoroutineName("MengerPrisonScene")
     private val rotationSensorHelper = RotationSensorHelper()
 
     init {
-        val sharedPreferencesRepository = SharedPreferencesRepository(context)
-        val existingResolutionIndex = sharedPreferencesRepository.getMengerSpongeResolutionIndex()
-        currentResolutionIndex = if(existingResolutionIndex < 0 || existingResolutionIndex >= resolutionFactorOptions.size) {
-            sharedPreferencesRepository.setMengerSpongeResolutionIndex(DEFAULT_RESOLUTION_INDEX)
-            DEFAULT_RESOLUTION_INDEX
-        } else { existingResolutionIndex }
-        prevFrameResolutionIndex = currentResolutionIndex
+        // TODO: Refrain from using runBlocking{}
+        val userPreferencesRepo = UserPreferencesDataStoreRepository(context)
+        val userPrefMengerIndex = runBlocking { userPreferencesRepo.mengerIndex.firstOrNull() }
+        userPrefMengerIndex?.let { index ->
+            prevFrameResolutionIndex = currentResolutionIndex
+            currentResolutionIndex = clamp(index, 0, resolutionFactorOptions.size - 1)
+        }
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {

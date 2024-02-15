@@ -2,6 +2,7 @@ package com.inasweaterpoorlyknit.scenes.di
 
 import android.content.Context
 import com.inasweaterpoorlyknit.scenes.repositories.SharedPreferencesRepository
+import com.inasweaterpoorlyknit.scenes.repositories.UserPreferencesDataStoreRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,4 +16,8 @@ object AppModule {
     @Singleton
     @Provides
     fun provideSharedPreferencesRepository(@ApplicationContext appContext: Context) = SharedPreferencesRepository(appContext)
+
+    @Singleton
+    @Provides
+    fun provideUserPreferencesDataStoreRepository(@ApplicationContext appContext: Context) = UserPreferencesDataStoreRepository(appContext)
 }

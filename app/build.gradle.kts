@@ -9,6 +9,8 @@ plugins {
 
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+
+    id("com.google.protobuf").version("0.9.4")
 }
 
 android {
@@ -144,6 +146,31 @@ dependencies {
     kaptAndroidTest("com.google.dagger:hilt-compiler:2.50")
     testImplementation("com.google.dagger:hilt-android-testing:2.50")
     kaptTest("com.google.dagger:hilt-compiler:2.50")
+
+    // Proto DataStore
+    implementation("androidx.datastore:datastore:1.0.0")
+//    implementation("androidx.datastore:datastore-rxjava2:1.0.0")
+//    implementation("androidx.datastore:datastore-rxjava3:1.0.0")
+// Starting from Protobuf 3.8.0, use the lite runtime library
+    implementation("com.google.protobuf:protobuf-kotlin-lite:3.24.4")
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.24.4"
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                register("java") {
+                    option("lite")
+                }
+                register("kotlin") {
+                    option("lite")
+                }
+            }
+        }
+    }
 }
 
 // Allow references to generated code

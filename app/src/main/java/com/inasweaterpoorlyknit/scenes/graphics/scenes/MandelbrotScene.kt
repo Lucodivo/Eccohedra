@@ -14,6 +14,9 @@ import com.inasweaterpoorlyknit.dVec2
 import com.inasweaterpoorlyknit.scenes.*
 import com.inasweaterpoorlyknit.scenes.graphics.*
 import com.inasweaterpoorlyknit.scenes.repositories.SharedPreferencesRepository
+import com.inasweaterpoorlyknit.scenes.repositories.UserPreferencesDataStoreRepository
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.runBlocking
 import java.nio.IntBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
@@ -66,7 +69,7 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
     private var previousY: Float = 0f
     private var doubleTapInProgress = false
 
-    private var accentColorsIndex: Int
+    private var accentColorsIndex: Int = DEFAULT_COLOR_INDEX
     private var pixelsPerUnit: Double = 0.0
 
     // TODO: Consider handling all scenarios through custom RotateGestureDetector?
@@ -75,12 +78,12 @@ class MandelbrotScene(context: Context) : Scene(context), ScaleGestureDetector.O
     private val rotateGestureDetector = RotateGestureDetector()
 
     init {
-        val sharedPreferencesRepository = SharedPreferencesRepository(context)
-        val existingColorIndex = sharedPreferencesRepository.getMandelbrotColorIndex()
-        accentColorsIndex = if(existingColorIndex < 0 || existingColorIndex >= colors.size) {
-            sharedPreferencesRepository.setMandelbrotColorIndex(DEFAULT_COLOR_INDEX)
-            DEFAULT_COLOR_INDEX
-        } else { existingColorIndex }
+        // TODO: Refrain from using runBlocking{}
+        val userPreferencesRepo = UserPreferencesDataStoreRepository(context)
+        val userPrefMengerIndex = runBlocking { userPreferencesRepo.mengerIndex.firstOrNull() }
+        userPrefMengerIndex?.let { index ->
+            accentColorsIndex = clamp(index, 0, colors.size - 1)
+        }
 
         scaleGestureDetector = ScaleGestureDetector(context, this)
         scaleGestureDetector.isQuickScaleEnabled = false // Default implementation of quick scaling feels awful
