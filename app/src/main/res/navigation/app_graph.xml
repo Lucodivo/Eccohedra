@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/app_graph"
+    app:startDestination="@id/sceneListFragment">
+
+    <fragment
+        android:id="@+id/sceneListFragment"
+        android:name="com.inasweaterpoorlyknit.scenes.ui.SceneListFragment"
+        android:label="Scene List">
+        <action
+            android:id="@+id/action_sceneListFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out"
+            app:popEnterAnim="@android:anim/fade_in"
+            app:popExitAnim="@android:anim/fade_out" />
+        <action
+            android:id="@+id/action_sceneListFragment_to_sceneFragment"
+            app:destination="@id/sceneFragment" />
+        <action
+            android:id="@+id/action_sceneListFragment_to_gateNativeActivity"
+            app:destination="@id/gateNativeActivity" />
+    </fragment>
+    <fragment
+        android:id="@+id/sceneFragment"
+        android:name="com.inasweaterpoorlyknit.scenes.ui.SceneFragment"
+        android:label="Scene" />
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.inasweaterpoorlyknit.scenes.ui.SettingsFragment"
+        android:label="Settings">
+        <deepLink app:uri="scenes://view_settings" />
+    </fragment>
+    <activity
+        android:id="@+id/gateNativeActivity"
+        android:name="com.inasweaterpoorlyknit.scenes.graphics.GateNativeActivity"
+        android:label="GateNativeActivity" />
+</navigation>

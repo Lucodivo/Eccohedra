@@ -12,6 +12,9 @@ Mandelbrot Scene:
     - Increase max zoom
         - Best potential solution seems to be utilizing Perturbation Theory.
         - Failed attempts were made at trying to emulate higher floating point precision in the fragment shader.
+    - Don't block while grabbing mandelbrot index from data store
+Menger Prison Scene:
+    - Don't block while grabbing menger index from data store
 
 == Overall Improvements ==
 Modularization:
@@ -32,3 +35,8 @@ README:
     - edit HowToPortals.md after to accommodate change in method
 Bugs(?):
     - Exiting a scene seems to sometimes show a frame or two of the users home screen wallpaper
+
+== Build Improvements ==
+- Migrate from Kapt to KSP
+- Optimize build variants for compilation speed
+    - https://developer.android.com/build/optimize-your-build

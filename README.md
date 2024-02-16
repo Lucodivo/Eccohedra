@@ -59,7 +59,7 @@ Fun graphic scenes on Android.
 
 ## Documentation
 - [Scene List & Scene Potential Architecture](SceneListAndScenePotentialArchitecture.md)
-- [Hilt](app/src/main/java/com/inasweaterpoorlyknit/learnopengl_androidport/di/Hilt.md)
+- [Hilt](app/src/main/java/com/inasweaterpoorlyknit/scenes/di/Hilt.md)
   - Note: Hilt is documented for future use. If looking for examples, not much can be found here ATM.
 - [Native Code / JNI / NDK](AndroidNativeCode.md)
 - [C++ Conventions & Reminders](CppConventionsAndReminders.md)
