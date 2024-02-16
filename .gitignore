@@ -82,7 +82,6 @@ lint/tmp/
 # lint/reports/
 
 #etc
-*.pro
 .idea/
 tmp/
 

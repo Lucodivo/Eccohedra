@@ -22,8 +22,8 @@ android {
         applicationId = "com.inasweaterpoorlyknit.learnopengl_androidport"
         minSdk = 24
         targetSdk = 33
-        versionCode = 18
-        versionName = "1.2.1"
+        versionCode = 20
+        versionName = "1.2.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         signingConfig = signingConfigs.getByName("debug")
 
@@ -65,7 +65,11 @@ android {
     }
 
     buildTypes {
-        getByName("release") {
+        debug {
+            isDebuggable = true
+            resValue("bool", "FIREBASE_ANALYTICS_DEACTIVATED", "true")
+        }
+        release {
             // Enables code shrinking, obfuscation, and optimization
             isMinifyEnabled = true
             // Enables resource shrinking
@@ -73,12 +77,6 @@ android {
             // Includes the default ProGuard rules files that are packaged with the Android Gradle plugin
             setProguardFiles(listOf(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"))
             resValue("bool", "FIREBASE_ANALYTICS_DEACTIVATED", "false")
-        }
-        getByName("debug") {
-            isMinifyEnabled = false
-            setProguardFiles(listOf(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"))
-            isDebuggable = true
-            resValue("bool", "FIREBASE_ANALYTICS_DEACTIVATED", "true")
         }
     }
 
@@ -172,6 +170,7 @@ protobuf {
         }
     }
 }
+
 
 // Allow references to generated code
 kapt {
