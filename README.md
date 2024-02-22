@@ -1,22 +1,20 @@
 # Scenes
+<a href="https://play.google.com/store/apps/details?id=com.inasweaterpoorlyknit.learnopengl_androidport"><img alt="Download" src="https://raw.githubusercontent.com/Lucodivo/RepoSampleImages/master/OpenGLScenes/Android/logo/logo-color-96x96.png"></a><br>
+<a href="https://play.google.com/store/apps/details?id=com.inasweaterpoorlyknit.learnopengl_androidport"><img alt="Download" src="https://img.shields.io/badge/Google%20Play-%20?logo=googleplay&amp;color=grey"></a>
 
-Fun graphic scenes on Android.
-
-[Available on Google Play](https://play.google.com/store/apps/details?id=com.inasweaterpoorlyknit.learnopengl_androidport)
-
-[Recording of app in action](https://www.youtube.com/watch?v=aROX7WxakuQ)
+A graphic toy application utilizing varied rendering methods.
 
 ## Screenshots
 
-- All screenshots taken on a Samsung Galaxy S10+
-
-![Scene List](https://github.com/Lucodivo/RepoSampleImages/blob/master/OpenGLScenes/Android/SceneList.png)
 ![Infinite Cube Scene](https://github.com/Lucodivo/RepoSampleImages/blob/master/OpenGLScenes/Android/InfiniteCube.png)
 ![Infinite Capsules Scene](https://github.com/Lucodivo/RepoSampleImages/blob/master/OpenGLScenes/Android/InfiniteCapsules.png)
 ![Mandelbrot Scene](https://github.com/Lucodivo/RepoSampleImages/blob/master/OpenGLScenes/Android/Mandelbrot.png)
 ![MengerPrison Scene](https://github.com/Lucodivo/RepoSampleImages/blob/master/OpenGLScenes/Android/MengerPrison.png)
-![Gate Portal Scene](https://github.com/Lucodivo/RepoSampleImages/blob/master/OpenGLScenes/Android/GatePortal.png)
+![Gate Portal Scene](https://github.com/Lucodivo/RepoSampleImages/blob/master/OpenGLScenes/Android/GatePortal.png)   
 
+## Video Demo
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/aROX7WxakuQ/0.jpg)](https://www.youtube.com/watch?v=aROX7WxakuQ)
 
 ## App Features
 - Infinite Cube Scene
@@ -60,7 +58,6 @@ Fun graphic scenes on Android.
 ## Documentation
 - [Scene List & Scene Potential Architecture](SceneListAndScenePotentialArchitecture.md)
 - [Hilt](app/src/main/java/com/inasweaterpoorlyknit/scenes/di/Hilt.md)
-  - Note: Hilt is documented for future use. If looking for examples, not much can be found here ATM.
 - [Native Code / JNI / NDK](AndroidNativeCode.md)
 - [C++ Conventions & Reminders](CppConventionsAndReminders.md)
 - [How To Portals](HowToPortals.md)
@@ -73,23 +70,34 @@ The drawbacks are that organization is hard, as sub-folders are not allowed in *
 On top of that, filetypes are obscured as the file extensions do not show in a raw resource's ID (ex: *R.raw.uv_coord_vertex_shader*). 
 These issues make moving shaders to the asset folder quite appealing. But, for now, this project enjoys compile-time checkin and autocomplete.
 
+### Math
+Any 3D math in this project should be assumed to be using a left-handed coordinate system with +Z pointing forward and
++Y pointing up, unless stated otherwise. For Kotlin, [kotlin-graphics/glm](https://github.com/kotlin-graphics/glm) was
+previously used for matrices/vectors. However, a simple Kotlin matrix math library, [NoopMathKt](https://github.com/lucodivo/NoopMathKt), 
+was created to simplify dependencies. All matrices are stored in column-major.
+
 ## Native C++ Scenes
+### Shaders
+GLSL shaders are stored as assets, located [here](native_scenes/src/main/assets/shaders), and loaded using [AAssetManager](https://developer.android.com/ndk/reference/group/asset).
+There are no similar trade-offs to consider as raw resources are not an option using the NDK. There is no autocomplete nor compile-time
+checking of shader paths. However, one potential future for shaders is compiling them on the users device on the first encounter of the
+shader, and separately storing compiled & linked programs, using 
+[glGetProgramBinary](https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGetProgramBinary.xhtml)/[glProgramBinary](https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glProgramBinary.xhtml),
+for subsequent encounters.
 
 ### Asset Baker
 This project contains source code for an asset-baker tool. This tool is used to bade assets required by the native scenes 
 (textures, models, shaders). It massages data and exports files in a format that reduces the amount of work needed between
 reading an asset and uploading it to the GPU.
 
-## Math
-Any 3D math in this project should be assumed to be using a left-handed coordinate system with +Z pointing forward and 
-+Y pointing up, unless stated otherwise. For Kotlin, [kotlin-graphics/glm](https://github.com/kotlin-graphics/glm) was 
-previously used for matrices/vectors but it contained maven dependencies that were unavailable despite no version change
-on my end. A custom Kotlin matrix math module was created in its stead. All matrices are stored in column-major.
+### Math
+A simple Kotlin matrix math library, [NoopMath](https://github.com/lucodivo/NoopMath), is used. All matrices are stored in 
+column-major.
 
 ## Building
 All the following information is under the assumption the project is being built within Android Studio.  
 
-- If you downloaded the project directly from github or are missing the noopmath submodule somehow, run the following git
+- If you downloaded the project directly from GitHub or are missing the noopmath submodule somehow, run the following git
   commands in the root directory of the project.
 
       git submodule init
@@ -103,7 +111,7 @@ All the following information is under the assumption the project is being built
 - Debug builds of the *native_scenes* library are currently set to only build for the *arm64-v8a* (AArch64) ABI. 
   - This is specified and can be changed in *native_scenes/build.gradle.kts* under *android > buildTypes > debug > ndk > abiFilters*
 - Although Vulkan is not currently used in this project, the Vulkan SDK is currently required for the typical build experience. Finding the Vulkan package
-  via CMake allows access to all sorts of great tools. For this repository, we use it to find the the _glslangValidator_ tool, which can
+  via CMake allows access to all sorts of great tools. For this repository, we use it to find the _glslangValidator_ tool, which can
   then be used to validate GLSL ES shader files at compile time, instead of waiting until runtime.
   - If you don't already have it, you must download the [Vulkan SDK by LunarG](https://www.lunarg.com/vulkan-sdk/)
   - If you want to skip the validation of glsl shaders, removing any `add_dependencies({target-name} shaders-validation)` in CMakeLists.txt

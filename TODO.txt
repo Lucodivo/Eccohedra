@@ -40,3 +40,7 @@ Bugs(?):
 - Migrate from Kapt to KSP
 - Optimize build variants for compilation speed
     - https://developer.android.com/build/optimize-your-build
+
+== Etc. ==
+- Use some sort of linter for Kotlin and C++
+- Put app version on display in the settings
