@@ -1,12 +1,12 @@
 package com.inasweaterpoorlyknit.scenes.viewmodels
 
-import com.inasweaterpoorlyknit.scenes.graphics.scenes.MandelbrotScene
-import com.inasweaterpoorlyknit.scenes.graphics.scenes.MengerPrisonScene
 import com.airbnb.mvrx.MavericksState
 import com.airbnb.mvrx.MavericksViewModel
 import com.airbnb.mvrx.MavericksViewModelFactory
 import com.airbnb.mvrx.hilt.AssistedViewModelFactory
 import com.airbnb.mvrx.hilt.hiltMavericksViewModelFactory
+import com.inasweaterpoorlyknit.scenes.graphics.scenes.MandelbrotScene
+import com.inasweaterpoorlyknit.scenes.graphics.scenes.MengerPrisonScene
 import com.inasweaterpoorlyknit.scenes.repositories.UserPreferencesDataStoreRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory

@@ -1,6 +1,5 @@
 package com.inasweaterpoorlyknit.scenes.graphics.scenes
 
-import android.content.Context
 import android.content.res.Resources
 import android.opengl.GLES32.*
 import android.view.MotionEvent

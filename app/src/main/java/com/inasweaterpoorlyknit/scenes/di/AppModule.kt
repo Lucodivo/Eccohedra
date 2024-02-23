@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
-import com.inasweaterpoorlyknit.scenes.di.InjectDispatcher.IO
 import com.inasweaterpoorlyknit.scenes.UserPreferences
 import com.inasweaterpoorlyknit.scenes.UserPreferencesSerializer
+import com.inasweaterpoorlyknit.scenes.di.InjectDispatcher.IO
 import com.inasweaterpoorlyknit.scenes.graphics.RotationSensorHelper
 import com.inasweaterpoorlyknit.scenes.migrations.SharedPreferencesMigration
 import com.inasweaterpoorlyknit.scenes.repositories.UserPreferencesDataStoreRepository

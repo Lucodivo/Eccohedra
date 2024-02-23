@@ -1,6 +1,5 @@
 package com.inasweaterpoorlyknit.scenes.graphics
 
-import android.content.Context
 import android.content.res.Resources
 import android.graphics.BitmapFactory
 import android.opengl.GLES32.GL_COMPILE_STATUS

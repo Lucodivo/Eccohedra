@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.airbnb.mvrx.MavericksView
 import com.airbnb.mvrx.activityViewModel
-import com.airbnb.mvrx.compose.mavericksViewModel
 import com.airbnb.mvrx.withState
 import com.inasweaterpoorlyknit.scenes.graphics.RotationSensorHelper
 import com.inasweaterpoorlyknit.scenes.graphics.SceneSurfaceView

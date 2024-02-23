@@ -1,6 +1,5 @@
 package com.inasweaterpoorlyknit.scenes.graphics
 
-import android.content.Context
 import android.content.res.Resources
 import android.opengl.GLES32.GL_LINK_STATUS
 import android.opengl.GLES32.glAttachShader
