@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "com.inasweaterpoorlyknit.native_scenes"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 24

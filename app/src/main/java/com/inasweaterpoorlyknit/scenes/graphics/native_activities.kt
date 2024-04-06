@@ -30,5 +30,4 @@ open class NativeSceneActivity: NativeActivity() {
     }
 }
 
-class TestNativeActivity: NativeSceneActivity()
 class GateNativeActivity: NativeSceneActivity()
