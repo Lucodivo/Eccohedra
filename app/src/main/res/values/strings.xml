@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Scenes</string>
+    <string name="app_name">Eccohedra</string>
 
     <!-- Infinite Cube Scene -->
     <string name="infinite_cube_scene_title">Infinite Cube Scene</string>

@@ -27,16 +27,15 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun OpenGLScenesTheme(
-    useDarkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val context = LocalContext.current
     val colorScheme = when {
         (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
-            if (useDarkTheme) dynamicDarkColorScheme(context)
-            else dynamicLightColorScheme(context)
+            val context = LocalContext.current
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        useDarkTheme -> DarkColorScheme
+        darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
     MaterialTheme(
