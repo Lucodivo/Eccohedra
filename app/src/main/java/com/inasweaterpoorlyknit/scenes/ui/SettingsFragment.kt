@@ -30,6 +30,7 @@ import androidx.lifecycle.lifecycleScope
 import com.airbnb.mvrx.compose.collectAsState
 import com.airbnb.mvrx.compose.mavericksViewModel
 import com.inasweaterpoorlyknit.scenes.R
+import com.inasweaterpoorlyknit.scenes.common.WebUrls
 import com.inasweaterpoorlyknit.scenes.graphics.scenes.MandelbrotScene
 import com.inasweaterpoorlyknit.scenes.graphics.scenes.MengerPrisonScene
 import com.inasweaterpoorlyknit.scenes.ui.theme.OpenGLScenesTheme
@@ -54,8 +55,8 @@ class SettingsFragment : Fragment() {
                 SettingsList(
                     mengerResolutionIndex = mengerResolutionIndex,
                     mandelbrotColorIndex = mandelbrotColorIndex,
-                    onContactPress = { openWebPage(SettingsState.WEBSITE_URL) },
-                    onSourcePress = { openWebPage(SettingsState.SOURCE_URL) },
+                    onContactPress = { openWebPage(WebUrls.AUTHOR_WEBSITE) },
+                    onSourcePress = { openWebPage(WebUrls.SOURCE_CODE_URL) },
                     onMandelbrotColorSelect = { lifecycleScope.launch { settingsViewModel.onMandelbrotColorSelected(it) }},
                     onMengerPrisonResolutionSelect = { lifecycleScope.launch { settingsViewModel.onMengerPrisonResolutionSelected(it) }})
             }

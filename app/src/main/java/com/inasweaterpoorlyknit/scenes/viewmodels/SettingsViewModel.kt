@@ -20,8 +20,6 @@ data class SettingsState(
     companion object {
         val mengerResolutionStrings = MengerPrisonScene.resolutionFactorOptions.map{ "${(it * 100.0f).toInt()}%" }
         val mandelbrotColors = MandelbrotScene.colors.map{ it.name }
-        const val WEBSITE_URL = "https://lucodivo.github.io"
-        const val SOURCE_URL = "https://github.com/Lucodivo/ScenesMobile"
     }
 }
 
