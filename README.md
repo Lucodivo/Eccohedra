@@ -1,8 +1,8 @@
-# Scenes
+# Eccohedra
 <a href="https://play.google.com/store/apps/details?id=com.inasweaterpoorlyknit.learnopengl_androidport"><img alt="Download" src="https://raw.githubusercontent.com/Lucodivo/RepoSampleImages/master/OpenGLScenes/Android/logo/logo-color-96x96.png"></a><br>
 <a href="https://play.google.com/store/apps/details?id=com.inasweaterpoorlyknit.learnopengl_androidport"><img alt="Download" src="https://img.shields.io/badge/Google%20Play-%20?logo=googleplay&amp;color=grey"></a>
 
-A graphic toy application utilizing varied rendering methods.
+Playful and interactive 3D/2D graphic scenes.
 
 ## Screenshots
 
@@ -121,7 +121,7 @@ All the following information is under the assumption the project is being built
   - asset_baker has hardcoded directories that will work smoothly as long as asset_baker is runs in the root
   	directory of the entire Android project.
   - asset_baker uses a cache system that will re-bake items that have been modified since last they were baked.
-  - asset_baker relies has a dependency on [AMD's Compressonator](https://github.com/GPUOpen-Tools/compressonator) static 
+  - asset_baker has a dependency on [AMD's Compressonator](https://github.com/GPUOpen-Tools/compressonator) static 
      libraries. Unfortunately, this must be compiled or found yourself. Fortunately, if you have access to Visual Studio,
   	 the repository makes it fairly simple.
     - load the Visual Studio project in Compressonator/vs2019
