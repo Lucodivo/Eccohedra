@@ -1,3 +1,5 @@
+import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -22,8 +24,8 @@ android {
         applicationId = "com.inasweaterpoorlyknit.learnopengl_androidport"
         minSdk = 24
         targetSdk = 34
-        versionCode = 24
-        versionName = "1.2.6"
+        versionCode = 25
+        versionName = "1.2.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         signingConfig = signingConfigs.getByName("debug")
 
@@ -47,7 +49,7 @@ android {
             kotlinCompilerExtensionVersion = composeCompilerVersion
         }
 
-        packagingOptions {
+        packaging {
             resources {
                 excludes += listOf(
                         "META-INF/DEPENDENCIES",
@@ -77,6 +79,10 @@ android {
             // Includes the default ProGuard rules files that are packaged with the Android Gradle plugin
             setProguardFiles(listOf(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"))
             resValue("bool", "FIREBASE_ANALYTICS_DEACTIVATED", "false")
+            configure<CrashlyticsExtension> {
+                nativeSymbolUploadEnabled = true
+                unstrippedNativeLibsDir = "build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib"
+            }
         }
     }
 
@@ -130,6 +136,7 @@ dependencies {
     // analytics
     implementation(platform("com.google.firebase:firebase-bom:32.2.3"))
     implementation("com.google.firebase:firebase-crashlytics-ktx")
+    implementation("com.google.firebase:firebase-crashlytics-ndk")
     implementation("com.google.firebase:firebase-analytics-ktx")
 
     // testing
