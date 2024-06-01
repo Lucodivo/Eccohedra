@@ -23,7 +23,6 @@ import android.opengl.GLES32.glGetShaderiv
 import android.opengl.GLES32.glShaderSource
 import android.opengl.GLES32.glTexImage2D
 import android.opengl.GLES32.glTexParameteri
-import android.util.Log
 import androidx.annotation.RawRes
 import com.inasweaterpoorlyknit.Vec3
 import java.nio.IntBuffer
@@ -96,22 +95,7 @@ fun createShader(resources: Resources, @RawRes shaderResourceId: Int, shaderType
         if (compileStatus[0] == 0) {
             val infoLog = glGetShaderInfoLog(shader)
             glDeleteShader(shader)
-            throw RuntimeException(
-"""${'\n'}
-=== ERROR COMPILING SHADER ===
-
-== Shader Resource ==
-${resources.getResourceName(shaderResourceId)}
-
-== Shader Text ==
-```
-$shaderText
-```
-
-== Shader Info Log ==
-$infoLog
-"""
-            )
+            throw RuntimeException("ERROR COMPILING SHADER: ${resources.getResourceName(shaderResourceId)}\n$infoLog")
         }
     }
 

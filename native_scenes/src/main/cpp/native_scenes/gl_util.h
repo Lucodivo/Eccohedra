@@ -56,9 +56,9 @@ void initGLEnvironment(GLEnvironment *glEnv) {
    * ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID. */
   eglGetConfigAttrib(glEnv->display, glEnv->config, EGL_NATIVE_VISUAL_ID, &format);
   const EGLint contextAttrList[] = {
-      // request a context using Open GL ES 3.2
+      // request a context using Open GL ES 3.1
       EGL_CONTEXT_MAJOR_VERSION, 3,
-      EGL_CONTEXT_MINOR_VERSION, 2,
+      EGL_CONTEXT_MINOR_VERSION, 1,
       EGL_NONE
   };
   // TODO: Create a separate shared context for loading assets
