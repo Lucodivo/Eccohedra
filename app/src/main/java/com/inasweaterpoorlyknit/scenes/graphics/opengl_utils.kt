@@ -74,32 +74,15 @@ fun loadTexture(resources: Resources, @RawRes resourceId: Int): Int {
     return textureId
 }
 
-fun createVertexShader(resources: Resources, @RawRes shaderResourceId: Int): Int {
-    return try {
-        createVertexShader(getResourceRawFileAsString(resources, shaderResourceId))
-    } catch (e: RuntimeException) {
-        throw RuntimeException("Error creating vertex shader: \n${resources.getResourceName(shaderResourceId)}\n${e.message}")
-    }
-}
+fun createVertexShader(resources: Resources, @RawRes shaderResourceId: Int): Int =
+    createShader(resources, shaderResourceId, GL_VERTEX_SHADER)
 
-fun createFragmentShader(resources: Resources, @RawRes shaderResourceId: Int): Int {
-    return try {
-        createFragmentShader(getResourceRawFileAsString(resources, shaderResourceId))
-    } catch (e: RuntimeException) {
-        throw RuntimeException("Error creating fragment shader: ${resources.getResourceName(shaderResourceId)}\n${e.message}")
-    }
-}
+fun createFragmentShader(resources: Resources, @RawRes shaderResourceId: Int): Int =
+    createShader(resources, shaderResourceId, GL_FRAGMENT_SHADER)
 
-fun createVertexShader(shaderText: String): Int {
-    return createShader(shaderText, GL_VERTEX_SHADER) ?: throw RuntimeException("Error creating vertex shader with text: \n$shaderText")
-}
-
-fun createFragmentShader(shaderText: String): Int {
-    return createShader(shaderText, GL_FRAGMENT_SHADER) ?: throw RuntimeException("Error creating fragment shader with text: \n$shaderText")
-}
-
-// Returns null if shader was not successfully created
-fun createShader(shaderText: String, shaderType: Int): Int? {
+// Throws exception of shader cannot be compiled
+fun createShader(resources: Resources, @RawRes shaderResourceId: Int, shaderType: Int): Int {
+    val shaderText = getResourceRawFileAsString(resources, shaderResourceId)
     val shader = glCreateShader(shaderType)
     if (shader != 0) {
         glShaderSource(shader, shaderText)
@@ -111,9 +94,24 @@ fun createShader(shaderText: String, shaderType: Int): Int? {
 
         // If the compilation failed, delete the shaderText.
         if (compileStatus[0] == 0) {
-            Log.e("ShaderUtil", glGetShaderInfoLog(shader))
+            val infoLog = glGetShaderInfoLog(shader)
             glDeleteShader(shader)
-            return null
+            throw RuntimeException(
+"""${'\n'}
+=== ERROR COMPILING SHADER ===
+
+== Shader Resource ==
+${resources.getResourceName(shaderResourceId)}
+
+== Shader Text ==
+```
+$shaderText
+```
+
+== Shader Info Log ==
+$infoLog
+"""
+            )
         }
     }
 

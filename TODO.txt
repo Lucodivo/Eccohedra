@@ -44,3 +44,5 @@ Bugs(?):
 == Etc. ==
 - Use some sort of linter for Kotlin and C++
 - Put app version on display in the settings
+- Store listing:
+  - Youtube video should be in landscape, as that is how it is presented on the store page.
