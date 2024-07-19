@@ -14,7 +14,7 @@ Playful and interactive 3D/2D graphic scenes.
 
 ## Video Demo
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/aROX7WxakuQ/0.jpg)](https://www.youtube.com/watch?v=aROX7WxakuQ)
+[![YouTube Demo Video of Eccohedra App](https://img.youtube.com/vi/aROX7WxakuQ/0.jpg)](https://www.youtube.com/watch?v=aROX7WxakuQ)
 
 ## App Features
 - Infinite Cube Scene

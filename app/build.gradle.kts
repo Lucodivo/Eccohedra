@@ -94,7 +94,7 @@ android {
 dependencies {
     val kotlinCompilerVersion: String by rootProject.extra
 
-    implementation("com.github.lucodivo:NoopMathKt:v0.2.4-alpha")
+    implementation("com.github.lucodivo:NoopMathKt:v0.2.5")
     implementation(project(":native_scenes"))
 
     // Kotlin
