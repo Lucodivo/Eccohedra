@@ -24,7 +24,7 @@ import android.opengl.GLES32.glShaderSource
 import android.opengl.GLES32.glTexImage2D
 import android.opengl.GLES32.glTexParameteri
 import androidx.annotation.RawRes
-import com.inasweaterpoorlyknit.Vec3
+import com.inasweaterpoorlyknit.noopmath.Vec3
 import java.nio.IntBuffer
 
 // NOTE: OpenGL ES does not support geometry shaders

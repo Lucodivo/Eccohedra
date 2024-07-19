@@ -1,7 +1,7 @@
 package com.inasweaterpoorlyknit.scenes.graphics
 
 import android.view.MotionEvent
-import com.inasweaterpoorlyknit.Vec2
+import com.inasweaterpoorlyknit.noopmath.Vec2
 
 class RotateGestureDetector {
     data class Pointer(

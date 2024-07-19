@@ -9,10 +9,10 @@ import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import androidx.core.math.MathUtils.clamp
-import com.inasweaterpoorlyknit.Mat2
-import com.inasweaterpoorlyknit.Vec2
-import com.inasweaterpoorlyknit.Vec3
-import com.inasweaterpoorlyknit.dVec2
+import com.inasweaterpoorlyknit.noopmath.Mat2
+import com.inasweaterpoorlyknit.noopmath.Vec2
+import com.inasweaterpoorlyknit.noopmath.Vec3
+import com.inasweaterpoorlyknit.noopmath.dVec2
 import com.inasweaterpoorlyknit.scenes.*
 import com.inasweaterpoorlyknit.scenes.graphics.*
 import com.inasweaterpoorlyknit.scenes.graphics.scenes.MengerPrisonScene.Companion.resolutionFactorOptions

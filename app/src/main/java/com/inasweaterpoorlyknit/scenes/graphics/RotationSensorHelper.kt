@@ -7,7 +7,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.util.Log
 import android.widget.Toast
-import com.inasweaterpoorlyknit.Mat3
+import com.inasweaterpoorlyknit.noopmath.Mat3
 import com.inasweaterpoorlyknit.scenes.R
 import com.inasweaterpoorlyknit.scenes.graphics.RotationSensorHelper.ScratchMats.firstSensorRotationMat
 import com.inasweaterpoorlyknit.scenes.graphics.RotationSensorHelper.ScratchMats.lastSensorRotationMat

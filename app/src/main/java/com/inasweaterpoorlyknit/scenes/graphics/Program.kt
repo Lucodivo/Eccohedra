@@ -23,12 +23,12 @@ import android.opengl.GLES32.glUniformMatrix4fv
 import android.opengl.GLES32.glUseProgram
 import android.util.Log
 import androidx.annotation.RawRes
-import com.inasweaterpoorlyknit.Mat2
-import com.inasweaterpoorlyknit.Mat3
-import com.inasweaterpoorlyknit.Mat4
-import com.inasweaterpoorlyknit.Vec2
-import com.inasweaterpoorlyknit.Vec3
-import com.inasweaterpoorlyknit.Vec4
+import com.inasweaterpoorlyknit.noopmath.Mat2
+import com.inasweaterpoorlyknit.noopmath.Mat3
+import com.inasweaterpoorlyknit.noopmath.Mat4
+import com.inasweaterpoorlyknit.noopmath.Vec2
+import com.inasweaterpoorlyknit.noopmath.Vec3
+import com.inasweaterpoorlyknit.noopmath.Vec4
 
 class Program(resources: Resources, @RawRes vertexShaderResId: Int, @RawRes fragmentShaderResId: Int)
 {

@@ -8,10 +8,10 @@ import android.opengl.GLES32.GL_UNSIGNED_INT
 import android.opengl.GLES32.glClear
 import android.opengl.GLES32.glDrawElements
 import android.view.MotionEvent
-import com.inasweaterpoorlyknit.Mat3
-import com.inasweaterpoorlyknit.Vec3
-import com.inasweaterpoorlyknit.clamp
-import com.inasweaterpoorlyknit.mod
+import com.inasweaterpoorlyknit.noopmath.Mat3
+import com.inasweaterpoorlyknit.noopmath.Vec3
+import com.inasweaterpoorlyknit.noopmath.clamp
+import com.inasweaterpoorlyknit.noopmath.mod
 import com.inasweaterpoorlyknit.scenes.R
 import com.inasweaterpoorlyknit.scenes.graphics.*
 import java.nio.IntBuffer

@@ -7,11 +7,11 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import androidx.core.math.MathUtils.clamp
-import com.inasweaterpoorlyknit.Mat3
-import com.inasweaterpoorlyknit.Mat4
-import com.inasweaterpoorlyknit.Vec2
-import com.inasweaterpoorlyknit.Vec3
-import com.inasweaterpoorlyknit.degToRad
+import com.inasweaterpoorlyknit.noopmath.Mat3
+import com.inasweaterpoorlyknit.noopmath.Mat4
+import com.inasweaterpoorlyknit.noopmath.Vec2
+import com.inasweaterpoorlyknit.noopmath.Vec3
+import com.inasweaterpoorlyknit.noopmath.degToRad
 import com.inasweaterpoorlyknit.scenes.R
 import com.inasweaterpoorlyknit.scenes.graphics.*
 import java.nio.IntBuffer

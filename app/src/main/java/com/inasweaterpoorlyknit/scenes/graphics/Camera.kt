@@ -1,7 +1,7 @@
 package com.inasweaterpoorlyknit.scenes.graphics
 
-import com.inasweaterpoorlyknit.Mat4
-import com.inasweaterpoorlyknit.Vec3
+import com.inasweaterpoorlyknit.noopmath.Mat4
+import com.inasweaterpoorlyknit.noopmath.Vec3
 
 // Note: Currently the camera faces (+Z) and can move forward or back. Anything else hasn't been needed.
 class Camera(position: Vec3 = Vec3(0.0f, 0.0f, 0.0f)) {
