@@ -38,9 +38,9 @@ class MandelbrotScene(context: Context, userPreferencesRepo: UserPreferencesData
 
         data class AccentColor(val name: String, val accentColor: Vec3)
         val colors = arrayOf(
-            AccentColor("🔴", Vec3(1.0f, 0.0f, 0.0f)), // blue/yellow
-            AccentColor("🟢", Vec3(0.0f, 1.0f, 0.0f)), // pastel blue/pink
-            AccentColor("🔵", Vec3(0.0f, 0.0f, 1.0f)), // pink/purple
+            AccentColor("Red", Vec3(1.0f, 0.0f, 0.0f)), // blue/yellow
+            AccentColor("Green", Vec3(0.0f, 1.0f, 0.0f)), // pastel blue/pink
+            AccentColor("Blue", Vec3(0.0f, 0.0f, 1.0f)), // pink/purple
         )
         const val DEFAULT_COLOR_INDEX = 0
 

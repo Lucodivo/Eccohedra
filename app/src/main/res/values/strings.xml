@@ -45,7 +45,7 @@
     <string name="source">Source</string>
     <string name="settings">Settings</string>
     <string name="dark_mode">Dark Mode 🌙</string>
-    <string name="menger_sponge_resolution">Menger Sponge Resolution</string>
+    <string name="menger_resolution">Menger Resolution</string>
     <string name="mandelbrot_color">Mandelbrot Color</string>
 
     <!-- Shortcuts-->
@@ -58,4 +58,11 @@
     <string name="debug_string_id">This is debug text. If you\'re reading this, the developer made a mistake.</string>
     <string name="info_shortcut_short">Info</string>
     <string name="info_shortcut_long">Developer Info</string>
+    <string name="developer">Developer</string>
+    <string name="web">Web</string>
+    <string name="code">Code</string>
+    <string name="merlinsbag">Merlinsbag</string>
+    <string name="etc">Etc.</string>
+    <string name="rate_and_review">Rate &amp; Review</string>
+    <string name="version">Version</string>
 </resources>

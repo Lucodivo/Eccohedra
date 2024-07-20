@@ -24,8 +24,8 @@ android {
         applicationId = "com.inasweaterpoorlyknit.learnopengl_androidport"
         minSdk = 24
         targetSdk = 34
-        versionCode = 25
-        versionName = "1.2.7"
+        versionCode = 26
+        versionName = "1.2.8"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         signingConfig = signingConfigs.getByName("debug")
 
