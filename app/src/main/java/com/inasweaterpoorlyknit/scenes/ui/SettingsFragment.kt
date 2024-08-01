@@ -93,7 +93,14 @@ class SettingsFragment : Fragment() {
                     onClickDeveloper = { uriHandler.openUri(WebUrls.AUTHOR_WEBSITE) },
                     onClickSource = { uriHandler.openUri(WebUrls.SOURCE_CODE_URL) },
                     onClickMerlinsbag = { uriHandler.openUri(WebUrls.MERLINSBAG_URL) },
-                    onClickRateAndReview = { uriHandler.openUri(WebUrls.ECCOHEDRA_URL) },
+                    onClickRateAndReview = {
+                        rateAndReviewRequest(
+                            context = context,
+                            onCompleted = { context.toast(R.string.thank_you) },
+                            onPreviouslyCompleted = { uriHandler.openUri(WebUrls.ECCOHEDRA_URL) },
+                            onError = { context.toast(R.string.try_again_later) },
+                        )
+                    },
                     onClickMandelbrotColor = {
                         mandelbrotRowExpanded = !mandelbrotRowExpanded
                     },

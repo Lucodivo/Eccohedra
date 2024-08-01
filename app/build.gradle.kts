@@ -24,8 +24,8 @@ android {
         applicationId = "com.inasweaterpoorlyknit.learnopengl_androidport"
         minSdk = 24
         targetSdk = 34
-        versionCode = 26
-        versionName = "1.2.8"
+        versionCode = 27
+        versionName = "1.2.9"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         signingConfig = signingConfigs.getByName("debug")
 
@@ -107,6 +107,10 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.fragment:fragment-ktx:1.6.1")
+
+    // In-App Google Play Reviews
+    implementation("com.google.android.play:review:2.0.1")
+    implementation("com.google.android.play:review-ktx:2.0.1")
 
     // Navigation
     val navVersion = "2.7.7"

@@ -65,4 +65,6 @@
     <string name="etc">Etc.</string>
     <string name="rate_and_review">Rate &amp; Review</string>
     <string name="version">Version</string>
+    <string name="thank_you">Thank you!</string>
+    <string name="try_again_later">Try again later.</string>
 </resources>
