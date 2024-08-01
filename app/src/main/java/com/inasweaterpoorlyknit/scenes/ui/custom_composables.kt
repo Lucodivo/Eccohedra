@@ -1,5 +1,12 @@
 package com.inasweaterpoorlyknit.scenes.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.TweenSpec
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -15,6 +22,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -150,4 +158,29 @@ fun ListItemDropdown(titleText: String, items: List<String>, selectedIndex: Int,
             })
         }
     }
+}
+
+@Composable
+fun staggeredHorizontallyAnimatedComposables(
+    content: List<@Composable AnimatedVisibilityScope.() -> Unit>,
+    millisecondsPerRow: Int = 30,
+): List<@Composable () -> Unit> {
+    val animationFloat = remember { Animatable(initialValue = 0.0f) }
+    LaunchedEffect(content.size) {
+        animationFloat.animateTo(
+            targetValue = content.size * 0.1f + 0.1f, // +0.1 as a safety buffer
+            animationSpec = TweenSpec(
+                durationMillis = millisecondsPerRow * content.size,
+                easing = LinearEasing,
+            )
+        )
+    }
+    return content.mapIndexed { index, item -> {
+        AnimatedVisibility(
+            visible = animationFloat.value >= (0.1f * (index + 1)),
+            enter = slideInHorizontally(initialOffsetX = { fullWidth -> fullWidth }),
+            exit = slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth }),
+            content = item,
+        )
+    }}
 }

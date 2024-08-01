@@ -318,16 +318,10 @@ class SettingsFragment : Fragment() {
         onClickMengerPrisonResolution: () -> Unit,
         onSelectMengerPrisonResolution: (Int) -> Unit
     ){
-        OpenGLScenesTheme {
-            LazyColumn(
-                contentPadding = PaddingValues(vertical = halfListPadding),
-                modifier = Modifier
-                    .background(color = MaterialTheme.colorScheme.background)
-                    .fillMaxSize()
-            ) {
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    SettingsTitle(stringResource(R.string.settings))
+        val rows = staggeredHorizontallyAnimatedComposables(
+            content = listOf(
+                { SettingsTitle(stringResource(R.string.settings)) },
+                {
                     MandelbrotColorRow(
                         selectedIndex = mandelbrotColorIndex,
                         expandedMenu = mandelbrotRowExpanded,
@@ -335,6 +329,8 @@ class SettingsFragment : Fragment() {
                         onSelectMandelbrotColor = onSelectMandelbrotColor,
                         onDismiss = onClickMandelbrotColor,
                     )
+                },
+                {
                     MengerPrisonResolutionRow(
                         selectedIndex = mengerResolutionIndex,
                         expandedMenu = mengerRowExpanded,
@@ -342,20 +338,28 @@ class SettingsFragment : Fragment() {
                         onSelectMengerPrisonResolution = onSelectMengerPrisonResolution,
                         onDismiss = onClickMengerPrisonResolution,
                     )
-                }
-                item { HorizontalDivider(thickness = dividerThickness, modifier = dividerModifier) }
-                item {
-                    SettingsTitle(stringResource(R.string.about))
-                    DeveloperRow(onClickDeveloper)
-                    SourceRow(onClickSource)
-                    VersionRow()
-                }
-                item { HorizontalDivider(thickness = dividerThickness, modifier = dividerModifier) }
-                item {
-                    SettingsTitle(stringResource(R.string.etc))
-                    RateAndReviewRow(onClickRateAndReview)
-                    MerlinsbagRow(onClickMerlinsbag)
-                }
+                },
+                { HorizontalDivider(thickness = dividerThickness, modifier = dividerModifier) },
+                { SettingsTitle(stringResource(R.string.about)) },
+                { DeveloperRow(onClickDeveloper) },
+                { SourceRow(onClickSource) },
+                { VersionRow() },
+                { HorizontalDivider(thickness = dividerThickness, modifier = dividerModifier) },
+                { SettingsTitle(stringResource(R.string.etc)) },
+                { RateAndReviewRow(onClickRateAndReview) },
+                { MerlinsbagRow(onClickMerlinsbag) },
+            )
+        )
+        OpenGLScenesTheme {
+            LazyColumn(
+                contentPadding = PaddingValues(vertical = halfListPadding),
+                modifier = Modifier
+                    .background(color = MaterialTheme.colorScheme.background)
+                    .fillMaxSize()
+            ) {
+                item { Spacer(modifier = Modifier.height(8.dp)) }
+                items(rows.size) { index -> rows[index]() }
+                item { Spacer(modifier = Modifier.height(8.dp)) }
             }
         }
     }
